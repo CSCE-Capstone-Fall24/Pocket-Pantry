@@ -3,7 +3,7 @@ import { Button, View, Text } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
 // Open the SQLite database (or create it if it doesn't exist)
-const db = SQLite.openDatabaseAsync('masterDatabase');
+// const db = SQLite.openDatabaseAsync('masterDatabase');
 
 const DatabaseComponent = () => {
   const [status, setStatus] = useState('No action taken');
