@@ -5,6 +5,9 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+import { SafeAreaView } from 'react-native';
+import CSVParserComponent from '@/components/CSVParserComponent';
+
 export default function HomeScreen() {
   return (
     <>
@@ -17,9 +20,13 @@ export default function HomeScreen() {
         />
       }
       >
-      <ThemedText> 
-        <h1>Recipe View</h1>
-      </ThemedText>
+        <ThemedText> 
+            <h1>Recipe View</h1>
+        </ThemedText>
+
+        <SafeAreaView style={{ flex: 1 }}>
+            <CSVParserComponent />
+        </SafeAreaView>
 
     </ParallaxScrollView>
     </>
