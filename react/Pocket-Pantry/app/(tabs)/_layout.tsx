@@ -14,7 +14,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
       }}>
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
@@ -29,6 +29,46 @@ export default function TabLayout() {
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      /> */}
+      <Tabs.Screen
+        name="shoppinglist"
+        options={{
+          title: 'Shopping List',
+          tabBarIcon: ({ color, focused }) => (
+            "SL"
+            // <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="recipe"
+        options={{
+          title: 'Recipes',
+          tabBarIcon: ({ color, focused }) => (
+            "R"
+            // <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      />  
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          title: 'Calendar View',
+          tabBarIcon: ({ color, focused }) => (
+            "CV"
+            // <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="pantry"
+        options={{
+          title: 'Pantry View',
+          tabBarIcon: ({ color, focused }) => (
+            "PV"
+            // <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
           ),
         }}
       />
