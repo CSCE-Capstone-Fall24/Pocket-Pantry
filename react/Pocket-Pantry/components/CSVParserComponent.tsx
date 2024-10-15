@@ -1,10 +1,11 @@
 import * as DocumentPicker from 'expo-document-picker';
 import Papa from 'papaparse';
-import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Button, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import React, { useState } from 'react';
 
 const CSVParserComponent = () => {
   const [data, setData] = useState<any[]>([]);
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
 
   const pickDocument = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -18,7 +19,6 @@ const CSVParserComponent = () => {
 
     if (result.assets && result.assets.length > 0) {
       const asset = result.assets[0];
-      console.log("SCUEEDED");
 
       if (asset.uri) {
         const response = await fetch(asset.uri);
@@ -28,7 +28,6 @@ const CSVParserComponent = () => {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
-            console.log('Parsed CSV results:', results.data);
             setData(results.data);
           },
           error: (error) => {
@@ -41,27 +40,68 @@ const CSVParserComponent = () => {
     }
   };
 
+  const toggleExpanded = (index: number) => {
+    setExpandedItems((prevState) => ({
+      ...prevState,
+      [index]: !prevState[index],
+    }));
+  };
+
   return (
     <View style={styles.container}>
       <Button title="Pick a CSV file" onPress={pickDocument} />
       <FlatList
         data={data}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text>Name: {item.name}</Text>
-            <Text>ID: {item.id}</Text>
-            <Text>Minutes: {item.minutes}</Text>
-            <Text>Contributor ID: {item.contributor_id}</Text>
-            <Text>Submitted: {item.submitted}</Text>
-            <Text>Tags: {item.tags}</Text>
-            <Text>Nutrition: {item.nutrition}</Text>
-            <Text>Steps: {item.steps}</Text>
-            <Text>Description: {item.description}</Text>
-            <Text>Ingredients: {item.ingredients}</Text>
-            <Text>Number of Ingredients: {item.n_ingredients}</Text>
-          </View>
-        )}
+        renderItem={({ item, index }) => {
+          const isExpanded = expandedItems[index];
+          return (
+            <TouchableOpacity onPress={() => toggleExpanded(index)}>
+              <View style={styles.card}>
+                <View style={styles.contentRow}>
+                  <View style={styles.textContent}>
+                    <Text style={styles.recipeTitle}>{item.name}</Text>
+                    <Text style={styles.recipeTime}>{item.minutes} minutes</Text>
+                    <Text style={styles.description}>{item.description}</Text>
+
+                    <Text style={styles.ingredientsLabel}>Ingredients:</Text>
+                    <Text style={styles.ingredients}>{item.ingredients}</Text>
+
+                    {isExpanded && (
+                      <View style={styles.expandedSection}>
+                        <Text style={styles.label}>Steps:</Text>
+                        <Text style={styles.value}>{item.steps}</Text>
+
+                        <View style={styles.infoRow}>
+                          <Text style={styles.label}>ID:</Text>
+                          <Text style={styles.value}>{item.id}</Text>
+                        </View>
+                        <View style={styles.infoRow}>
+                          <Text style={styles.label}>Contributor ID:</Text>
+                          <Text style={styles.value}>{item.contributor_id}</Text>
+                        </View>
+                        <View style={styles.infoRow}>
+                          <Text style={styles.label}>Submitted:</Text>
+                          <Text style={styles.value}>{item.submitted}</Text>
+                        </View>
+                        <View style={styles.infoRow}>
+                          <Text style={styles.label}>Tags:</Text>
+                          <Text style={styles.value}>{item.tags}</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  <Image
+                    source={{ uri: 'https://www.creativefabrica.com/wp-content/uploads/2021/01/09/Diagonal-of-random-square-pattern-5-Graphics-7678518-1.jpg' }} 
+                    style={styles.recipeImage}
+                  />
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </View>
   );
@@ -70,12 +110,71 @@ const CSVParserComponent = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-  },
-  item: {
-    marginVertical: 10,
     padding: 10,
-    backgroundColor: '#f9c2ff',
+    backgroundColor: '#f8f8f8',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  contentRow: {
+    flexDirection: 'row',
+  },
+  textContent: {
+    flex: 2,
+  },
+  recipeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  recipeTime: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  description: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  ingredientsLabel: {
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  ingredients: {
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  expandedSection: {
+    marginTop: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 5,
+  },
+  label: {
+    fontWeight: 'bold',
+    marginRight: 5,
+  },
+  value: {
+    color: '#333',
+  },
+  separator: {
+    height: 10,
+  },
+  recipeImage: {
+    flex: 1,
+    height: 200,
+    borderRadius: 10,
+    marginLeft: 10,
   },
 });
 

@@ -1,11 +1,19 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, StyleSheet, Button } from 'react-native';
+import React, { useState } from 'react';
 
-import { HelloWave } from '@/components/HelloWave';
+
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+
+import { InventoryProvider } from '../../components/contexts/inventoryContext'; // Import the provider
+import AdminView from '../../components/AdminView'; 
+import InventoryView from '../../components/InventoryView';
+
 
 export default function HomeScreen() {
+
+  const [showAdmin, setShowAdmin] = useState<boolean>(false);
+
   return (
     <>
     <ParallaxScrollView
@@ -20,6 +28,16 @@ export default function HomeScreen() {
       <ThemedText> 
         <h1>Pantry View</h1>
       </ThemedText>
+
+      <Button title="toggle admin view" onPress={() => setShowAdmin(!showAdmin)} />
+
+      <InventoryProvider>
+        { showAdmin && (
+            <AdminView />
+          )
+        }
+        <InventoryView />
+      </InventoryProvider>
 
     </ParallaxScrollView>
     </>
