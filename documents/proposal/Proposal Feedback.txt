@@ -1,0 +1,108 @@
+Big issues
+	Failing to distinguish objectives from features
+	multiple parts of the solution dont have means of being realized
+		some aspects dont have ui
+		database design not fully fleshed out
+		algorithms are not clear on if they are just [a] solution, a [good] solution, or just a sketch to get something on paper
+
+	strong start -> becomes weaker -> becomes weaker-er
+	project design and plan for execution don't match our vision
+
+	our goals + objectives need to touch on the criteria when compairing to competition
+
+	"hedge words" in comparison -> not formal
+	informal language!
+	important criteria [receipt scanning] needs to show up earlier
+	comparisons focus on features rather than methods -> this a basis for improvement
+
+
+	method overview in proposed work section
+	section 4 sucks organization and intro wise
+
+	data flow for meal selection
+
+	need to iron out A LOT about preferences and how those interplay with our infrastructure.
+
+	what are our algorithms optimized for?
+
+	diagram is not sufficient
+		preferences
+		planned vs carried out meals
+		pantry table specifics
+		is there enough info for calendar view?
+
+	need to reference when talking about dataset
+
+	ui layout is missing visuals of core functionality
+
+	scope is talking about features, not scope. 
+		what does general purpose meal planning app mean, why arent we this?
+
+	db design doesnt show our psql
+
+	kaggle license, format, size, how to use, etc.
+
+	gantt chart rough
+
+	sources not correct
+		
+
+Good things
+	vision is well articulated
+	identifies our niche
+	
+	3 clear objectives
+	research into existin methods is thorough
+
+
+questions
+	rankings vs suggestions
+	temporal organization, personalization when picking recipes
+	why mobile app?
+
+	3.2, who is they? -> other competitors
+	who are you quoting? respective app websites [no source]
+	
+
+
+dataset license
+	data derived from
+	https://paperswithcode.com/dataset/food-com-recipes-and-interactions
+		unknown license
+
+	Data files © Original Authors
+
+	how do you copyright a recipe?
+	food.com copyright takes precendent over scraped?
+
+	"Copyright, a form of intellectual property law, protects original works of authorship including literary, dramatic, musical, and artistic works, such as poetry, novels, movies, songs, computer software, and architecture. Copyright does not protect facts, ideas, systems, or methods of operation, although it may protect the way these things are expressed."
+
+	https://www.copyrightlaws.com/copyright-protection-recipes/
+
+	If you have a collection of recipes, for example in a cookbook, the collection as a whole is protected by copyright. Collections are protected even if the individual recipes themselves are in the public domain.
+
+	https://www.zsalads.com/blogs/the-latest/copyrighting-recipes
+
+
+
+
+from meeting
+how complex is this software
+finding a medium between simplest and best solutions
+
+better sense of the components and their interdependencies
+	receipt ocr -> how does taht effect downstream
+
+disjointness between sections
+in our needs, dig to the real problem
+	the problem isnt that other apps suck
+	seperate the WHAT from the HOW 
+	
+	non trivial maangement of resources
+	needs statement is similar to describing our objectives
+
+	keeping correspondance between real pantry and representation
+
+	thunk about what would make our app effective for use in objectives
+
+	naive algorithm for core ingredients vs non-core ingredients
