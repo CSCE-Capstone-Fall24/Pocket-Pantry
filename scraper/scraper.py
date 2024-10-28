@@ -9,7 +9,7 @@
 # 70971
 
 # import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 # import json
 import cloudscraper
 import re
@@ -59,38 +59,57 @@ def scrape_ingredients(id):
             units = []
 
             # loop through all the <li> tags
-            for li in ingredients_section.find_all('li', style="display: contents"):
-                quantity = li.find('span', class_='ingredient-quantity').get_text(strip=True)
-                quantity = " ".join(quantity.split())
-                ingredient = li.find('span', class_='ingredient-text').get_text(strip=True)
-                ingredient = " ".join(ingredient.split())
+            try:
+                for li in ingredients_section.find_all('li', style="display: contents"):
+                    quantity = li.find('span', class_='ingredient-quantity').get_text(strip=True)
+                    quantity = " ".join(quantity.split())
+                    
+                    ingredient_text_span = li.find('span', class_='ingredient-text')
+                    ingredient = ""
+                    for content in ingredient_text_span.children:
+                        if content.name == 'a':  # <a> tag, add a space before and after
+                            ingredient += f" {content.get_text(strip=True)} "
+                            # print(f"a tag {content.get_text(strip=True)}")
+                        elif isinstance(content, NavigableString):
+                            ingredient += content.strip()
+                            # print(f"non a tag {content}")
+                        # print(f"ingredient now {ingredient}")
+                    ingredient = ingredient.replace("HTML_TAG_START", "").replace("HTML_TAG_END", "")
+                    ingredient = " ".join(ingredient.split())
 
-                # if first word of ingredient starts with '('
-                # match up to ), grab extra word if there
-                # take that value and add to "unit"
-                unit = "unknown unit"
-                if ingredient.startswith('('):
-                    match = re.search(r'\(([^)]+)\)', ingredient)
-                    if match:
-                        # Extract unit and update ingredient
-                        unit = match.group(1)
-                        ingredient = ingredient[match.end():].strip()
+                    
+                    # ingredient = li.find('span', class_='ingredient-text').get_text(strip=True)
+                    # ingredient = " ".join(ingredient.split())
 
-                # otherwise, if first word of ingredient is
-                # cup, cups, tablespoon, tablespoons, teaspoon, teaspoons
-                else:
-                    first_word = ingredient.split()[0].lower()
-                    if first_word in KNOWN_UNITS:
-                        unit = first_word
-                        ingredient = " ".join(ingredient.split()[1:])
+                    # if first word of ingredient starts with '('
+                    # match up to ), grab extra word if there
+                    # take that value and add to "unit"
+                    unit = "unknown unit"
+                    if ingredient.startswith('('):
+                        match = re.search(r'\(([^)]+)\)', ingredient)
+                        if match:
+                            # Extract unit and update ingredient
+                            unit = match.group(1)
+                            ingredient = ingredient[match.end():].strip()
 
-                if not quantity:
-                    quantity = "No specific quantity"
+                    # otherwise, if first word of ingredient is
+                    # cup, cups, tablespoon, tablespoons, teaspoon, teaspoons
+                    else:
+                        first_word = ingredient.split()[0].lower()
+                        if first_word in KNOWN_UNITS:
+                            unit = first_word
+                            ingredient = " ".join(ingredient.split()[1:])
 
-                ingredients.append(ingredient)
-                quantities.append(quantity)
-                units.append(unit)
+                    if not quantity:
+                        quantity = "No specific quantity"
 
+                    ingredients.append(ingredient)
+                    quantities.append(quantity)
+                    units.append(unit)
+            except Exception as e:
+                print(f"error {e}")
+                return [], [], []
+            
         return ingredients, quantities, units
 
 # scrape_ingredients(137739)
@@ -99,6 +118,7 @@ df = pd.read_csv("../datasets/100_raw_recipes.csv")
 ingreds = []
 quantities = []
 units = []
+c = 0
 for id in df["id"]:
     print(f"scraping {id}")
     ingr, quan, unit = scrape_ingredients(id)
@@ -108,13 +128,19 @@ for id in df["id"]:
     quantities.append(quan)
     units.append(unit)
 
-    sleep(.5)
-    break
+    sleep(1.5)
 
-# df.assign(ingredients_scraped=ingreds)
-# df.assign(quantities_scraped=quantities)
+    # c += 1
+    # if c == 3:
+    #     break
 
-with open("test.txt", "w") as f:
-    for ing, quan, unit in zip(ingreds, quantities, units):
-        f.write(f"{ing}|||{quan:>20f}|||{unit:>20f}\n")
+df = df.assign(ingredients_scraped=ingreds)
+df = df.assign(quantities_scraped=quantities)
+df = df.assign(units_scraped=units)
+
+df.to_csv("scraped_data.csv", encoding='utf-8', index=False)
+# with open("test.txt", "w") as f:
+    # for ing, quan, unit in zip(ingreds, quantities, units):
+        # f.write(f"{}\n")
+
 # scrape_ingredients(31490)
