@@ -67,7 +67,7 @@ const CSVParserComponent = () => {
                     <Text style={styles.ingredientsLabel}>Ingredients:</Text>
                     <Text style={styles.ingredients}>{item.ingredients}</Text>
 
-                    {isExpanded && (
+                    {isExpanded ? (
                       <View style={styles.expandedSection}>
                         <Text style={styles.label}>Steps:</Text>
                         <Text style={styles.value}>{item.steps}</Text>
@@ -89,7 +89,7 @@ const CSVParserComponent = () => {
                           <Text style={styles.value}>{item.tags}</Text>
                         </View>
                       </View>
-                    )}
+                    ) : null }
                   </View>
 
                   <Image

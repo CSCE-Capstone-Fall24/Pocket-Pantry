@@ -32,9 +32,9 @@ export default function HomeScreen() {
       <Button title="toggle admin view" onPress={() => setShowAdmin(!showAdmin)} />
 
       <InventoryProvider>
-        { showAdmin && (
+        { showAdmin ? (
             <AdminView />
-          )
+          ) : null
         }
         <InventoryView />
       </InventoryProvider>
