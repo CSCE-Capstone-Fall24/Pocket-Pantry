@@ -19,4 +19,11 @@ def test_posts(db: Session = Depends(get_db)):
 
     return test
 
+@app.get("/recipes")
+def test_posts(db: Session = Depends(get_db)):
+
+    all_r = db.query(models.Recipes).all()
+
+    return all_r
+
 
