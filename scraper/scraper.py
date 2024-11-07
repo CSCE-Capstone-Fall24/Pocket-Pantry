@@ -51,9 +51,39 @@ def scrape_ingredients(id):
         myfile.write(str(soup))
 
         if response.status_code == 200:
-            page = BeautifulSoup(response.content, 'html.parser')
-            ingredients_section = soup.find('ul', class_='ingredient-list')
+            # page = BeautifulSoup(response.content, 'html.parser')
 
+            serving_size = -1              
+
+            serving_size_section = soup.find_all('div', class_='facts__item')
+            
+            # for i in serving_size_section:
+            #     print(i, "\n\n\n")
+            # print(len(serving_size_section))
+
+            # print("\n\n")
+            # print(serving_size_section[2].find('span', class_="value"))
+            # quit()
+            try:
+                serving_size_section = serving_size_section[2].find('span', class_="value")
+
+                if serving_size_section:
+                    serving_text = serving_size_section.get_text(strip=True)                    
+                    serving_match = re.search(r'(\d+)-?(\d+)?', serving_text)
+                    if serving_match:
+                        if serving_match.group(2):  # if range i.e 4-5
+                            lower = int(serving_match.group(1))
+                            upper = int(serving_match.group(2))
+                            serving_size = (lower + upper) / 2
+                        else: # single digit number
+                            serving_size = int(serving_match.group(1))
+
+                print("SERVING SIZE GOT IS", serving_size)
+            except:
+                print("failed getting serving size")
+            # quit()
+
+            ingredients_section = soup.find('ul', class_='ingredient-list')
             ingredients = []
             quantities = []
             units = []
@@ -77,7 +107,6 @@ def scrape_ingredients(id):
                     ingredient = ingredient.replace("HTML_TAG_START", "").replace("HTML_TAG_END", "")
                     ingredient = " ".join(ingredient.split())
 
-                    
                     # ingredient = li.find('span', class_='ingredient-text').get_text(strip=True)
                     # ingredient = " ".join(ingredient.split())
 
@@ -110,7 +139,7 @@ def scrape_ingredients(id):
                 print(f"error {e}")
                 return [], [], []
             
-        return ingredients, quantities, units
+        return ingredients, quantities, units, serving_sizes
 
 # scrape_ingredients(137739)
 
@@ -118,17 +147,19 @@ df = pd.read_csv("../datasets/100_raw_recipes.csv")
 ingreds = []
 quantities = []
 units = []
+serving_sizes = []
 c = 0
 for id in df["id"]:
     print(f"scraping {id}")
-    ingr, quan, unit = scrape_ingredients(id)
+    ingr, quan, unit, serv = scrape_ingredients(id)
     print(f"got {ingr}\n{quan}\n{unit}\n\n")
     
     ingreds.append(ingr)
     quantities.append(quan)
     units.append(unit)
+    serving_sizes.append(serv)
 
-    sleep(1.5)
+    sleep(1)
 
     # c += 1
     # if c == 3:
@@ -138,7 +169,7 @@ df = df.assign(ingredients_scraped=ingreds)
 df = df.assign(quantities_scraped=quantities)
 df = df.assign(units_scraped=units)
 
-df.to_csv("scraped_data.csv", encoding='utf-8', index=False)
+df.to_csv("scraped_data_w_serving_sizes.csv", encoding='utf-8', index=False)
 # with open("test.txt", "w") as f:
     # for ing, quan, unit in zip(ingreds, quantities, units):
         # f.write(f"{}\n")
