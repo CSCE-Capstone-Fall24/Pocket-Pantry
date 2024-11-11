@@ -37,25 +37,84 @@ def format_array_for_postgres(value, numeric=False):
     
     return '{' + ','.join(formatted_items) + '}'
 
-def convert_quantity(quantity):
-    """Convert ingredient quantities and handle ranges."""
-    if pd.isna(quantity) or quantity == 'No specific quantity':
-        return -1.0
+# def convert_quantity(quantity):
+    # """Convert ingredient quantities and handle ranges."""
+    # if quantity == 'No specific quantity':
+    #     return -1.0
+    
+    # print(f"Converting quantity: {quantity}")  # Debugging line
+    
+    # try:
+    #     if '-' in quantity:
+    #         parts = [float(Fraction(part.strip())) for part in re.split(r'-', quantity)]
+    #         result = sum(parts) / len(parts)
+    #         print(f"Quantity with range: {quantity} -> {result}")  # Debugging line
+    #         return result
+        
+    #     # Handle fractions with special characters like '⁄' and '/'.
+    #     quantity = re.sub(r'⁄|/', '/', quantity)
+    #     result = float(Fraction(quantity))
+    #     print(f"Converted fraction: {quantity} -> {result}")  # Debugging line
+    #     return result
+    # except ValueError as e:
+    #     print(f"Error converting {quantity}: {e}")  # Debugging line
+    #     return -1.0
+
+def convert_quantity(value):
+    if value == "No specific quantity":
+        return -1
+
+    print(f"before converting {value}")
+    if "[" in value:
+        value = value.replace("[", "")
+
+    if "]" in value:
+        value = value.repace("]", "")
+
+    print(f"after converting {value}")
+
+    if '-' in value:
+        parts = [convert_single_value(part.strip()) for part in value.split('-')]
+        return sum(parts) / len(parts)
+
+    return convert_single_value(value)
+
+def convert_single_value(value):
     try:
-        if '-' in quantity:
-            parts = [float(Fraction(part.strip())) for part in re.split(r'-', quantity)]
-            return sum(parts) / len(parts)
-        quantity = re.sub(r'⁄|/', '/', quantity)
-        return float(Fraction(quantity))
-    except ValueError:
-        return -1.0
+        return float(value)
+    except:
+        pass # classic
+
+    mixed_number_match = re.match(r'(\d+)(?:\s*(\d+[\⁄/]\d+)|\d+)', value)
+    if mixed_number_match:
+        print(mixed_number_match)
+        whole, fraction = mixed_number_match.groups()
+        print(mixed_number_match.groups())
+        return int(whole) + float(Fraction(fraction.replace('⁄', '/')))
+
+    if '⁄' in value or '/' in value:
+        value = value.replace('⁄', '/')
+        return float(Fraction(value))
+    
+    return float(value)
+
+
 
 df = pd.read_csv("scraped_data_w_serving_sizes.csv")
 
 df['name'] = df['name'].str.split().str.join(' ')
 
+
+# df['quantities_scraped'] = df['quantities_scraped'].apply(
+#     lambda x: [convert_quantity(q) for q in x.split(',')] if isinstance(x, str) else x
+# )
+
 df['quantities_scraped'] = df['quantities_scraped'].apply(
-    lambda x: [convert_quantity(q) for q in x.split(',')] if isinstance(x, str) else x
+    lambda x: ast.literal_eval(x) if isinstance(x, str) else x
+)
+
+df['quantities_scraped'] = df['quantities_scraped'].apply(
+    lambda quantities: [convert_quantity(q) for q in quantities] if isinstance(quantities, list) else quantities
 )
 
 array_columns = [
@@ -96,7 +155,7 @@ df = df[desired_columns + remaining_columns]
 
 df['submitted_date'] = pd.to_datetime(df['submitted_date']).dt.strftime('%Y-%m-%d')
 
-df.to_csv("final.csv", index=False, quoting=csv.QUOTE_MINIMAL, escapechar='\\')
+df.to_csv("final_test_quantities.csv", index=False, quoting=csv.QUOTE_MINIMAL, escapechar='\\')
 
 print("\nSample of formatted data:")
 print(df[['tags', 'nutrition', 'cook_steps']].head(1))
