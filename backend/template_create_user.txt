@@ -1,9 +1,0 @@
-curl -X POST "http://localhost:8000/add_planned_meal/" \
--H "Content-Type: application/json" \
--d '{
-  "user_id": 2,
-  "recipe_id": 1,
-  "n_servings": 2.5,
-  "is_shared": false,
-  "shared_with": []
-}'
