@@ -44,6 +44,15 @@ def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
 
     return user_pantry
 
+@app.get("/planned_meals")
+def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
+    user_meals = db.query(PlannedMeals).filter(PlannedMeals.user_id == user_id).all()
+
+    if not user_meals:
+        raise HTTPException(status_code=404, detail="No planned meals found for this user")
+
+    return user_meals
+
 class PlannedMealRequest(BaseModel):
     user_id: int
     recipe_id: int
