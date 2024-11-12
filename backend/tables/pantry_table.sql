@@ -1,6 +1,6 @@
-CREATE TABLE Pantry (
+CREATE TABLE pantry (
     id SERIAL PRIMARY KEY,                    
-    user_id INT REFERENCES Users(user_id),    
+    user_id INT REFERENCES users(user_id),  
     food_name TEXT NOT NULL,                  
     quantity DECIMAL NOT NULL,                
     unit TEXT NOT NULL,                       
