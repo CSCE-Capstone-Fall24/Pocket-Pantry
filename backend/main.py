@@ -5,7 +5,7 @@ from typing import List
 from pydantic import BaseModel
 
 from database import get_db
-from models import Recipes, Users, PlannedMeals
+from models import Recipes, Users, PlannedMeals, Pantry
 
 app = FastAPI()
 
@@ -27,6 +27,13 @@ def test_posts(db: Session = Depends(get_db)):
     all_u = db.query(Users).all()
 
     return all_u
+
+@app.get("/pantry")
+def test_posts(db: Session = Depends(get_db)):
+
+    all_p = db.query(Pantry).all()
+
+    return all_p
 
 
 class PlannedMealRequest(BaseModel):

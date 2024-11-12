@@ -1,12 +1,6 @@
 from database import Base
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, Text, Float, Date, ARRAY, Numeric
 
-
-class Test(Base):
-    __tablename__ = "test"
-    id = Column(Integer,primary_key=True,nullable=False)
-
-
 class Recipes(Base):
     __tablename__ = "recipes_good"
 
@@ -51,3 +45,21 @@ class PlannedMeals(Base):
     n_servings = Column(Numeric)
     is_shared = Column(Boolean)
     shared_with = Column(ARRAY(Integer))
+
+class Pantry(Base):
+    __tablename__ = "pantry"
+
+    pantry_id = Column(Integer, primary_key=True, nullable=False)                    
+    user_id = Column(Integer)
+    food_name = Column(Text)                        
+    quantity = Column(Numeric)                     
+    unit = Column(Text)                   
+    added_date = Column(TIMESTAMP)  
+    expiration_date = Column(TIMESTAMP)
+    category = Column(Text)            
+    comment = Column(Text)                       
+    is_shared = Column(Boolean)                     
+    shared_with = Column(ARRAY(Integer))                   
+    location = Column(Text)            
+    price = Column(Numeric)                    
+
