@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from typing import List
@@ -28,13 +28,21 @@ def test_posts(db: Session = Depends(get_db)):
 
     return all_u
 
-@app.get("/pantry")
+@app.get("/all_pantry")
 def test_posts(db: Session = Depends(get_db)):
 
     all_p = db.query(Pantry).all()
 
     return all_p
 
+@app.get("/pantry")
+def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
+    user_pantry = db.query(Pantry).filter(Pantry.user_id == user_id).all()
+
+    if not user_pantry:
+        raise HTTPException(status_code=404, detail="No pantry items found for this user")
+
+    return user_pantry
 
 class PlannedMealRequest(BaseModel):
     user_id: int
