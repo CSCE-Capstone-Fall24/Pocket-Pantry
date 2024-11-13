@@ -28,7 +28,7 @@ class Users(Base):
     user_id = Column(Integer, primary_key=True, nullable=False)
     username = Column(Text)
     email = Column(Text)
-    roomates = Column(ARRAY(Integer))
+    roommates = Column(ARRAY(Integer))
     favorite_recipes = Column(ARRAY(Integer))
     cooked_recipes = Column(ARRAY(Integer))
     hashed_confirmation_code = Column(Text)
