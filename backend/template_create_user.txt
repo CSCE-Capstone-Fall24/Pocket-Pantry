@@ -43,3 +43,20 @@ curl -X POST "http://localhost:8000/unshare_item/" \
   "pantry_id": 32,
   "roommate_id": 2
 }'
+
+
+SHARE MEAL
+curl -X POST "http://localhost:8000/share_meal/" \
+-H "Content-Type: application/json" \
+-d '{
+  "meal_id": 2,
+  "roommate_id": 3
+}'
+
+UNSHARE MEAL
+curl -X POST "http://localhost:8000/unshare_meal/" \
+-H "Content-Type: application/json" \
+-d '{
+  "meal_id": 2,
+  "roommate_id": 3
+}'

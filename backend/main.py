@@ -186,5 +186,52 @@ def mark_pantry_item_unshared(data: ShareItemRequest, db: Session = Depends(get_
         return {"message": "Roommate removed successfully", "pantry_id": data.pantry_id, "updated_roommates": item.shared_with}
     
     except ValueError:
-        return {"message": "rommate not shared with"}
+        return {"message": "roommate not shared with"}
+    
+
+class ShareMealRequest(BaseModel):
+    meal_id: int
+    roommate_id: int
+
+@app.post("/share_meal/")
+def share_meal(data: ShareMealRequest, db: Session = Depends(get_db)):
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == data.meal_id).first()
+    
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
+
+    if data.roommate_id in meal.shared_with:
+        raise HTTPException(status_code=400, detail="meal already shared with roommate")
+
+    updated_roommates = meal.shared_with + [data.roommate_id]
+    meal.shared_with = updated_roommates
+
+    meal.is_shared = True
+
+    db.commit()
+    db.refresh(meal)
+    return {"message": "Roommate added to meal successfully", "meal_id": data.meal_id, "updated_roommates": meal.shared_with}
+   
+@app.post("/unshare_meal/")
+def mark_pantry_item_unshared(data: ShareMealRequest, db: Session = Depends(get_db)):
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == data.meal_id).first()
+    
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
+
+    try:
+    #     idx = user.roommates.index(data.roommate_id)
+        idx = meal.shared_with.index(data.roommate_id)
+        splice = meal.shared_with[:idx] + meal.shared_with[idx + 1:]
+        meal.shared_with = splice
+
+        if len(splice) == 0:
+            meal.is_shared = False
+
+        db.commit()
+        db.refresh(meal)
+        return {"message": "Roommate removed successfully", "meal_id": data.meal_id, "updated_roommates": meal.shared_with}
+    
+    except ValueError:
+        return {"message": "roommate not shared with"}
     
