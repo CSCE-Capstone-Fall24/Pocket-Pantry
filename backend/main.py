@@ -64,7 +64,7 @@ def get_pantry_items(user_id: int, db: Session = Depends(get_db)):
     return {"pantry_items": pantry_items}
 
 @app.get("/planned_meals")
-def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
+def planned_meals(user_id: int, db: Session = Depends(get_db)):
     user_meals = db.query(PlannedMeals).filter(PlannedMeals.user_id == user_id).all()
 
     if not user_meals:
@@ -188,13 +188,3 @@ def mark_pantry_item_unshared(data: ShareItemRequest, db: Session = Depends(get_
     except ValueError:
         return {"message": "rommate not shared with"}
     
-
-    # updated_roommates = item.shared_with + [data.roommate_id]
-    # item.shared_with = updated_roommates
-
-    # item.is_shared = True
-
-    # db.commit()
-    # db.refresh(item)
-    # return {"message": "Roommate added to item successfully", "user_id": data.pantry_id, "updated_roommates": item.shared_with}
-   
