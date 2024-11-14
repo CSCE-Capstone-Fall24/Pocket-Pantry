@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
 
-from typing import List
-from pydantic import BaseModel
+from datetime import datetime
+
+from typing import List, Optional
+from pydantic import BaseModel, Field
 
 from database import get_db
 from models import Recipes, Users, PlannedMeals, Pantry
@@ -286,4 +288,41 @@ def mark_pantry_item_unshared(data: ShareMealRequest, db: Session = Depends(get_
     
     except ValueError:
         return {"message": "roommate not shared with"}
+    
+class PantryItemCreate(BaseModel):
+    food_name: str
+    quantity: float
+    unit: str
+    user_id: Optional[int] = None
+    added_date: Optional[datetime] = None
+    expiration_date: Optional[datetime] = None
+    category: Optional[str] = None
+    comment: Optional[str] = None
+    is_shared: Optional[bool] = False
+    shared_with: Optional[List[int]] = Field(default_factory=list)
+    location: Optional[str] = None
+    price: Optional[float] = None
+
+@app.post("/add_item/")
+async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db)):
+    pantry_item = Pantry(
+        food_name=item.food_name,
+        quantity=item.quantity,
+        unit=item.unit,
+        user_id=item.user_id,
+        added_date=item.added_date or datetime.now,
+        expiration_date=item.expiration_date,
+        category=item.category,
+        comment=item.comment,
+        is_shared=item.is_shared,
+        shared_with=item.shared_with,
+        location=item.location,
+        price=item.price
+    )
+
+    db.add(pantry_item)
+    db.commit()
+    db.refresh(pantry_item)
+
+    return pantry_item
     

@@ -28,12 +28,12 @@ curl -X POST "http://localhost:8000/remove_roommate/" \
 }'
 
 
-SHARED ITEM
+SHARE ITEM
 curl -X POST "http://localhost:8000/share_item/" \
 -H "Content-Type: application/json" \
 -d '{
   "pantry_id": 33,
-  "roommate_id": 4
+  "roommate_id": 34
 }'
 
 
@@ -67,5 +67,24 @@ view pantry multiple users
 curl -X POST "http://localhost:8000/unique_pantry_multiple_users/" \
 -H "Content-Type: application/json" \
 -d '{
-  "user_list": [2, 4]
+  "user_list": [34, 4]
+}'
+
+
+ADD PANTRY ITEM
+curl -X POST "http://localhost:8000/add_item/" \
+-H "Content-Type: application/json" \
+-d '{
+  "food_name": "Apple_TEST",
+  "quantity": 5,
+  "unit": "pcs",
+  "user_id": 34,
+  "added_date": "2024-11-14T12:00:00",
+  "expiration_date": "2024-12-01T12:00:00",
+  "category": "Fruit",
+  "comment": "Fresh apples from the market",
+  "is_shared": true,
+  "shared_with": [234, 345],
+  "location": "Refrigerator",
+  "price": 3.50
 }'
