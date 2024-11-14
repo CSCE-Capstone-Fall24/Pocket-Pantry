@@ -163,5 +163,38 @@ def mark_pantry_item_shared(data: ShareItemRequest, db: Session = Depends(get_db
 
     db.commit()
     db.refresh(item)
-    return {"message": "Roommate added to item successfully", "user_id": data.pantry_id, "updated_roommates": item.shared_with}
+    return {"message": "Roommate added to item successfully", "pantry_id": data.pantry_id, "updated_roommates": item.shared_with}
+   
+@app.post("/unshare_item/")
+def mark_pantry_item_unshared(data: ShareItemRequest, db: Session = Depends(get_db)):
+    item = db.query(Pantry).filter(Pantry.pantry_id == data.pantry_id).first()
+    
+    if not item:
+        raise HTTPException(status_code=404, detail="item not found")
+
+    try:
+    #     idx = user.roommates.index(data.roommate_id)
+        idx = item.shared_with.index(data.roommate_id)
+        splice = item.shared_with[:idx] + item.shared_with[idx + 1:]
+        item.shared_with = splice
+
+        if len(splice) == 0:
+            item.is_shared = False
+
+        db.commit()
+        db.refresh(item)
+        return {"message": "Roommate removed successfully", "pantry_id": data.pantry_id, "updated_roommates": item.shared_with}
+    
+    except ValueError:
+        return {"message": "rommate not shared with"}
+    
+
+    # updated_roommates = item.shared_with + [data.roommate_id]
+    # item.shared_with = updated_roommates
+
+    # item.is_shared = True
+
+    # db.commit()
+    # db.refresh(item)
+    # return {"message": "Roommate added to item successfully", "user_id": data.pantry_id, "updated_roommates": item.shared_with}
    
