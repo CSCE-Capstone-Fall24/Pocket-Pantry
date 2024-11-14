@@ -40,6 +40,12 @@ def all_pantry(db: Session = Depends(get_db)):
     all_p = db.query(Pantry).all()
     return all_p
 
+@app.get("/all_meals")
+def all_meals(db: Session = Depends(get_db)):
+
+    all_m = db.query(PlannedMeals).all()
+    return all_m
+
 @app.get("/indv_pantry")
 def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
     user_pantry = db.query(Pantry).filter(Pantry.user_id == user_id).all()
@@ -61,16 +67,41 @@ def get_pantry_items(user_id: int, db: Session = Depends(get_db)):
         )
     ).all()
 
-    return {"pantry_items": pantry_items}
+    return pantry_items
 
-@app.get("/planned_meals")
-def planned_meals(user_id: int, db: Session = Depends(get_db)):
+@app.get("/indv_planned_meals")
+def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
     user_meals = db.query(PlannedMeals).filter(PlannedMeals.user_id == user_id).all()
 
     if not user_meals:
         raise HTTPException(status_code=404, detail="No planned meals found for this user")
 
     return user_meals
+
+@app.get("/planned_meals")
+def planned_meals(user_id: int, db: Session = Depends(get_db)):
+    all_meals = db.query(PlannedMeals).filter(
+        or_(
+            PlannedMeals.user_id == user_id,
+            and_(
+                PlannedMeals.is_shared == True,
+                user_id == any_(PlannedMeals.shared_with)
+            )
+        )
+    ).all()
+
+    return all_meals
+
+@app.get("/meals_shared_with")
+def meals_shared_with(user_id: int, db: Session = Depends(get_db)):
+    shared_meals = db.query(PlannedMeals).filter(
+        and_(
+            PlannedMeals.is_shared == True,
+            user_id == any_(PlannedMeals.shared_with)
+        )
+    ).all()
+
+    return shared_meals
 
 class PlannedMealRequest(BaseModel):
     user_id: int
@@ -141,7 +172,6 @@ def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
         return {"message": "User not found in your roommates"}
 
         
-
 class ShareItemRequest(BaseModel):
     pantry_id: int
     roommate_id: int
