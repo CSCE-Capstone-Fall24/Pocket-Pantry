@@ -1,11 +1,12 @@
+PLAN MEAL
 curl -X POST "http://localhost:8000/add_planned_meal/" \
 -H "Content-Type: application/json" \
 -d '{
-  "user_id": 2,
-  "recipe_id": 1,
-  "n_servings": 2.5,
-  "is_shared": false,
-  "shared_with": []
+  "user_id": 4,
+  "recipe_id": 29,
+  "n_servings": 50,
+  "is_shared": true,
+  "shared_with": [2]
 }'
 
 
@@ -31,8 +32,8 @@ SHARED ITEM
 curl -X POST "http://localhost:8000/share_item/" \
 -H "Content-Type: application/json" \
 -d '{
-  "pantry_id": 32,
-  "roommate_id": 2
+  "pantry_id": 33,
+  "roommate_id": 4
 }'
 
 
@@ -58,5 +59,13 @@ curl -X POST "http://localhost:8000/unshare_meal/" \
 -H "Content-Type: application/json" \
 -d '{
   "meal_id": 2,
-  "roommate_id": 3
+  "roommate_id": 2
+}'
+
+
+view pantry multiple users
+curl -X POST "http://localhost:8000/unique_pantry_multiple_users/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_list": [2, 4]
 }'

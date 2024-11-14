@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import or_, and_, any_
+from sqlalchemy import or_, and_, any_, cast, Integer, func
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import array
+from sqlalchemy.dialects import postgresql
 
 from typing import List
 from pydantic import BaseModel
@@ -68,6 +69,27 @@ def get_pantry_items(user_id: int, db: Session = Depends(get_db)):
     ).all()
 
     return pantry_items
+
+class UserList(BaseModel):
+    user_list: List[int]
+
+@app.post("/unique_pantry_multiple_users/")
+def multi_user_pantry_items(data: UserList, db: Session = Depends(get_db)):
+    pantry_items = db.query(Pantry).filter(
+        or_(
+            Pantry.user_id.in_(data.user_list),
+            and_(
+                Pantry.is_shared == True,
+                Pantry.shared_with.op('&&')(data.user_list)
+            )
+        )
+    ).all()
+    
+    if not pantry_items:
+        raise HTTPException(status_code=404, detail="No pantry items found for given criteria.")
+    
+    return pantry_items
+
 
 @app.get("/indv_planned_meals")
 def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
