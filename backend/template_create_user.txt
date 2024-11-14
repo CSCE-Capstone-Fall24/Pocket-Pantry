@@ -25,3 +25,12 @@ curl -X POST "http://localhost:8000/remove_roommate/" \
   "user_id": 2,
   "roommate_id": 69
 }'
+
+
+SHARED ITEM
+curl -X POST "http://localhost:8000/share_item/" \
+-H "Content-Type: application/json" \
+-d '{
+  "pantry_id": 32,
+  "roommate_id": 2
+}'

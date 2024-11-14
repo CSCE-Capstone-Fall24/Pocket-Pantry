@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy import or_, and_, any_
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import array
 
 from typing import List
 from pydantic import BaseModel
@@ -38,7 +40,7 @@ def all_pantry(db: Session = Depends(get_db)):
     all_p = db.query(Pantry).all()
     return all_p
 
-@app.get("/pantry")
+@app.get("/indv_pantry")
 def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
     user_pantry = db.query(Pantry).filter(Pantry.user_id == user_id).all()
 
@@ -46,6 +48,20 @@ def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No pantry items found for this user")
 
     return user_pantry
+
+@app.get("/whole_pantry/")
+def get_pantry_items(user_id: int, db: Session = Depends(get_db)):
+    pantry_items = db.query(Pantry).filter(
+        or_(
+            Pantry.user_id == user_id,
+            and_(
+                Pantry.is_shared == True,
+                user_id == any_(Pantry.shared_with)
+            )
+        )
+    ).all()
+
+    return {"pantry_items": pantry_items}
 
 @app.get("/planned_meals")
 def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
@@ -126,3 +142,26 @@ def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
 
         
 
+class ShareItemRequest(BaseModel):
+    pantry_id: int
+    roommate_id: int
+
+@app.post("/share_item/")
+def mark_pantry_item_shared(data: ShareItemRequest, db: Session = Depends(get_db)):
+    item = db.query(Pantry).filter(Pantry.pantry_id == data.pantry_id).first()
+    
+    if not item:
+        raise HTTPException(status_code=404, detail="item not found")
+
+    if data.roommate_id in item.shared_with:
+        raise HTTPException(status_code=400, detail="item already shared with roommate")
+
+    updated_roommates = item.shared_with + [data.roommate_id]
+    item.shared_with = updated_roommates
+
+    item.is_shared = True
+
+    db.commit()
+    db.refresh(item)
+    return {"message": "Roommate added to item successfully", "user_id": data.pantry_id, "updated_roommates": item.shared_with}
+   
