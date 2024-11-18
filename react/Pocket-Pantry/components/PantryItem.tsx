@@ -23,19 +23,19 @@ const PantryItem = (props: PantryProps) => {
 
 const styles = StyleSheet.create({
     button: {
-        paddingVertical: 10
+        paddingVertical: 10,
     },
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between'
     },
     nameText: {
-        marginLeft: 20,
+        paddingLeft: 25,
         fontSize: 20,
         color: 'gray'
     },
     quantityText: {
-        marginRight: 20,
+        paddingRight: 25,
         fontSize: 20,
         color: 'gray'
     }

@@ -22,7 +22,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="pantry"
+        name="Pantry"
         options={{
           title: 'Pantry',
           tabBarIcon: ({ color, focused }) => (
@@ -31,7 +31,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="shopping"
+        name="ShoppingList"
         options={{
           title: 'Shopping',
           tabBarIcon: ({ color, focused }) => (
@@ -40,7 +40,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="Profile"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (

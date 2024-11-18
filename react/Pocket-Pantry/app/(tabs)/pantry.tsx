@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PantryItem from '@/components/PantryItem';
@@ -6,7 +6,7 @@ import PantryItem from '@/components/PantryItem';
 export default function Pantry () {
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView>
       
       <Text style={styles.header}>
         Pantry
@@ -34,12 +34,10 @@ export default function Pantry () {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    
-  },
   header: {
-    marginLeft: 20,
-    fontSize: 30,
+    marginLeft: 25,
+    marginVertical: 25,
+    fontSize: 32,
     fontWeight: 700,
   }
 });
