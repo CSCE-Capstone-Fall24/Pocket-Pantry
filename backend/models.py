@@ -1,11 +1,6 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, Text, Float, Date, ARRAY, Numeric
-
-
-class Test(Base):
-    __tablename__ = "test"
-    id = Column(Integer,primary_key=True,nullable=False)
-
+from sqlalchemy import ForeignKey, Column, Integer, String, TIMESTAMP, Boolean, Text, Float, Date, ARRAY, Numeric
+from sqlalchemy.orm import relationship
 
 class Recipes(Base):
     __tablename__ = "recipes_good"
@@ -34,7 +29,7 @@ class Users(Base):
     user_id = Column(Integer, primary_key=True, nullable=False)
     username = Column(Text)
     email = Column(Text)
-    roomates = Column(ARRAY(Integer))
+    roommates = Column(ARRAY(Integer))
     favorite_recipes = Column(ARRAY(Integer))
     cooked_recipes = Column(ARRAY(Integer))
     hashed_confirmation_code = Column(Text)
@@ -47,7 +42,27 @@ class PlannedMeals(Base):
 
     meal_id = Column(Integer, primary_key=True, nullable=False)
     user_id = Column(Integer)
-    recipe_id = Column(Integer)
+    recipe_id = Column(Integer, ForeignKey("recipes_good.recipe_id"))
     n_servings = Column(Numeric)
     is_shared = Column(Boolean)
     shared_with = Column(ARRAY(Integer))
+
+    recipe = relationship("Recipes", backref="planned_meals")
+
+class Pantry(Base):
+    __tablename__ = "pantry"
+
+    pantry_id = Column(Integer, primary_key=True, nullable=False)                    
+    user_id = Column(Integer)
+    food_name = Column(Text)                        
+    quantity = Column(Numeric)                     
+    unit = Column(Text)                   
+    added_date = Column(TIMESTAMP)  
+    expiration_date = Column(TIMESTAMP)
+    category = Column(Text)            
+    comment = Column(Text)                       
+    is_shared = Column(Boolean)                     
+    shared_with = Column(ARRAY(Integer))                   
+    location = Column(Text)            
+    price = Column(Numeric)                    
+
