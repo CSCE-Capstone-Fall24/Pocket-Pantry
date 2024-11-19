@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import or_, and_, any_, cast, Integer, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
 
@@ -104,7 +104,7 @@ def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/planned_meals")
 def planned_meals(user_id: int, db: Session = Depends(get_db)):
-    all_meals = db.query(PlannedMeals).filter(
+    all_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
         or_(
             PlannedMeals.user_id == user_id,
             and_(
