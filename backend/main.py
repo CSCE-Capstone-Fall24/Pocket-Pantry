@@ -95,7 +95,7 @@ def multi_user_pantry_items(data: UserList, db: Session = Depends(get_db)):
 
 @app.get("/indv_planned_meals")
 def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
-    user_meals = db.query(PlannedMeals).filter(PlannedMeals.user_id == user_id).all()
+    user_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(PlannedMeals.user_id == user_id).all()
 
     if not user_meals:
         raise HTTPException(status_code=404, detail="No planned meals found for this user")
@@ -118,7 +118,7 @@ def planned_meals(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/meals_shared_with")
 def meals_shared_with(user_id: int, db: Session = Depends(get_db)):
-    shared_meals = db.query(PlannedMeals).filter(
+    shared_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
         and_(
             PlannedMeals.is_shared == True,
             user_id == any_(PlannedMeals.shared_with)
