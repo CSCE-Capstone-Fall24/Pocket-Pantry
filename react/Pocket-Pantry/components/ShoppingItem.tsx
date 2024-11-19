@@ -7,7 +7,7 @@ type PantryProps = {
   quantity: number
 }
 
-const PantryItem = (props: PantryProps) => {
+const ShoppingItem = (props: PantryProps) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
@@ -86,4 +86,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default PantryItem
+export default ShoppingItem
