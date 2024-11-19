@@ -88,3 +88,11 @@ curl -X POST "http://localhost:8000/add_item/" \
   "location": "Refrigerator",
   "price": 3.50
 }'
+
+
+recipes_made_from_inventory
+curl -X POST "http://localhost:8000/recipes_made_from_inventory/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_list": [2]
+}'
