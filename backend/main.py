@@ -8,6 +8,7 @@ from datetime import datetime
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from fuzzywuzzy import fuzz, process
 
 from database import get_db
 from models import Recipes, Users, PlannedMeals, Pantry
@@ -303,7 +304,7 @@ class PantryItemCreate(BaseModel):
     location: Optional[str] = None
     price: Optional[float] = None
 
-@app.post("/add_item/")
+@app.get("/add_item/")
 async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db)):
     pantry_item = Pantry(
         food_name=item.food_name,
@@ -326,3 +327,41 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
 
     return pantry_item
     
+
+@app.post("/recipes_made_from_inventory/")
+async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
+    pantry_items = db.query(Pantry).filter(     #contains all items shared/or not without duplicates from users
+        or_(
+            Pantry.user_id.in_(data.user_list),
+            and_(
+                Pantry.is_shared == True,
+                Pantry.shared_with.op('&&')(data.user_list)
+            )
+        )
+    ).all()
+    
+    if not pantry_items:
+        raise HTTPException(status_code=404, detail="No pantry items found for given criteria.")
+    
+    all_r = db.query(Recipes).all()         #fetches all recipes from database
+
+    #********************************Not inclusive of quentity matching
+    #fuzzy matching of ingredients to pantry items
+    matched_recipes_ids = []                    #return value; stores the recipes (recipe.recipe_id) that can be cooked
+
+    # Extract pantry ingredient names (normalized to lowercase for case-insensitive comparison)
+    pantry_ingredients = [p_item.food_name.lower() for p_item in pantry_items]
+
+    for recipe in all_r:  # Iterate through each recipe in the database
+        r_ingredients = [r_item.lower() for r_item in recipe.ingredients]  # Normalize recipe ingredients to lowercase
+
+        # Check if all ingredients in the recipe have a match in pantry items
+        all_match = all(
+            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
+            for r_ingredient in r_ingredients
+        )
+
+        if all_match:  # If all ingredients are matched, add the recipe ID
+            matched_recipes_ids.append(recipe.recipe_id)
+
+    return matched_recipes_ids
