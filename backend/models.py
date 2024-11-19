@@ -1,5 +1,6 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, Text, Float, Date, ARRAY, Numeric
+from sqlalchemy import ForeignKey, Column, Integer, String, TIMESTAMP, Boolean, Text, Float, Date, ARRAY, Numeric
+from sqlalchemy.orm import relationship
 
 class Recipes(Base):
     __tablename__ = "recipes_good"
@@ -41,10 +42,12 @@ class PlannedMeals(Base):
 
     meal_id = Column(Integer, primary_key=True, nullable=False)
     user_id = Column(Integer)
-    recipe_id = Column(Integer)
+    recipe_id = Column(Integer, ForeignKey("recipes_good.recipe_id"))
     n_servings = Column(Numeric)
     is_shared = Column(Boolean)
     shared_with = Column(ARRAY(Integer))
+
+    recipe = relationship("Recipes", backref="planned_meals")
 
 class Pantry(Base):
     __tablename__ = "pantry"
