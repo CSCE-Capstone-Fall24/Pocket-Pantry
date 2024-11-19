@@ -59,9 +59,7 @@ export default function Pantry () {
         name="Ingredient8"
         quantity={10}
       />
-      
-      
-        
+       
     </SafeAreaView>
   );
 };
