@@ -33,21 +33,22 @@ export default function Pantry() {
   );
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Pantry</Text>
-
       <FlatList
         data={pantryItems}
         keyExtractor={(item) => item.pantry_id.toString()}
         renderItem={renderPantryItem}
         ItemSeparatorComponent={() => <View style={styles.line}></View>}
-        contentContainerStyle={styles.container}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1, // Ensures the FlatList takes the remaining screen space and is scrollable
+  },
   title: {
     marginLeft: 25,
     marginTop: 25,
@@ -57,9 +58,5 @@ const styles = StyleSheet.create({
   line: {
     borderBottomWidth: 1,
     borderColor: 'lightgray',
-  },
-  container: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
   },
 });
