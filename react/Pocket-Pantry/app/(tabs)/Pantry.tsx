@@ -1,20 +1,22 @@
 import React from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PantryItem from '@/components/PantryItem';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function Pantry () {
-
   return (
     <ScrollView>
-    <SafeAreaView>
-        <Text style={styles.title}>
-          Pantry
-        </Text>
-      
-        <Text style={styles.header}>
-          Category 1
-        </Text>
+      <SafeAreaView>
+        
+        <View style={styles.header}>
+          <Text style={styles.title}>Pantry</Text>
+          <TouchableOpacity style={styles.addButton}>
+            <Ionicons name="add-outline" size={40} color="white"/>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.category}>MEAT, POULTRY & SEAFOOD</Text>
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient1"
@@ -36,9 +38,7 @@ export default function Pantry () {
           quantity={10}
         />
 
-        <Text style={styles.header}>
-          Category 2
-        </Text>
+        <Text style={styles.category}>FRESH PRODUCE</Text>
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient5"
@@ -59,30 +59,43 @@ export default function Pantry () {
           name="Ingredient8"
           quantity={10}
         />
-       
-      
-    </SafeAreaView>
+         
+      </SafeAreaView>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
-    marginLeft: 25,
     marginTop: 25,
+    marginLeft: 25,
     fontSize: 32,
     fontWeight: 700,
   },
-  header: {
+  addButton: {
     marginTop: 25,
+    marginRight: 25,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ff8667',
+  },
+  category: {
+    marginTop: 30,
+    marginBottom: 10,
     marginLeft: 25,
-    marginBottom: 8,
-    fontSize: 16,
-    fontStyle: 'italic',
-    color: '#c0c0c0'
+    color: 'gray',
+    fontWeight: 600,
   },
   line: {
     borderBottomWidth: 1,
-    borderColor: 'lightgray'
+    borderColor: 'lightgray',
   }
 });
