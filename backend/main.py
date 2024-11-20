@@ -13,7 +13,17 @@ from fuzzywuzzy import fuzz, process
 from database import get_db
 from models import Recipes, Users, PlannedMeals, Pantry
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace '*' with specific origins like ['http://localhost:19000'] for stricter access
+    allow_credentials=True,
+    allow_methods=["*"],  # HTTP methods allowed (e.g., ['GET', 'POST', 'PUT'])
+    allow_headers=["*"],  # HTTP headers allowed (e.g., ['Content-Type', 'Authorization'])
+)
 
 
 @app.get("/")

@@ -1,86 +1,62 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PantryItem from '@/components/PantryItem';
 
-export default function Pantry () {
+export default function Pantry() {
+  const [pantryItems, setPantryItems] = useState([]);
+
+  useEffect(() => {
+    const fetchPantryItems = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/indv_pantry?user_id=2');
+        const data = await response.json();
+        setPantryItems(data);
+        console.log("FETCHING");
+      } catch (error) {
+        console.error('Error fetching pantry items:', error);
+      }
+    };
+
+    fetchPantryItems();
+  }, []);
+
+  const renderPantryItem = ({ item }) => (
+    <PantryItem
+      name={item.food_name}
+      quantity={item.quantity}
+      unit={item.unit}
+      expirationDate={item.expiration_date}
+      location={item.location}
+      category={item.category}
+    />
+  );
 
   return (
-    <SafeAreaView>
-      
-      <Text style={styles.title}>
-        Pantry
-      </Text>
-      
-      <Text style={styles.header}>
-        Category 1
-      </Text>
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient1"
-        quantity={10}
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Pantry</Text>
+      <FlatList
+        data={pantryItems}
+        keyExtractor={(item) => item.pantry_id.toString()}
+        renderItem={renderPantryItem}
+        ItemSeparatorComponent={() => <View style={styles.line}></View>}
       />
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient2"
-        quantity={10}
-      />
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient3"
-        quantity={10}
-      />
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient4"
-        quantity={10}
-      />
-
-      <Text style={styles.header}>
-        Category 2
-      </Text>
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient5"
-        quantity={10}
-      />
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient6"
-        quantity={10}
-      />
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient7"
-        quantity={10}
-      />
-      <View style={styles.line}></View>
-      <PantryItem
-        name="Ingredient8"
-        quantity={10}
-      />
-       
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1, // Ensures the FlatList takes the remaining screen space and is scrollable
+  },
   title: {
     marginLeft: 25,
     marginTop: 25,
     fontSize: 32,
-    fontWeight: 700,
-  },
-  header: {
-    marginTop: 25,
-    marginLeft: 25,
-    marginBottom: 8,
-    fontSize: 16,
-    fontStyle: 'italic',
-    color: '#c0c0c0'
+    fontWeight: '700',
   },
   line: {
     borderBottomWidth: 1,
-    borderColor: 'lightgray'
-  }
+    borderColor: 'lightgray',
+  },
 });
