@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import or_, and_, any_, cast, Integer, func
+from sqlalchemy import or_, and_, any_, cast, Integer, func, select, MetaData, Table
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import NoResultFound
 
 from datetime import datetime
 
@@ -375,3 +376,28 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             matched_recipes_ids.append(recipe.recipe_id)
 
     return matched_recipes_ids
+
+class UserLogin(BaseModel):
+    username: str = None
+    email: str = None
+    password: str
+
+@app.post("/login")
+def login(data: UserLogin, db: Session = Depends(get_db)):
+    if not data.username and not data.email:
+        raise HTTPException(status_code=400, detail="Username or email is required.")
+
+    query = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    )
+
+    user = query.first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if data.password != user.hashed_confirmation_code:
+    # if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    return {"user_id": user.user_id}
