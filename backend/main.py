@@ -345,7 +345,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
     
     all_r = db.query(Recipes).all()         #fetches all recipes from database
 
-    #********************************Not inclusive of quentity matching
+    #********************************Not inclusive of quantity matching
     #fuzzy matching of ingredients to pantry items
     matched_recipes_ids = []                    #return value; stores the recipes (recipe.recipe_id) that can be cooked
 
@@ -365,3 +365,45 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             matched_recipes_ids.append(recipe.recipe_id)
 
     return matched_recipes_ids
+
+
+@app.post("/recipes_ordered_by_match/")
+async def recipes_ordered_by_match(data: UserList, db: Session = Depends(get_db)):
+    pantry_items = db.query(Pantry).filter(  # Fetch all pantry items (shared or not) for the user(s)
+        or_(
+            Pantry.user_id.in_(data.user_list),
+            and_(
+                Pantry.is_shared == True,
+                Pantry.shared_with.op('&&')(data.user_list)
+            )
+        )
+    ).all()
+
+    if not pantry_items:
+        raise HTTPException(status_code=404, detail="No pantry items found for given criteria.")
+
+    all_r = db.query(Recipes).all()  # Fetch all recipes from the database
+
+    # Extract pantry ingredient names (normalized to lowercase for case-insensitive comparison)
+    pantry_ingredients = [p_item.food_name.lower() for p_item in pantry_items]
+
+    # List to store recipes and their match counts
+    recipe_matches = []
+
+    for recipe in all_r:  # Iterate through each recipe in the database
+        r_ingredients = [r_item.lower() for r_item in recipe.ingredients]  # Normalize recipe ingredients to lowercase
+
+        # Calculate the number of ingredients matched from the pantry
+        match_count = sum(
+            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
+            for r_ingredient in r_ingredients
+        )
+
+        # Append recipe ID and match count to the list
+        recipe_matches.append((recipe.recipe_id, match_count))
+
+    # Sort recipes by match count in descending order
+    recipe_matches.sort(key=lambda x: x[1], reverse=True)
+
+    # Return the sorted list of recipe IDs
+    return [recipe_id for recipe_id, _ in recipe_matches]

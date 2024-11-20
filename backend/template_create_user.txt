@@ -96,3 +96,10 @@ curl -X POST "http://localhost:8000/recipes_made_from_inventory/" \
 -d '{
   "user_list": [2]
 }'
+
+recipes_ordered_by_match
+curl -X POST "http://localhost:8000/recipes_ordered_by_match/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_list": [2]
+}'
