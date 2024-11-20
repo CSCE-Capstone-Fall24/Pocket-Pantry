@@ -15,8 +15,9 @@ export default function Profile () {
       <Text style={styles.header}>
         Profile
       </Text>
+      
       <FavoritedRecipes
-        FavoritedRecipes="FavoritedRecipes"
+        FavoritedRecipes="Favorited Recipes"
       />
       <AccountInfo
         name="User"

@@ -11,7 +11,7 @@ const FavoritedRecipes = (props: FavoritedRecipesProps) => {
 
 
         <View style={styles.container}>
-            <Text style={styles.quantityText}>{props.FavoritedRecipes}</Text>
+            <Text style={styles.nameText}>{props.FavoritedRecipes}</Text>
         </View>
 
 
