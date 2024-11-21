@@ -19,16 +19,22 @@ export default function Profile () {
       <FavoritedRecipes
         FavoritedRecipes="Favorited Recipes"
       />
+      <View style={styles.line}></View>
       <AccountInfo
         name="User"
-        password="ThisGuy"
+        username="ThisGuy"
+        userId={74781}
       />
+      <View style={styles.line}></View>
       <Notifications
-        notifications="notifications"
+        notifications="Notifications"
       />
+      <View style={styles.line}></View>
       <About
         about="About"
+        aboutText="Pocket Pantry is a product designed for college students to help them manage..."
       />
+      <View style={styles.line}></View>
       <Feedback
         feedback="Feedback"
       />
@@ -43,6 +49,10 @@ const styles = StyleSheet.create({
     marginVertical: 25,
     fontSize: 32,
     fontWeight: 700,
+  },
+  line: {
+    borderBottomWidth: 1,
+    borderColor: 'lightgray'
   }
 });
 
