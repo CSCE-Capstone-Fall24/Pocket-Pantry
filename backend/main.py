@@ -15,6 +15,45 @@ from models import Recipes, Users, PlannedMeals, Pantry
 
 app = FastAPI()
 
+GRAMS_CONVERSION = {
+    # Volume to grams (based on water density)
+    "cup": 240, "cups": 240, "c": 240,
+    "tablespoon": 15, "tablespoons": 15, "tbsp": 15, "tbs": 15, "Tbl": 15, "T": 15,
+    "teaspoon": 5, "teaspoons": 5, "tsp": 5,
+    "ml": 1, "milliliter": 1, "milliliters": 1, "cc": 1,
+    "l": 1000, "liter": 1000, "liters": 1000, "litre": 1000, "litres": 1000,
+    "fl oz": 30, "fluid ounce": 30, "fluid ounces": 30,
+    "pint": 473, "pints": 473, "pt": 473,
+    "quart": 946, "quarts": 946, "qt": 946,
+    "gallon": 3785, "gallons": 3785, "gal": 3785,
+    "drop": 0.05, "drops": 0.05, "gtt": 0.05,
+    "dash": 0.6, "dashes": 0.6,
+    "pinch": 0.3, "pinches": 0.3,
+    "handful": 30, "handfuls": 30,  # Approximate for light items like herbs
+
+    # Weight to grams
+    "gram": 1, "grams": 1, "g": 1, "gm": 1,
+    "kilogram": 1000, "kilograms": 1000, "kg": 1000,
+    "milligram": 0.001, "milligrams": 0.001, "mg": 0.001,
+    "ounce": 28, "ounces": 28, "oz": 28,
+    "pound": 454, "pounds": 454, "lb": 454, "lbs": 454,
+    "stone": 6350, "stones": 6350, "st": 6350,
+
+    # Miscellaneous (approximate based on common usage)
+    "clove": 5, "cloves": 5,  # Average weight of a garlic clove
+    "slice": 30, "slices": 30,  # Average for bread or cheese slices
+    "stick": 113, "sticks": 113,  # Standard butter stick
+    "can": 400, "cans": 400,  # Average canned food
+    "bottle": 500, "bottles": 500,  # Standard bottle
+    "pack": 500, "packs": 500, "pkt": 500, "packet": 500, "packets": 500,
+    "bunch": 150, "bunches": 150,  # For herbs or leafy greens
+    "piece": 100, "pieces": 100, "pc": 100,  # Approximate for fruits or small items
+    "leaf": 1, "leaves": 1,  # Small herb leaves
+    "sprig": 1, "sprigs": 1  # Small herb sprigs
+}
+
+
+
 
 @app.get("/")
 async def root():
@@ -497,3 +536,32 @@ async def add_favorite_recipe(data: AddFavoriteRequest, db: Session = Depends(ge
     db.refresh(user)
 
     return {"message": "Recipe added to favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
+
+class removeFavoriteRequest(BaseModel):
+    user_id: int
+    recipe_id: int
+
+@app.post("/remove_favorite_recipe/")
+async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the recipe is not in the favorites list
+    if user.favorite_recipes is None or data.recipe_id not in user.favorite_recipes:
+        raise HTTPException(status_code=400, detail="Recipe not in favorites")
+    
+    if data.recipe_id in user.favorite_recipes:
+        copy_favorites = []
+        copy_favorites = user.favorite_recipes
+        copy_favorites.remove(data.recipe_id)
+        user.favorite_recipes = copy_favorites
+
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
+
+
+#adjust item quantities after cooking meals
