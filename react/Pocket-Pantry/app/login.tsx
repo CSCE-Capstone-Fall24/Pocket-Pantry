@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'reac
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@env';
 
-export default function LoginScreen({ setIsAuthenticated, setUserId }) {
+export default function LoginScreen({ setIsAuthenticated, setUserData }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -38,7 +38,9 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
 
       if (response.ok) {
         setIsAuthenticated(true);
-        setUserId(data.user_id);
+        setUserData(data.user_data);
+        console.log(data);
+        alert(data.user_data);
         Alert.alert('Success', 'Logged in successfully!');
         
       } else {
@@ -81,7 +83,7 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
         Alert.alert('Success', 'Signed up successfully! Logging you in...');
         alert("good?");
         setIsAuthenticated(true);
-        setUserId(data.user_id);
+        setUserData(data.user_data);
         setSignupEmail('');
         setSignupPassword('');
         setSignupUsername('');

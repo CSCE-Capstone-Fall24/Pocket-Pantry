@@ -19,7 +19,7 @@ function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const { userId, setUserId } = useUserContext();
+  const { userData, setUserData } = useUserContext();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   console.log("thing is " + API_URL);
@@ -38,9 +38,11 @@ function RootLayout() {
   if (isAuthenticated) {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Text style={{ backgroundColor: 'yellow' }}>user_id {userId}</Text>
+        <Text style={{ backgroundColor: 'yellow' }}>user_id {userData.user_id}</Text>
         <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <UserProvider>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </UserProvider>
           <Stack.Screen name="+not-found" />
         </Stack>
       </ThemeProvider>
@@ -50,7 +52,7 @@ function RootLayout() {
   return (
     <Login 
       setIsAuthenticated={setIsAuthenticated}
-      setUserId={setUserId}
+      setUserData={setUserData}
     />
   );
 }

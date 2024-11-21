@@ -1,8 +1,12 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { API_URL } from '@env';
+import { useUserContext } from '@/components/contexts/UserContext';
 
 export default function TabLayout() {
+  const [userData, setUserData] = useState(null);
+
   return (
     <Tabs
       screenOptions={{
@@ -46,6 +50,18 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* <Tabs.Screen
+        name="Profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'person' : 'person-outline'} color={color} />
+          ),
+        }}
+        // Use `component` to directly pass props
+        component={(props) => <Profile {...props} user={userData} />}
+      /> */}
     </Tabs>
   );
 }

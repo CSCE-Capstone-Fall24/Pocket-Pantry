@@ -400,7 +400,17 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     # if not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect password.")
 
-    return {"user_id": user.user_id}
+    user_data = {
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "account_created_at": user.account_created_at,
+        "roommates": user.roommates,
+        "favorite_recipes": user.favorite_recipes,
+        "cooked_recipes": user.cooked_recipes,
+    }
+
+    return {"user_data": user_data}
 
 class UserCreate(BaseModel):
     username: str
