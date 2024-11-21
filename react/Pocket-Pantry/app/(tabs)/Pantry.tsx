@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PantryItem from '@/components/PantryItem';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -8,7 +8,7 @@ export default function Pantry () {
   return (
     <ScrollView>
       <SafeAreaView>
-        
+
         <View style={styles.header}>
           <Text style={styles.title}>Pantry</Text>
           <TouchableOpacity style={styles.addButton}>
@@ -20,22 +20,26 @@ export default function Pantry () {
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient1"
-          quantity={10}
+          quantity={14}
+          unit="lbs"
         />
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient2"
           quantity={10}
+          unit="lbs"
         />
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient3"
           quantity={10}
+          unit="lbs"
         />
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient4"
           quantity={10}
+          unit="lbs"
         />
 
         <Text style={styles.category}>FRESH PRODUCE</Text>
@@ -43,21 +47,25 @@ export default function Pantry () {
         <PantryItem
           name="Ingredient5"
           quantity={10}
+          unit="lbs"
         />
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient6"
           quantity={10}
+          unit="lbs"
         />
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient7"
           quantity={10}
+          unit="lbs"
         />
         <View style={styles.line}></View>
         <PantryItem
           name="Ingredient8"
           quantity={10}
+          unit="lbs"
         />
          
       </SafeAreaView>
@@ -69,7 +77,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   title: {
     marginTop: 25,
@@ -97,5 +104,5 @@ const styles = StyleSheet.create({
   line: {
     borderBottomWidth: 1,
     borderColor: 'lightgray',
-  }
+  },
 });

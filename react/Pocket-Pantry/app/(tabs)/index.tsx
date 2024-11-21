@@ -1,24 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MealPlan () {
-
   return (
-    <SafeAreaView>
-      
-      <Text style={styles.header}>
-        Meal Plan
-      </Text>
-      
+    <ScrollView>
+      <SafeAreaView> 
 
-        
-    </SafeAreaView>
+        <Text style={styles.title}>
+          Meal Plan
+        </Text>
+          
+      </SafeAreaView>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  title: {
     marginLeft: 25,
     marginVertical: 25,
     fontSize: 32,
