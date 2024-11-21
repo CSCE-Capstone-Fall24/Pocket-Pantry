@@ -8,7 +8,7 @@ from sqlalchemy.exc import NoResultFound
 from datetime import datetime
 
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from fuzzywuzzy import fuzz, process
 
 from database import get_db
@@ -401,3 +401,36 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Incorrect password.")
 
     return {"user_id": user.user_id}
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+@app.post("/signup")
+def signup(data: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    ).first()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username or email already exists.")
+    
+    # hashed_password = hash_password(data.password)
+    hashed_password = data.password
+    
+    new_user = Users(
+        username=data.username,
+        email=data.email,
+        hashed_confirmation_code=hashed_password,
+        account_created_at=datetime.now(),
+        roommates=[],
+        favorite_recipes=[],
+        cooked_recipes=[]
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User created successfully", "user_id": new_user.user_id}

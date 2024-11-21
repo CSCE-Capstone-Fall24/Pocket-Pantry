@@ -5,8 +5,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function LoginScreen({ setIsAuthenticated, setUserId }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  const [signupUsername, setSignupUsername] = useState('');
+
   const [loadingLogin, setLoadingLogin] = useState(false);
   const [loadingSignup, setLoadingSignup] = useState(false);
 
@@ -50,23 +53,44 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
   };
 
   const handleSignup = async () => {
-    if (!signupEmail || !signupPassword) {
+    if (!signupEmail || !signupPassword || !signupUsername) {
       Alert.alert('Error', 'Please fill in all fields.');
-      alert("fille in both fields");
+      alert('Error Please fill in all fields.');
       return;
     }
-
+  
     setLoadingSignup(true);
-
+  
     try {
-      setTimeout(async () => {
-        Alert.alert('Success', 'Signed up successfully! You can now log in.');
+      const response = await fetch('http://127.0.0.1:8000/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: signupUsername,
+          email: signupEmail,
+          password: signupPassword,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        Alert.alert('Success', 'Signed up successfully! Logging you in...');
+        alert("good?");
+        setIsAuthenticated(true);
+        setUserId(data.user_id);
         setSignupEmail('');
         setSignupPassword('');
-      }, 1500);
+        setSignupUsername('');
+      } else {
+        Alert.alert('Error', data.detail || 'Something went wrong. Please try again.');
+        alert('Error' + data.detail || 'Something went wrong. Please try again.');
+      }
     } catch (error) {
-      setLoadingSignup(false);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      Alert.alert('Error', 'Network error. Please try again.');
+      alert("network errror");
     } finally {
       setLoadingSignup(false);
     }
@@ -109,6 +133,14 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
         autoCapitalize="none"
         value={signupEmail}
         onChangeText={setSignupEmail}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        autoCapitalize="none"
+        value={signupUsername}
+        onChangeText={setSignupUsername}
       />
       <TextInput
         style={styles.input}
