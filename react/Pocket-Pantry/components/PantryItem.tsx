@@ -8,7 +8,7 @@ type PantryProps = {
   name: string
   quantity: number
   unit: string
-}
+};
 
 const PantryItem = (props: PantryProps) => {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -16,11 +16,19 @@ const PantryItem = (props: PantryProps) => {
   const closeModal = () => setModalVisible(false);
 
   const [quantity, setQuantity] = useState(props.quantity.toString());
+  const [tempQuantity, setTempQuantity] = useState(quantity);
+  const handleQuantitySave = (value: string) => {
+    if (value != '') {
+      setQuantity(tempQuantity);
+    } else {
+      setTempQuantity(quantity);
+    }
+  };
 
   const [isScrollerVisible, setScrollerVisible] = useState(false);
   const openScroller = () => setScrollerVisible(true);
   const closeScroller = () => setScrollerVisible(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [expirationDate, setExpirationDate] = useState(new Date());
 
   const [isShared1, setShared1] = useState(false);
   const handleShared1 = () => { setShared1((prevState) => !prevState); };
@@ -28,6 +36,8 @@ const PantryItem = (props: PantryProps) => {
   const handleShared2 = () => { setShared2((prevState) => !prevState); };
   const [isShared3, setShared3] = useState(false);
   const handleShared3 = () => { setShared3((prevState) => !prevState); };
+  const [isShared4, setShared4] = useState(false);
+  const handleShared4 = () => { setShared4((prevState) => !prevState); };
   
   return (
     <View style={styles.container}>
@@ -36,11 +46,12 @@ const PantryItem = (props: PantryProps) => {
       <View style={styles.infoContainer}>
         <View style={styles.sharedIcons}>
           <Text style={styles.itemName}>{props.name}</Text>
-          <Text> {isShared1 ? (<Ionicons name="ellipse" size={16} color="red"/>) : (null)} </Text>
-          <Text> {isShared2 ? (<Ionicons name="ellipse" size={16} color="green"/>) : (null)} </Text>
-          <Text> {isShared3 ? (<Ionicons name="ellipse" size={16} color="blue"/>) : (null)} </Text>
+          {isShared1 ? (<Text>  <Ionicons name="ellipse" size={13} color="#e167a4"/></Text>) : (null)}
+          {isShared2 ? (<Text>  <Ionicons name="ellipse" size={13} color="#f4737e"/></Text>) : (null)}
+          {isShared3 ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
+          {isShared4 ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
         </View>
-        <Text style={styles.itemDetails}>{props.quantity} {props.unit}   Exp. 11/30/24</Text>
+        <Text style={styles.itemDetails}>{quantity} {props.unit}   Exp. {expirationDate.toLocaleDateString()}</Text>
       </View>
 
       <TouchableOpacity style={styles.editButton} onPress={openModal}>
@@ -66,8 +77,8 @@ const PantryItem = (props: PantryProps) => {
               <Text style={styles.modalContainerText}>Edit quantity:  </Text>
               <TextInput
                 style={styles.quantityInput}
-                value={quantity}
-                onChangeText={(value) => setQuantity(value)}
+                value={tempQuantity}
+                onChangeText={(value) => setTempQuantity(value)}
               />
               <Text style={styles.modalContainerText}>  {props.unit}</Text>
             </View>
@@ -79,7 +90,7 @@ const PantryItem = (props: PantryProps) => {
                 style={styles.expirationInput}
                 onPress={openScroller}
               >
-                <Text style={styles.modalContainerText}>{selectedDate.toLocaleDateString()}</Text>
+                <Text style={styles.modalContainerText}>{expirationDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
 
@@ -90,9 +101,9 @@ const PantryItem = (props: PantryProps) => {
                 <Text style={styles.modalContainerText}>Shared with user1:  </Text>
                 <Pressable onPress={handleShared1}>
                   {isShared1 ? (
-                    <Ionicons name="checkmark-circle" size={32} color="red" />
+                    <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
                   ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="red" />
+                    <Ionicons name="ellipse-outline" size={32} color="#e167a4"/>
                   )}
                 </Pressable>
               </View>
@@ -101,9 +112,9 @@ const PantryItem = (props: PantryProps) => {
                 <Text style={styles.modalContainerText}>Shared with user2:  </Text>
                 <Pressable onPress={handleShared2}>
                   {isShared2 ? (
-                    <Ionicons name="checkmark-circle" size={32} color="green" />
+                    <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
                   ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="green" />
+                    <Ionicons name="ellipse-outline" size={32} color="#f4737e"/>
                   )}
                 </Pressable>
               </View>
@@ -112,16 +123,31 @@ const PantryItem = (props: PantryProps) => {
                 <Text style={styles.modalContainerText}>Shared with user3:  </Text>
                 <Pressable onPress={handleShared3}>
                   {isShared3 ? (
-                    <Ionicons name="checkmark-circle" size={32} color="blue" />
+                    <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
                   ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="blue" />
+                    <Ionicons name="ellipse-outline" size={32} color="#ff8667"/>
                   )}
                 </Pressable>
               </View>
+
+              <View style={styles.sharedContainer}>
+                <Text style={styles.modalContainerText}>Shared with user4:  </Text>
+                <Pressable onPress={handleShared4}>
+                  {isShared4 ? (
+                    <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="#ffb778"/>
+                  )}
+                </Pressable>
+              </View>
+
             </View>     
           
-            <TouchableOpacity style={styles.saveButton} onPress={closeModal}>
-              <Text style={styles.saveButtonText}>Save</Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => {closeModal(); handleQuantitySave(tempQuantity); }}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
 
             {/* Expiration date scroller */}
@@ -140,11 +166,11 @@ const PantryItem = (props: PantryProps) => {
                 <View style={styles.dateScroller}>
                   {isScrollerVisible && (
                     <DateTimePicker
-                      value={selectedDate}
+                      value={expirationDate}
                       mode="date"
                       display="spinner"
                       onChange={(event, date) => {
-                        if (date) setSelectedDate(date);
+                        if (date) setExpirationDate(date);
                       }}
                     />
                   )}
@@ -156,7 +182,7 @@ const PantryItem = (props: PantryProps) => {
       </Modal>
     </View>
   )
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -222,6 +248,7 @@ const styles = StyleSheet.create({
   },
   sharedSpacer: {
     marginBottom: 15,
+    alignItems: 'center',
   },
   sharedContainer: {
     flexDirection: 'row',
@@ -243,19 +270,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'gray',
   },
   doneButtonText: {
-    paddingTop: 15,
-    paddingHorizontal: 25,
-    color: '#50acff',
+    marginTop: 15,
+    marginHorizontal: 25,
+    color: '#2fb1ff',
     fontSize: 20,
     fontWeight: 600,
   },
-  saveButton: {
+  closeButton: {
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 20,
     backgroundColor: '#ff8667',
   },
-  saveButtonText: {
+  closeButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
