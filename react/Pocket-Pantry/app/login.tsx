@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '@env';
 
 export default function LoginScreen({ setIsAuthenticated, setUserId }) {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
     setLoadingLogin(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/login', {
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,7 +63,7 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
     setLoadingSignup(true);
   
     try {
-      const response = await fetch('http://127.0.0.1:8000/signup', {
+      const response = await fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
