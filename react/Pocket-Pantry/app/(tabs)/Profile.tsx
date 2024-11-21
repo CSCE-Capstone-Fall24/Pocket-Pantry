@@ -2,13 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function MealPlan () {
+export default function Profile () {
   return (
     <ScrollView>
       <SafeAreaView> 
-
+        
         <Text style={styles.title}>
-          Meal Plan
+          Profile
         </Text>
           
       </SafeAreaView>
