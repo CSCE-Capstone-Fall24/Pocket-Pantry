@@ -9,6 +9,7 @@ import Login from './login';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { UserProvider, useUserContext } from '@/components/contexts/UserContext';
+import { API_URL } from '@env';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +21,9 @@ function RootLayout() {
 
   const { userId, setUserId } = useUserContext();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  console.log("thing is " + API_URL);
+
 
   useEffect(() => {
     if (loaded) {
