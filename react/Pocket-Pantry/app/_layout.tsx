@@ -9,7 +9,7 @@ import Login from './login';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { UserProvider, useUserContext } from '@/components/contexts/UserContext';
-import { API_URL } from '@env';
+const API_URL = 123;
 
 SplashScreen.preventAutoHideAsync();
 
