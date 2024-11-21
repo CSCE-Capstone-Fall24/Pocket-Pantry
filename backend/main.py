@@ -407,3 +407,93 @@ async def recipes_ordered_by_match(data: UserList, db: Session = Depends(get_db)
 
     # Return the sorted list of recipe IDs
     return [recipe_id for recipe_id, _ in recipe_matches]
+
+#Add endpoint
+
+class UpdatePantryItemRequest(BaseModel):
+    id: int  # Unique ID of the pantry item to update
+    food_name: Optional[str] = None  
+    unit: Optional[str] = None  
+    user_id: int  
+    added_date: Optional[datetime] = None  
+    expiration_date: Optional[datetime] = None 
+    category: Optional[str] = None  
+    comment: Optional[str] = None  
+    is_shared: Optional[bool] = None  
+    shared_with: Optional[List[int]] = Field(default_factory=list)  
+    location: Optional[str] = None  
+    price: Optional[float] = None  
+
+@app.put("/update_pantry_item/")
+async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Depends(get_db)):
+    # Fetch the pantry item to update
+    pantry_item = db.query(Pantry).filter(Pantry.id == request.id, Pantry.user_id == request.user_id).first()
+
+    if not pantry_item:
+        raise HTTPException(status_code=404, detail="Pantry item not found or you do not have permission to update it.")
+
+    # Update pantry item fields if provided in the request
+    pantry_item.food_name = request.food_name if request.food_name else pantry_item.food_name
+    pantry_item.quantity = request.quantity if request.quantity is not None else pantry_item.quantity
+    pantry_item.unit = request.unit if request.unit else pantry_item.unit
+    pantry_item.added_date = request.added_date if request.added_date else pantry_item.added_date
+    pantry_item.expiration_date = request.expiration_date if request.expiration_date else pantry_item.expiration_date
+    pantry_item.category = request.category if request.category else pantry_item.category
+    pantry_item.comment = request.comment if request.comment else pantry_item.comment
+    pantry_item.is_shared = request.is_shared if request.is_shared is not None else pantry_item.is_shared
+    pantry_item.shared_with = request.shared_with if request.shared_with else pantry_item.shared_with
+    pantry_item.location = request.location if request.location else pantry_item.location
+    pantry_item.price = request.price if request.price is not None else pantry_item.price
+
+    db.commit()
+
+    return {"message": "Pantry item updated successfully", "item_id": pantry_item.id}
+
+
+class RemovePantryItemRequest(BaseModel):
+    id: int  # ID of the pantry item to remove
+    user_id: int  # ID of the user requesting the removal
+
+@app.put("/remove_pantry_item/")
+async def remove_pantry_item(request: RemovePantryItemRequest, db: Session = Depends(get_db)):
+    # Fetch the pantry item to remove
+    pantry_item = db.query(Pantry).filter(Pantry.id == request.id, Pantry.user_id == request.user_id).first()
+
+    if not pantry_item:
+        raise HTTPException(status_code=404, detail="Pantry item not found or you do not have permission to remove it.")
+
+    # Remove the pantry item
+    db.delete(pantry_item)
+    db.commit()
+
+    return {"message": "Pantry item removed successfully", "item_id": request.id}
+
+
+
+class AddFavoriteRequest(BaseModel):
+    user_id: int  # ID of the user
+    recipe_id: int  # ID of the recipe to add to favorites
+
+@app.post("/add_favorite_recipe/")
+async def add_favorite_recipe(data: AddFavoriteRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the recipe is already in the favorites list
+    if user.favorite_recipes is None:
+        user.favorite_recipes = []
+
+    if data.recipe_id in user.favorite_recipes:
+        raise HTTPException(status_code=400, detail="Recipe already in favorites")
+
+    # Add the recipe to the user's favorites
+    updated_favorites = user.favorite_recipes + [data.recipe_id]
+    user.favorite_recipes = updated_favorites
+
+    # Commit the changes to the database
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Recipe added to favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
