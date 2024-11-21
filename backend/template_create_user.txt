@@ -1,0 +1,98 @@
+PLAN MEAL
+curl -X POST "http://localhost:8000/add_planned_meal/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_id": 4,
+  "recipe_id": 29,
+  "n_servings": 50,
+  "is_shared": true,
+  "shared_with": [2]
+}'
+
+
+ADD ROOMMATE
+curl -X POST "http://localhost:8000/add_roommate/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_id": 2,
+  "roommate_id": 69
+}'
+
+
+REMOVE ROOMMATE
+curl -X POST "http://localhost:8000/remove_roommate/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_id": 2,
+  "roommate_id": 69
+}'
+
+
+SHARE ITEM
+curl -X POST "http://localhost:8000/share_item/" \
+-H "Content-Type: application/json" \
+-d '{
+  "pantry_id": 33,
+  "roommate_id": 34
+}'
+
+
+unshare ITEM
+curl -X POST "http://localhost:8000/unshare_item/" \
+-H "Content-Type: application/json" \
+-d '{
+  "pantry_id": 32,
+  "roommate_id": 2
+}'
+
+
+SHARE MEAL
+curl -X POST "http://localhost:8000/share_meal/" \
+-H "Content-Type: application/json" \
+-d '{
+  "meal_id": 2,
+  "roommate_id": 3
+}'
+
+UNSHARE MEAL
+curl -X POST "http://localhost:8000/unshare_meal/" \
+-H "Content-Type: application/json" \
+-d '{
+  "meal_id": 2,
+  "roommate_id": 2
+}'
+
+
+view pantry multiple users
+curl -X POST "http://localhost:8000/unique_pantry_multiple_users/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_list": [34, 4]
+}'
+
+
+ADD PANTRY ITEM
+curl -X POST "http://localhost:8000/add_item/" \
+-H "Content-Type: application/json" \
+-d '{
+  "food_name": "Apple_TEST",
+  "quantity": 5,
+  "unit": "pcs",
+  "user_id": 34,
+  "added_date": "2024-11-14T12:00:00",
+  "expiration_date": "2024-12-01T12:00:00",
+  "category": "Fruit",
+  "comment": "Fresh apples from the market",
+  "is_shared": true,
+  "shared_with": [234, 345],
+  "location": "Refrigerator",
+  "price": 3.50
+}'
+
+
+recipes_made_from_inventory
+curl -X POST "http://localhost:8000/recipes_made_from_inventory/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_list": [2]
+}'

@@ -1,0 +1,31 @@
+PLAN MEAL
+
+curl -X POST "http://localhost:8000/add_planned_meal/" \
+-H "Content-Type: application/json" \
+-d '{
+  "user_id": 2,
+  "recipe_id": 1,
+  "n_servings": 2.5,
+  "is_shared": false,
+  "shared_with": []
+}'
+
+
+
+CREATE USER IN DB, working on endpoint
+
+INSERT INTO users (
+    user_id, username, email, roomates, favorite_recipes, cooked_recipes,
+    hashed_confirmation_code, code_expires_at, account_created_at, topt_secret
+) VALUES (
+    DEFAULT,  -- user_id will auto-increment with nextval()
+    'test_user_again_different',  -- Sample username
+    'test_user123456@example.com',  -- Sample email
+    '{}',  -- Roommates represented by an array of user IDs
+    '{5}',  -- Favorite recipes represented by an array of recipe IDs
+    '{10}',  -- Cooked recipes represented by an array of recipe IDs
+    'hashedcode123456',  -- Example hashed confirmation code
+    '2024-12-01 12:00:00',  -- Code expiration timestamp
+    NOW(),  -- Account creation timestamp using the current time
+    'this_is_top_secret'  -- Placeholder text for sensitive information
+);
