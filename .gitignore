@@ -1,5 +1,6 @@
 datasets/
 .gitattributes
 backend/.env
+react/Pocket-Pantry/.env
 scraper/*.txt
 scraper/*.html
