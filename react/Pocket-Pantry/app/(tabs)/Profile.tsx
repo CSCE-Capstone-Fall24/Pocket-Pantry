@@ -1,14 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUserContext } from '@/components/contexts/UserContext';
 
 export default function Profile () {
+
+  const { userData, setUserData } = useUserContext();
+
   return (
     <ScrollView>
       <SafeAreaView> 
         
         <Text style={styles.title}>
-          Profile
+          {userData.user_id} {userData.email}
         </Text>
           
       </SafeAreaView>

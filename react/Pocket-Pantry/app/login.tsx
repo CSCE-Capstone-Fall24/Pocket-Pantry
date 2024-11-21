@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
-export default function LoginScreen({ setIsAuthenticated, setUserId }) {
+export default function LoginScreen({ setIsAuthenticated, setUserData }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -22,7 +23,7 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
     setLoadingLogin(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/login', {
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,9 +38,9 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
 
       if (response.ok) {
         setIsAuthenticated(true);
-        setUserId(data.user_id);
+        setUserData(data.user_data);
         Alert.alert('Success', 'Logged in successfully!');
-        
+        console.log(data);
       } else {
         Alert.alert('Error', data.detail || 'Something went wrong. Please try again.');
         alert(data.detail)
@@ -80,7 +81,7 @@ export default function LoginScreen({ setIsAuthenticated, setUserId }) {
         Alert.alert('Success', 'Signed up successfully! Logging you in...');
         alert("good?");
         setIsAuthenticated(true);
-        setUserId(data.user_id);
+        setUserData(data.user_data);
         setSignupEmail('');
         setSignupPassword('');
         setSignupUsername('');
