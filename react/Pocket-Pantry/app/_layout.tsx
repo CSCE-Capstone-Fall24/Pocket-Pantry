@@ -9,7 +9,7 @@ import Login from './login';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { UserProvider, useUserContext } from '@/components/contexts/UserContext';
-const API_URL = 123;
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 SplashScreen.preventAutoHideAsync();
 
