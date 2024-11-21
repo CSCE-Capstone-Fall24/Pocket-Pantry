@@ -51,7 +51,6 @@ function RootLayout() {
   );
 }
 
-// Wrap RootLayout with UserProvider here
 export default function Layout() {
   return (
     <UserProvider>
