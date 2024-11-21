@@ -106,7 +106,7 @@ const PantryItem = (props: PantryProps) => {
         </View>
       </Modal>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -200,5 +200,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-export default PantryItem
