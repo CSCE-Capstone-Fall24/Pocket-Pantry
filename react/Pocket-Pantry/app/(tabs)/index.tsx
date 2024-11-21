@@ -8,7 +8,7 @@ export default function MealPlan () {
       <SafeAreaView> 
 
         <Text style={styles.title}>
-          Meal Plan
+          Meal Plan (this is Nick's branch)
         </Text>
           
       </SafeAreaView>
