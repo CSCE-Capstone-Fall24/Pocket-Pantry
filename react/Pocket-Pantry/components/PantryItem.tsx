@@ -21,13 +21,25 @@ const PantryItem = (props: PantryProps) => {
   const openScroller = () => setScrollerVisible(true);
   const closeScroller = () => setScrollerVisible(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const [isShared1, setShared1] = useState(false);
+  const handleShared1 = () => { setShared1((prevState) => !prevState); };
+  const [isShared2, setShared2] = useState(false);
+  const handleShared2 = () => { setShared2((prevState) => !prevState); };
+  const [isShared3, setShared3] = useState(false);
+  const handleShared3 = () => { setShared3((prevState) => !prevState); };
   
   return (
     <View style={styles.container}>
 
       {/* Displayed item information */}
       <View style={styles.infoContainer}>
-        <Text style={styles.itemName}>{props.name}</Text>
+        <View style={styles.sharedIcons}>
+          <Text style={styles.itemName}>{props.name}</Text>
+          <Text> {isShared1 ? (<Ionicons name="ellipse" size={16} color="red"/>) : (null)} </Text>
+          <Text> {isShared2 ? (<Ionicons name="ellipse" size={16} color="green"/>) : (null)} </Text>
+          <Text> {isShared3 ? (<Ionicons name="ellipse" size={16} color="blue"/>) : (null)} </Text>
+        </View>
         <Text style={styles.itemDetails}>{props.quantity} {props.unit}   Exp. 11/30/24</Text>
       </View>
 
@@ -65,11 +77,48 @@ const PantryItem = (props: PantryProps) => {
               <Text style={styles.modalContainerText}>Edit expiration date:  </Text>
               <TouchableOpacity
                 style={styles.expirationInput}
-                onPress={() => { setScrollerVisible(true); openScroller(); }}
+                onPress={openScroller}
               >
                 <Text style={styles.modalContainerText}>{selectedDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Set item as shared */}
+            <View style={styles.sharedSpacer}>
+
+              <View style={styles.sharedContainer}>
+                <Text style={styles.modalContainerText}>Shared with user1:  </Text>
+                <Pressable onPress={handleShared1}>
+                  {isShared1 ? (
+                    <Ionicons name="checkmark-circle" size={32} color="red" />
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="red" />
+                  )}
+                </Pressable>
+              </View>
+
+              <View style={styles.sharedContainer}>
+                <Text style={styles.modalContainerText}>Shared with user2:  </Text>
+                <Pressable onPress={handleShared2}>
+                  {isShared2 ? (
+                    <Ionicons name="checkmark-circle" size={32} color="green" />
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="green" />
+                  )}
+                </Pressable>
+              </View>
+
+              <View style={styles.sharedContainer}>
+                <Text style={styles.modalContainerText}>Shared with user3:  </Text>
+                <Pressable onPress={handleShared3}>
+                  {isShared3 ? (
+                    <Ionicons name="checkmark-circle" size={32} color="blue" />
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="blue" />
+                  )}
+                </Pressable>
+              </View>
+            </View>     
           
             <TouchableOpacity style={styles.saveButton} onPress={closeModal}>
               <Text style={styles.saveButtonText}>Save</Text>
@@ -84,7 +133,7 @@ const PantryItem = (props: PantryProps) => {
             >
               <View style={styles.dateScrollerAlignment}>
                 <View style={styles.doneButtonContainer}>
-                  <TouchableOpacity onPress={() => { setScrollerVisible(false); closeScroller(); }}>
+                  <TouchableOpacity onPress={closeScroller}>
                     <Text style={styles.doneButtonText}>Done</Text>
                   </TouchableOpacity>
                 </View>
@@ -118,6 +167,10 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     marginLeft: 25,
   },
+  sharedIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   itemName: {
     marginBottom: 5,
     fontSize: 20,
@@ -144,9 +197,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   quantityContainer: {
+    marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 25,
   },
   quantityInput: {
     width: 70,
@@ -157,15 +210,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   expirationContainer: {
+    marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 25,
   },
   expirationInput: {
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
     padding: 10,
+  },
+  sharedSpacer: {
+    marginBottom: 15,
+  },
+  sharedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   dateScrollerAlignment: {
     flex: 1,
@@ -184,7 +245,7 @@ const styles = StyleSheet.create({
   doneButtonText: {
     paddingTop: 15,
     paddingHorizontal: 25,
-    color: '#50ccff',
+    color: '#50acff',
     fontSize: 20,
     fontWeight: 600,
   },
