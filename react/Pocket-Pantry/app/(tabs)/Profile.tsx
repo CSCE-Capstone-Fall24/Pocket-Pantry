@@ -1,24 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Profile () {
-
   return (
-    <SafeAreaView>
-      
-      <Text style={styles.header}>
-        Profile
-      </Text>
-      
-
+    <ScrollView>
+      <SafeAreaView> 
         
-    </SafeAreaView>
+        <Text style={styles.title}>
+          Profile
+        </Text>
+          
+      </SafeAreaView>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  title: {
     marginLeft: 25,
     marginVertical: 25,
     fontSize: 32,
