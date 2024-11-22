@@ -1,19 +1,30 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import or_, and_, any_, cast, Integer, func
+from sqlalchemy import or_, and_, any_, cast, Integer, func, select, MetaData, Table
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import NoResultFound
 
 from datetime import datetime
 
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from fuzzywuzzy import fuzz, process
 
 from database import get_db
 from models import Recipes, Users, PlannedMeals, Pantry
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace '*' with specific origins like ['http://localhost:19000'] for stricter access
+    allow_credentials=True,
+    allow_methods=["*"],  # HTTP methods allowed (e.g., ['GET', 'POST', 'PUT'])
+    allow_headers=["*"],  # HTTP headers allowed (e.g., ['Content-Type', 'Authorization'])
+)
 
 
 @app.get("/")
@@ -365,3 +376,71 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             matched_recipes_ids.append(recipe.recipe_id)
 
     return matched_recipes_ids
+
+class UserLogin(BaseModel):
+    username: str = None
+    email: str = None
+    password: str
+
+@app.post("/login")
+def login(data: UserLogin, db: Session = Depends(get_db)):
+    if not data.username and not data.email:
+        raise HTTPException(status_code=400, detail="Username or email is required.")
+
+    query = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    )
+
+    user = query.first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if data.password != user.hashed_confirmation_code:
+    # if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    user_data = {
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "account_created_at": user.account_created_at,
+        "roommates": user.roommates,
+        "favorite_recipes": user.favorite_recipes,
+        "cooked_recipes": user.cooked_recipes,
+    }
+
+    return {"user_data": user_data}
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+@app.post("/signup")
+def signup(data: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    ).first()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username or email already exists.")
+    
+    # hashed_password = hash_password(data.password)
+    hashed_password = data.password
+    
+    new_user = Users(
+        username=data.username,
+        email=data.email,
+        hashed_confirmation_code=hashed_password,
+        account_created_at=datetime.now(),
+        roommates=[],
+        favorite_recipes=[],
+        cooked_recipes=[]
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User created successfully", "user_id": new_user.user_id}

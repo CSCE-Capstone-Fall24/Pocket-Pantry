@@ -62,7 +62,7 @@ export default function Pantry () {
       </SafeAreaView>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   header: {

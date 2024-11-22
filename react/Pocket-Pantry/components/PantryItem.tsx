@@ -289,4 +289,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PantryItem
+export default PantryItem;
