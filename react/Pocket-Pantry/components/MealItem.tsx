@@ -5,150 +5,107 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 
 type MealProps = {
+  id: number
   name: string
-  quantity: number
-  unit: string
+  quantity: number // Change to servings
+  unit: string // Probably remove this
+  expiration: Date // Change to just date; this is for the day we plan to cook the meal
+  shared: boolean[]
+  // Add an ingredients array; probably gonna be a string array
 };
 
 const MealItem = (props: MealProps) => {
-  const [isModalVisible, setModalVisible] = useState(false);
-  const openModal = () => setModalVisible(true);
-  const closeModal = () => setModalVisible(false);
+  const [isWindowVisible, setWindowVisible] = useState(false);
+  const openWindow = () => setWindowVisible(true);
+  const closeWindow = () => setWindowVisible(false);
 
   const [quantity, setQuantity] = useState(props.quantity.toString());
   const [tempQuantity, setTempQuantity] = useState(quantity);
-  const handleQuantitySave = (value: string) => {
-    if (value != '') {
-      setQuantity(tempQuantity);
-    } else {
-      setTempQuantity(quantity);
-    }
-  };
 
   const [isScrollerVisible, setScrollerVisible] = useState(false);
   const openScroller = () => setScrollerVisible(true);
   const closeScroller = () => setScrollerVisible(false);
-  const [expirationDate, setExpirationDate] = useState(new Date());
+  const [expiration, setExpiration] = useState(props.expiration);
+  const [tempExpiration, setTempExpiration] = useState(expiration);
 
-  const [isShared1, setShared1] = useState(false);
-  const handleShared1 = () => { setShared1((prevState) => !prevState); };
-  const [isShared2, setShared2] = useState(false);
-  const handleShared2 = () => { setShared2((prevState) => !prevState); };
-  const [isShared3, setShared3] = useState(false);
-  const handleShared3 = () => { setShared3((prevState) => !prevState); };
-  const [isShared4, setShared4] = useState(false);
-  const handleShared4 = () => { setShared4((prevState) => !prevState); };
-  
+  const [shared, setShared] = useState(props.shared);
+  const [tempShared, setTempShared] = useState(shared);
+  const tempSharedToggle = (index: number) => {
+    setTempShared((prevState) =>
+      prevState.map((item, i) => (i === index ? !item : item))
+    );
+  };
+
+  const handleCancel = () => {
+    setTempQuantity(quantity);
+    setTempExpiration(expiration);
+    setTempShared(shared)
+  }
+  const handleSave = () => {
+    if (tempQuantity != '' && !isNaN(Number(tempQuantity))) {
+      setQuantity(tempQuantity);
+    } else {
+      setTempQuantity(quantity);
+    }
+    setExpiration(tempExpiration);
+    setShared(tempShared)
+  };
+
   return (
     <View style={styles.container}>
 
       {/* Displayed item information */}
-      <View style={styles.infoContainer}>
-        <View style={styles.sharedIcons}>
+      <View style={styles.itemContainer}>
+        <View style={styles.rowAlignment}>
           <Text style={styles.itemName}>{props.name}</Text>
-          {isShared1 ? (<Text>  <Ionicons name="ellipse" size={13} color="#e167a4"/></Text>) : (null)}
-          {isShared2 ? (<Text>  <Ionicons name="ellipse" size={13} color="#f4737e"/></Text>) : (null)}
-          {isShared3 ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
-          {isShared4 ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
+          {shared[0] ? (<Text>  <Ionicons name="ellipse" size={13} color="#e167a4"/></Text>) : (null)}
+          {shared[1] ? (<Text>  <Ionicons name="ellipse" size={13} color="#f4737e"/></Text>) : (null)}
+          {shared[2] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
+          {shared[3] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
         </View>
-        <Text style={styles.itemDetails}>{quantity} {props.unit}   Exp. {expirationDate.toLocaleDateString()}</Text>
+        <Text style={styles.itemDetails}>{quantity} {props.unit}   Exp. {expiration.toLocaleDateString()}</Text>
       </View>
 
-      <TouchableOpacity style={styles.editButton} onPress={openModal}>
+      <TouchableOpacity style={styles.editButton} onPress={openWindow}>
         <Ionicons name="pencil" size={26} color="gray"/>
       </TouchableOpacity>
 
-      {/* Pop-up edit window */}
+      {/* Edit window */}
       <Modal
         transparent={true}
         animationType="fade"
-        visible={isModalVisible}
-        onRequestClose={closeModal}
+        visible={isWindowVisible}
+        onRequestClose={closeWindow}
       >
         <BlurView
           style={StyleSheet.absoluteFill}
           intensity={20}
         />
-        <View style={styles.modalContainerAlignment}>
-          <View style={styles.modalContainer}>
+        <View style={styles.windowAlignment}>
+          <View style={styles.window}>
+            <Text style={styles.windowTitle}>{props.name}</Text>
             
             {/* Edit quantity */}
             <View style={styles.quantityContainer}>
-              <Text style={styles.modalContainerText}>Edit quantity:  </Text>
+              <Text style={styles.windowText}>Edit quantity:  </Text>
               <TextInput
                 style={styles.quantityInput}
                 value={tempQuantity}
                 onChangeText={(value) => setTempQuantity(value)}
               />
-              <Text style={styles.modalContainerText}>  {props.unit}</Text>
+              <Text style={styles.windowText}>  {props.unit}</Text>
             </View>
 
             {/* Edit expiration date */}
             <View style={styles.expirationContainer}>
-              <Text style={styles.modalContainerText}>Edit expiration date:  </Text>
+              <Text style={styles.windowText}>Edit expiration date:  </Text>
               <TouchableOpacity
                 style={styles.expirationInput}
                 onPress={openScroller}
               >
-                <Text style={styles.modalContainerText}>{expirationDate.toLocaleDateString()}</Text>
+                <Text style={styles.windowText}>{tempExpiration.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Set item as shared */}
-            <View style={styles.sharedSpacer}>
-
-              <View style={styles.sharedContainer}>
-                <Text style={styles.modalContainerText}>Shared with user1:  </Text>
-                <Pressable onPress={handleShared1}>
-                  {isShared1 ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#e167a4"/>
-                  )}
-                </Pressable>
-              </View>
-
-              <View style={styles.sharedContainer}>
-                <Text style={styles.modalContainerText}>Shared with user2:  </Text>
-                <Pressable onPress={handleShared2}>
-                  {isShared2 ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#f4737e"/>
-                  )}
-                </Pressable>
-              </View>
-
-              <View style={styles.sharedContainer}>
-                <Text style={styles.modalContainerText}>Shared with user3:  </Text>
-                <Pressable onPress={handleShared3}>
-                  {isShared3 ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#ff8667"/>
-                  )}
-                </Pressable>
-              </View>
-
-              <View style={styles.sharedContainer}>
-                <Text style={styles.modalContainerText}>Shared with user4:  </Text>
-                <Pressable onPress={handleShared4}>
-                  {isShared4 ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#ffb778"/>
-                  )}
-                </Pressable>
-              </View>
-
-            </View>     
-          
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => {closeModal(); handleQuantitySave(tempQuantity); }}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
 
             {/* Expiration date scroller */}
             <Modal
@@ -157,26 +114,97 @@ const MealItem = (props: MealProps) => {
               visible={isScrollerVisible}
               onRequestClose={closeScroller}
             >
-              <View style={styles.dateScrollerAlignment}>
+              <Pressable style={styles.scrollerSpacer} onPress={closeScroller}></Pressable>
+              <View>
                 <View style={styles.doneButtonContainer}>
                   <TouchableOpacity onPress={closeScroller}>
                     <Text style={styles.doneButtonText}>Done</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.dateScroller}>
+                <View style={styles.scroller}>
                   {isScrollerVisible && (
                     <DateTimePicker
-                      value={expirationDate}
+                      value={tempExpiration}
                       mode="date"
                       display="spinner"
                       onChange={(event, date) => {
-                        if (date) setExpirationDate(date);
+                        if (date) setTempExpiration(date);
                       }}
                     />
                   )}
                 </View>
               </View>
             </Modal>
+
+            {/* Set item as shared */}
+            <View style={styles.sharedSpacer}>
+              <View style={styles.sharedContainer}>
+                <Text style={styles.windowText}>Shared with user1:  </Text>
+                <Pressable onPress={() => tempSharedToggle(0)}>
+                  {tempShared[0] ? (
+                    <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="#e167a4"/>
+                  )}
+                </Pressable>
+              </View>
+
+              <View style={styles.sharedContainer}>
+                <Text style={styles.windowText}>Shared with user2:  </Text>
+                <Pressable onPress={() => tempSharedToggle(1)}>
+                  {tempShared[1] ? (
+                    <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="#f4737e"/>
+                  )}
+                </Pressable>
+              </View>
+
+              <View style={styles.sharedContainer}>
+                <Text style={styles.windowText}>Shared with user3:  </Text>
+                <Pressable onPress={() => tempSharedToggle(2)}>
+                  {tempShared[2] ? (
+                    <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="#ff8667"/>
+                  )}
+                </Pressable>
+              </View>
+
+              <View style={styles.sharedContainer}>
+                <Text style={styles.windowText}>Shared with user4:  </Text>
+                <Pressable onPress={() => tempSharedToggle(3)}>
+                  {tempShared[3] ? (
+                    <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
+                  ) : (
+                    <Ionicons name="ellipse-outline" size={32} color="#ffb778"/>
+                  )}
+                </Pressable>
+              </View>
+            </View>  
+
+            {/* Cancel/save changes */}
+            <View style={styles.rowAlignment}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => {
+                  closeWindow();
+                  handleCancel();
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.saveButton}
+                onPress={() => {
+                  closeWindow();
+                  handleSave();
+                }}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -189,11 +217,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  infoContainer: {
+  itemContainer: {
     marginVertical: 10,
     marginLeft: 25,
   },
-  sharedIcons: {
+  rowAlignment: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -208,18 +236,23 @@ const styles = StyleSheet.create({
     marginRight: 5,
     padding: 20,
   },
-  modalContainerAlignment: {
+  windowAlignment: {
     flex: 1,
     justifyContent: 'center',
   },
-  modalContainer: {
+  window: {
     marginHorizontal: 50,
     borderRadius: 8,
-    padding: 25,
+    padding: 35,
     alignItems: 'center',
     backgroundColor: 'white',
   },
-  modalContainerText: {
+  windowTitle: {
+    fontSize: 24,
+    fontWeight: 600,
+    marginBottom: 30,
+  },
+  windowText: {
     fontSize: 16,
   },
   quantityContainer: {
@@ -246,21 +279,11 @@ const styles = StyleSheet.create({
     borderColor: 'lightgray',
     padding: 10,
   },
-  sharedSpacer: {
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  sharedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  dateScrollerAlignment: {
+  scrollerSpacer: {
     flex: 1,
-    justifyContent: 'flex-end',
   },
-  dateScroller: {
-    paddingBottom: 25,
+  scroller: {
+    paddingBottom: 30,
     alignItems: 'center',
     backgroundColor: 'gray',
   },
@@ -276,17 +299,44 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 600,
   },
-  closeButton: {
+  sharedSpacer: {
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  sharedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  cancelButton: {
+    marginRight: 35,
+    width: 90,
+    borderWidth: 2,
     borderRadius: 8,
+    borderColor: "#ff8667",
+    alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: 'white',
+  },
+  cancelButtonText: {
+    color: '#ff8667',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    width: 90,
+    borderWidth: 2,
+    borderRadius: 8,
+    borderColor: "#ff8667",
+    alignItems: 'center',
+    paddingVertical: 10,
     backgroundColor: '#ff8667',
   },
-  closeButtonText: {
+  saveButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
 });
 
-export default MealItem
+export default MealItem;
