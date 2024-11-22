@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserContext } from '@/components/contexts/UserContext';
 import Roommates from '@/components/Roommates';
+import FavoritedRecipes from '@/components/FavoriteRecipes';
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
@@ -88,6 +89,8 @@ export default function Profile() {
         </View>
 
         <Roommates/>
+
+        <FavoritedRecipes/>
 
         <Modal
           animationType="slide"
