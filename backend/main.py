@@ -749,5 +749,19 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
 #add quantity considerations for recipe searching
 #complete logic for shopping list generation
 
+#Generate Shopping List
+@app.post("/shopping_list/")
+async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
 
-
+    #fetch planned meals
+    planned_m = db.query(PlannedMeals).filter(PlannedMeals.user_id == user_id).all()
+    """
+    or_(
+            Pantry.user_id.in_(user_list),
+            and_(
+                Pantry.is_shared == True,
+                Pantry.shared_with.op('&&')(user_list)
+            )
+        )
+    """
+    return
