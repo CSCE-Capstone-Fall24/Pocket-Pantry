@@ -207,6 +207,11 @@ def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
     except ValueError:
         return {"message": "User not found in your roommates"}
 
+@app.get("/get_roommates/")
+def get_roommates(user_id: int, db: Session = Depends(get_db)):
+    rms = db.query(Users).filter(Users.user_id == user_id).first().roommates
+
+    return {"roommates": rms}
         
 class ShareItemRequest(BaseModel):
     pantry_id: int
@@ -400,7 +405,17 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     # if not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect password.")
 
-    return {"user_id": user.user_id}
+    user_data = {
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "account_created_at": user.account_created_at,
+        "roommates": user.roommates,
+        "favorite_recipes": user.favorite_recipes,
+        "cooked_recipes": user.cooked_recipes,
+    }
+
+    return {"user_data": user_data}
 
 class UserCreate(BaseModel):
     username: str
@@ -434,3 +449,24 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     return {"message": "User created successfully", "user_id": new_user.user_id}
+
+class Reset(BaseModel):
+    user_id: int
+    old_pass: str
+    new_pass: str
+
+@app.post("/reset_pass")
+def reset_pass(data: Reset, db: Session = Depends(get_db)):
+
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+
+    if user.hashed_confirmation_code != data.old_pass:
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    # old pass is correct
+    user.hashed_confirmation_code = data.new_pass
+
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "reset password successfully"}
