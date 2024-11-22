@@ -30,7 +30,7 @@ GRAMS_CONVERSION = {
     "drop": 0.05, "drops": 0.05, "gtt": 0.05,
     "dash": 0.6, "dashes": 0.6,
     "pinch": 0.3, "pinches": 0.3,
-    "handful": 30, "handfuls": 30,  # Approximate for light items like herbs
+    "handful": 30, "handfuls": 30,  
 
     # Weight to grams
     "gram": 1, "grams": 1, "g": 1, "gm": 1,
@@ -41,16 +41,16 @@ GRAMS_CONVERSION = {
     "stone": 6350, "stones": 6350, "st": 6350,
 
     # Miscellaneous (approximate based on common usage)
-    "clove": 5, "cloves": 5,  # Average weight of a garlic clove
-    "slice": 30, "slices": 30,  # Average for bread or cheese slices
-    "stick": 113, "sticks": 113,  # Standard butter stick
-    "can": 400, "cans": 400,  # Average canned food
-    "bottle": 500, "bottles": 500,  # Standard bottle
+    "clove": 5, "cloves": 5,  
+    "slice": 30, "slices": 30,  
+    "stick": 113, "sticks": 113, 
+    "can": 400, "cans": 400,  
+    "bottle": 500, "bottles": 500,  
     "pack": 500, "packs": 500, "pkt": 500, "packet": 500, "packets": 500,
-    "bunch": 150, "bunches": 150,  # For herbs or leafy greens
-    "piece": 100, "pieces": 100, "pc": 100,  # Approximate for fruits or small items
-    "leaf": 1, "leaves": 1,  # Small herb leaves
-    "sprig": 1, "sprigs": 1  # Small herb sprigs
+    "bunch": 150, "bunches": 150,  
+    "piece": 100, "pieces": 100, "pc": 100,  
+    "leaf": 1, "leaves": 1,  
+    "sprig": 1, "sprigs": 1  
 }
 
 def convert_to_grams(quantity, unit_name):
@@ -590,9 +590,22 @@ async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
     
     return recipe_details
 
+@app.post("/delete_planned_meal/")
+async def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="Planned Meal not found")
+    
+    db.delete(meal)
+    db.commit()
+
+    return {"message": "Your meal has been removed and meal plan has been updated."}
+
 #adjust item quantities after cooking meals
-@app.post("/adjust_inv_quantities_after_cooked/")
-async def adjust_inv_quantities_after_cooked(meal_id: int, db: Session = Depends(get_db)):
+@app.post("/mark_meal_cooked/")
+async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
     
     #fetches the cooked meal from cooked meal table
     cookedMeal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == meal_id).first()
@@ -733,6 +746,8 @@ async def adjust_inv_quantities_after_cooked(meal_id: int, db: Session = Depends
     return {"message": "Your pantry inventory has been updated and meal removed."}
 
 
-#remove planned meal (not cooked)
+#add quantity considerations for recipe searching
+#complete logic for shopping list generation
+
 
 
