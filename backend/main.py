@@ -6,6 +6,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import NoResultFound
 
 from datetime import datetime
+import copy
 
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
@@ -32,7 +33,7 @@ GRAMS_CONVERSION = {
     "drop": 0.05, "drops": 0.05, "gtt": 0.05,
     "dash": 0.6, "dashes": 0.6,
     "pinch": 0.3, "pinches": 0.3,
-    "handful": 30, "handfuls": 30,  # Approximate for light items like herbs
+    "handful": 30, "handfuls": 30,  
 
     # Weight to grams
     "gram": 1, "grams": 1, "g": 1, "gm": 1,
@@ -43,19 +44,27 @@ GRAMS_CONVERSION = {
     "stone": 6350, "stones": 6350, "st": 6350,
 
     # Miscellaneous (approximate based on common usage)
-    "clove": 5, "cloves": 5,  # Average weight of a garlic clove
-    "slice": 30, "slices": 30,  # Average for bread or cheese slices
-    "stick": 113, "sticks": 113,  # Standard butter stick
-    "can": 400, "cans": 400,  # Average canned food
-    "bottle": 500, "bottles": 500,  # Standard bottle
+    "clove": 5, "cloves": 5,  
+    "slice": 30, "slices": 30,  
+    "stick": 113, "sticks": 113, 
+    "can": 400, "cans": 400,  
+    "bottle": 500, "bottles": 500,  
     "pack": 500, "packs": 500, "pkt": 500, "packet": 500, "packets": 500,
-    "bunch": 150, "bunches": 150,  # For herbs or leafy greens
-    "piece": 100, "pieces": 100, "pc": 100,  # Approximate for fruits or small items
-    "leaf": 1, "leaves": 1,  # Small herb leaves
-    "sprig": 1, "sprigs": 1  # Small herb sprigs
+    "bunch": 150, "bunches": 150,  
+    "piece": 100, "pieces": 100, "pc": 100,  
+    "leaf": 1, "leaves": 1,  
+    "sprig": 1, "sprigs": 1  
 }
 
+def convert_to_grams(quantity, unit_name):
+    if unit_name in GRAMS_CONVERSION:
+        return quantity * GRAMS_CONVERSION[unit_name]
+    raise ValueError(f"Unit '{unit_name}' is not recognized")
 
+def convert_from_grams(quantity, unit_name):
+    if unit_name in GRAMS_CONVERSION:
+        return quantity / GRAMS_CONVERSION[unit_name]
+    raise ValueError(f"Unit '{unit_name}' is not recognized")
 
 
 @app.get("/")
@@ -450,7 +459,6 @@ async def recipes_ordered_by_match(data: UserList, db: Session = Depends(get_db)
     # Return the sorted list of recipe IDs
     return [recipe_id for recipe_id, _ in recipe_matches]
 
-#Add endpoint
 
 class UpdatePantryItemRequest(BaseModel):
     id: int  # Unique ID of the pantry item to update
@@ -567,4 +575,182 @@ async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depe
     return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
 
 
+@app.post("/fetch_recipe_by_id/")
+async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    recipe_details = db.query(Recipes).filter(Recipes.recipe_id == recipe_id).first()
+
+    if not recipe_details:
+        raise HTTPException(status_code=404, detail="Recipe not in Recipes")
+    
+    return recipe_details
+
+@app.post("/fetch_recipe_by_name/")
+async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
+    recipe_details = db.query(Recipes).filter(Recipes.name == recipe_name).first()
+
+    if not recipe_details:
+        raise HTTPException(status_code=404, detail="Not a recipe name")
+    
+    return recipe_details
+
+@app.post("/delete_planned_meal/")
+async def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="Planned Meal not found")
+    
+    db.delete(meal)
+    db.commit()
+
+    return {"message": "Your meal has been removed and meal plan has been updated."}
+
 #adjust item quantities after cooking meals
+@app.post("/mark_meal_cooked/")
+async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
+    
+    #fetches the cooked meal from cooked meal table
+    cookedMeal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == meal_id).first()
+
+    if not cookedMeal:
+        raise HTTPException(status_code=404, detail="Planned Meal not found")
+
+    #list of users on the shared meal
+    user_list = []
+    user_list.append(cookedMeal.user_id)
+
+    for user in cookedMeal.shared_with:
+        user_list.append(user)   
+    
+    #fetches the pantry items of all the users on the cooked meal
+    pantry_items = db.query(Pantry).filter(
+        or_(
+            Pantry.user_id.in_(user_list),
+            and_(
+                Pantry.is_shared == True,
+                Pantry.shared_with.op('&&')(user_list)
+            )
+        )
+    ).all()
+
+    #fetches details(Recipe Entry) for the cooked meal (ingredients: units & quantities)
+    cookedMealDetails = db.query(Recipes).filter(Recipes.recipe_id == cookedMeal.recipe_id).first()
+
+    if not cookedMealDetails:
+        raise HTTPException(status_code=404, detail="Recipe not in Recipes")
+
+    #deep copies the quantities of the planned meal
+    quantities_scaled_and_converted = copy.deepcopy(cookedMealDetails.ingredient_quantities)
+    #scale the quantities based on servings planned with servings for 
+    quantities_scaled_and_converted = [item * (cookedMeal.n_servings/cookedMealDetails.serving_size) for item in quantities_scaled_and_converted]
+    
+    #convert units to grams
+    #fetch ingredient units for the cooked meal
+    units_cooked_ingredients = cookedMealDetails.ingredient_units[::]
+
+    #convert to grams for quantity adjustment
+    for i in range(len(units_cooked_ingredients)):
+        quantities_scaled_and_converted[i] = convert_to_grams( quantities_scaled_and_converted[i], units_cooked_ingredients[i])
+    
+    #fuzzy match on ingredient names - identifies corresponding ingredients in pantry from the cooking users
+        #deep copy of relevant ingredient names for parallel listing with their quantities
+    corresponding_ingredients_from_pantry = []  # Stores the ingredient matching names in parallel with IDs and quantities
+    corresponding_pantry_item_ids = []
+    corresponding_pantry_item_quantities = []
+    corresponding_pantry_item_units = []
+    locs_of_ingredients_not_possessed = []
+
+    count = 0
+    for meal_ingredient in cookedMealDetails.ingredients:
+        best_ratio = 0
+        current_best_matches = []  # Temporary list to store items with the best ratio for the current ingredient
+
+        # Loop over pantry items
+        for pantry_item in pantry_items:
+            ratio = fuzz.ratio(meal_ingredient.lower(), pantry_item.food_name.lower())
+
+            if ratio > best_ratio:  # New best match
+                best_ratio = ratio
+                current_best_matches = [pantry_item]  # Replace with the new best match list
+
+            elif ratio == best_ratio:  # Add duplicates with the same best ratio
+                current_best_matches.append(pantry_item)
+
+        #if no match because item never added to pantry
+        if not current_best_matches:
+            locs_of_ingredients_not_possessed.append(count)
+        else:
+        # Append all current best matches to the corresponding lists
+            for match in current_best_matches:
+                corresponding_ingredients_from_pantry.append(meal_ingredient)
+                corresponding_pantry_item_ids.append(match.pantry_id)
+                corresponding_pantry_item_quantities.append(match.quantity)
+                corresponding_pantry_item_units.append(match.unit)
+        count+=1
+
+    if current_best_matches:
+        for i in reversed(locs_of_ingredients_not_possessed):
+            quantities_scaled_and_converted[i].remove()
+
+    #convert relevant ingredient quantities to grams on the copy
+    for i in range(len(corresponding_pantry_item_quantities)):
+        corresponding_pantry_item_quantities[i] = convert_to_grams(corresponding_pantry_item_quantities[i], corresponding_pantry_item_units[i])
+
+    #adjust quantities - logic for identifying multiple instances and decrementing one and then on the other
+    for i in range(len(quantities_scaled_and_converted)):
+        quantity_tracker = quantities_scaled_and_converted[i]
+        ingredient_name = cookedMealDetails.ingredients[i]
+
+        for j in range(len(corresponding_pantry_item_quantities)):
+            if ingredient_name == corresponding_ingredients_from_pantry[j]:
+                if corresponding_pantry_item_quantities[j] < quantity_tracker:
+                    quantity_tracker -= corresponding_pantry_item_quantities[j]
+                    corresponding_pantry_item_quantities[j] = 0
+                else:
+                    corresponding_pantry_item_quantities -= quantity_tracker
+                    quantity_tracker = 0
+
+            if quantity_tracker == 0:
+                break
+
+    #remove items from pantry that are now 0
+    for i in range(len(corresponding_pantry_item_quantities)):
+        if corresponding_pantry_item_quantities[i] == 0:
+            pantry_item = db.query(Pantry).filter(Pantry.pantry_id == corresponding_pantry_item_ids[i]).first()
+
+            if not pantry_item:
+                raise HTTPException(status_code=404, detail="Pantry item not found. Line 707")
+
+            db.delete(pantry_item)
+    db.commit()
+
+    #convert back to original unit quantities
+    for i in range(len(corresponding_pantry_item_quantities)):
+        reset_quantity = convert_from_grams(corresponding_pantry_item_quantities[i], corresponding_pantry_item_units[i])
+        corresponding_pantry_item_quantities[i] = reset_quantity
+ 
+    #update user pantry quanities with current deep copy list
+    for i in range(len(corresponding_pantry_item_ids)):
+        if corresponding_pantry_item_quantities[i] != 0:
+            pantry_item = db.query(Pantry).filter(Pantry.pantry_id == corresponding_pantry_item_ids[i]).first()
+
+            if not pantry_item:
+                raise HTTPException(status_code=404, detail="Pantry item not found. Line 723")
+            
+            pantry_item.quantity = corresponding_pantry_item_quantities[i]
+
+            db.refresh(pantry_item)
+
+    #remove cooked meal from planned
+    db.delete(cookedMeal)
+
+    db.commit()
+    return {"message": "Your pantry inventory has been updated and meal removed."}
+
+
+#add quantity considerations for recipe searching
+#complete logic for shopping list generation
+
+
+
