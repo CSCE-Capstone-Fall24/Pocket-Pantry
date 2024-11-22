@@ -1,4 +1,3 @@
-// Roommates.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -16,7 +15,7 @@ const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 export default function Roommates() {
   const { userData, setUserData } = useUserContext();
-  const [dropdownState, setDropdownState] = useState(false);
+  const [dropdownState, setDropdownState] = useState(true);
   const [isAddRoommateModalVisible, setAddRoommateModalVisible] = useState(false);
   const [newRoommate, setNewRoommate] = useState('');
 
@@ -45,12 +44,40 @@ export default function Roommates() {
         roommates: data.updated_roommates,
       }));
 
-      Alert.alert('Success', 'Roommate added successfully!');
+      alert('Success, Roommate added successfully!');
       setNewRoommate('');
       setAddRoommateModalVisible(false);
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Could not add roommate. Please try again.');
+      alert('Error, Could not add roommate. Please check their ID and try again.');
+    }
+  };
+
+  const handleRemoveRoommate = async (roommateId: number) => {
+    try {
+      const response = await fetch(`${API_URL}/remove_roommate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userData?.user_id,
+          roommate_id: roommateId,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to remove roommate');
+
+      const updatedRoommates = await response.json();
+      setUserData((prevData: any) => ({
+        ...prevData,
+        roommates: updatedRoommates.updated_roommates,
+      }));
+
+      Alert.alert('Success', 'Roommate removed successfully!');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Could not remove roommate. Please try again.');
     }
   };
 
@@ -95,10 +122,19 @@ export default function Roommates() {
       {dropdownState && (
         <View style={styles.dropdownContent}>
           {userData?.roommates && userData.roommates.length > 0 ? (
-            userData.roommates.map((item: string, index: number) => (
-              <Text key={index} style={styles.dropdownItem}>
-                {item}
-              </Text>
+            userData.roommates.map((roommate: any, index: number) => (
+              <View key={index} style={styles.roommateItem}>
+                <Text style={styles.roommateName}>ID: {roommate.roommate_id}, User: {roommate.username}</Text>
+                <Text style={styles.status}>
+                  {roommate.is_reciprocated ? '✅ Added Back' : '❌ Not Added Back'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => handleRemoveRoommate(roommate.roommate_id)}
+                >
+                  <Text style={styles.removeButtonText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
             ))
           ) : (
             <Text style={styles.dropdownItem}>No roommates found</Text>
@@ -232,4 +268,34 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       width: '100%',
     },
+    roommateItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+        marginBottom: 5,
+        backgroundColor: '#f8f9fa',
+        borderRadius: 8,
+      },
+      roommateName: {
+        fontSize: 16,
+        fontWeight: '600',
+      },
+      status: {
+        fontSize: 14,
+        color: '#6c757d',
+        textAlign: 'right',
+        flex: 1,
+        marginRight: 20
+      },
+      removeButton: {
+        backgroundColor: '#dc3545',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+      },
+      removeButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+      },
   });

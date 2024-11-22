@@ -168,9 +168,16 @@ class RoommateRequest(BaseModel):
 @app.post("/add_roommate/")
 def add_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.user_id == data.user_id).first()
-    
-    if not user: # should always be there if valid ui
+    rm = db.query(Users).filter(Users.user_id == data.roommate_id).first()
+
+    if (data.user_id == data.roommate_id):
+        raise HTTPException(status_code=404, detail="You cannot add yourself")
+
+    if not user:  # Should always be there if valid UI
         raise HTTPException(status_code=404, detail="User not found")
+
+    if not rm:
+        raise HTTPException(status_code=404, detail="This user doesn't exist! Double check their ID!")
 
     if user.roommates is None:
         user.roommates = []
@@ -183,7 +190,25 @@ def add_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(user)
-    return {"message": "Roommate added successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
+
+    roommate_data = []
+    for roommate_id in user.roommates:
+        roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
+        if not roommate:
+            continue
+
+        is_reciprocated = data.user_id in roommate.roommates
+        roommate_data.append({
+            "roommate_id": roommate.user_id,
+            "username": roommate.username,
+            "is_reciprocated": is_reciprocated,
+        })
+
+    return {
+        "message": "Roommate added successfully",
+        "user_id": data.user_id,
+        "updated_roommates": roommate_data,
+    }
    
 @app.post("/remove_roommate/")
 def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
@@ -202,16 +227,53 @@ def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
 
         db.commit()
         db.refresh(user)
-        return {"message": "Roommate removed successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
+
+        roommate_data = []
+        for roommate_id in user.roommates:
+            roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
+            if not roommate:
+                continue
+
+            is_reciprocated = data.user_id in roommate.roommates
+            roommate_data.append({
+                "roommate_id": roommate.user_id,
+                "username": roommate.username,
+                "is_reciprocated": is_reciprocated,
+            })
+
+        return {
+            "message": "Roommate added successfully",
+            "user_id": data.user_id,
+            "updated_roommates": roommate_data,
+        }
     
     except ValueError:
         return {"message": "User not found in your roommates"}
 
 @app.get("/get_roommates/")
 def get_roommates(user_id: int, db: Session = Depends(get_db)):
-    rms = db.query(Users).filter(Users.user_id == user_id).first().roommates
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
 
-    return {"roommates": rms}
+    roommates = user.roommates
+    
+    roommate_data = []
+    for roommate_id in roommates:
+        roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
+        if not roommate:
+            continue
+
+        is_reciprocated = user_id in roommate.roommates
+        roommate_data.append({
+            "roommate_id": roommate.user_id,
+            "username": roommate.username,
+            "is_reciprocated": is_reciprocated,
+        })
+
+    return {"roommates": roommate_data}
+
         
 class ShareItemRequest(BaseModel):
     pantry_id: int
@@ -402,20 +464,32 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found.")
 
     if data.password != user.hashed_confirmation_code:
-    # if not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    user_roommates = user.roommates
+    roommates_with_status = []
+    for roommate_id in user_roommates:
+        roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
+        if roommate:
+            is_reciprocated = user.user_id in roommate.roommates
+            roommates_with_status.append({
+                "roommate_id": roommate.user_id,
+                "username": roommate.username,
+                "is_reciprocated": is_reciprocated,
+            })
 
     user_data = {
         "user_id": user.user_id,
         "username": user.username,
         "email": user.email,
         "account_created_at": user.account_created_at,
-        "roommates": user.roommates,
+        "roommates": roommates_with_status,
         "favorite_recipes": user.favorite_recipes,
         "cooked_recipes": user.cooked_recipes,
     }
 
     return {"user_data": user_data}
+
 
 class UserCreate(BaseModel):
     username: str
