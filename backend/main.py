@@ -18,13 +18,44 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Replace '*' with specific origins like ['http://localhost:19000'] for stricter access
-    allow_credentials=True,
-    allow_methods=["*"],  # HTTP methods allowed (e.g., ['GET', 'POST', 'PUT'])
-    allow_headers=["*"],  # HTTP headers allowed (e.g., ['Content-Type', 'Authorization'])
-)
+GRAMS_CONVERSION = {
+    # Volume to grams (based on water density)
+    "cup": 240, "cups": 240, "c": 240,
+    "tablespoon": 15, "tablespoons": 15, "tbsp": 15, "tbs": 15, "Tbl": 15, "T": 15,
+    "teaspoon": 5, "teaspoons": 5, "tsp": 5,
+    "ml": 1, "milliliter": 1, "milliliters": 1, "cc": 1,
+    "l": 1000, "liter": 1000, "liters": 1000, "litre": 1000, "litres": 1000,
+    "fl oz": 30, "fluid ounce": 30, "fluid ounces": 30,
+    "pint": 473, "pints": 473, "pt": 473,
+    "quart": 946, "quarts": 946, "qt": 946,
+    "gallon": 3785, "gallons": 3785, "gal": 3785,
+    "drop": 0.05, "drops": 0.05, "gtt": 0.05,
+    "dash": 0.6, "dashes": 0.6,
+    "pinch": 0.3, "pinches": 0.3,
+    "handful": 30, "handfuls": 30,  # Approximate for light items like herbs
+
+    # Weight to grams
+    "gram": 1, "grams": 1, "g": 1, "gm": 1,
+    "kilogram": 1000, "kilograms": 1000, "kg": 1000,
+    "milligram": 0.001, "milligrams": 0.001, "mg": 0.001,
+    "ounce": 28, "ounces": 28, "oz": 28,
+    "pound": 454, "pounds": 454, "lb": 454, "lbs": 454,
+    "stone": 6350, "stones": 6350, "st": 6350,
+
+    # Miscellaneous (approximate based on common usage)
+    "clove": 5, "cloves": 5,  # Average weight of a garlic clove
+    "slice": 30, "slices": 30,  # Average for bread or cheese slices
+    "stick": 113, "sticks": 113,  # Standard butter stick
+    "can": 400, "cans": 400,  # Average canned food
+    "bottle": 500, "bottles": 500,  # Standard bottle
+    "pack": 500, "packs": 500, "pkt": 500, "packet": 500, "packets": 500,
+    "bunch": 150, "bunches": 150,  # For herbs or leafy greens
+    "piece": 100, "pieces": 100, "pc": 100,  # Approximate for fruits or small items
+    "leaf": 1, "leaves": 1,  # Small herb leaves
+    "sprig": 1, "sprigs": 1  # Small herb sprigs
+}
+
+
 
 
 @app.get("/")
@@ -356,7 +387,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
     
     all_r = db.query(Recipes).all()         #fetches all recipes from database
 
-    #********************************Not inclusive of quentity matching
+    #********************************Not inclusive of quantity matching
     #fuzzy matching of ingredients to pantry items
     matched_recipes_ids = []                    #return value; stores the recipes (recipe.recipe_id) that can be cooked
 
@@ -377,70 +408,163 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
 
     return matched_recipes_ids
 
-class UserLogin(BaseModel):
-    username: str = None
-    email: str = None
-    password: str
 
-@app.post("/login")
-def login(data: UserLogin, db: Session = Depends(get_db)):
-    if not data.username and not data.email:
-        raise HTTPException(status_code=400, detail="Username or email is required.")
+@app.post("/recipes_ordered_by_match/")
+async def recipes_ordered_by_match(data: UserList, db: Session = Depends(get_db)):
+    pantry_items = db.query(Pantry).filter(  # Fetch all pantry items (shared or not) for the user(s)
+        or_(
+            Pantry.user_id.in_(data.user_list),
+            and_(
+                Pantry.is_shared == True,
+                Pantry.shared_with.op('&&')(data.user_list)
+            )
+        )
+    ).all()
 
-    query = db.query(Users).filter(
-        (Users.username == data.username) | (Users.email == data.email)
-    )
+    if not pantry_items:
+        raise HTTPException(status_code=404, detail="No pantry items found for given criteria.")
 
-    user = query.first()
+    all_r = db.query(Recipes).all()  # Fetch all recipes from the database
+
+    # Extract pantry ingredient names (normalized to lowercase for case-insensitive comparison)
+    pantry_ingredients = [p_item.food_name.lower() for p_item in pantry_items]
+
+    # List to store recipes and their match counts
+    recipe_matches = []
+
+    for recipe in all_r:  # Iterate through each recipe in the database
+        r_ingredients = [r_item.lower() for r_item in recipe.ingredients]  # Normalize recipe ingredients to lowercase
+
+        # Calculate the number of ingredients matched from the pantry
+        match_count = sum(
+            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
+            for r_ingredient in r_ingredients
+        )
+
+        # Append recipe ID and match count to the list
+        recipe_matches.append((recipe.recipe_id, match_count))
+
+    # Sort recipes by match count in descending order
+    recipe_matches.sort(key=lambda x: x[1], reverse=True)
+
+    # Return the sorted list of recipe IDs
+    return [recipe_id for recipe_id, _ in recipe_matches]
+
+#Add endpoint
+
+class UpdatePantryItemRequest(BaseModel):
+    id: int  # Unique ID of the pantry item to update
+    food_name: Optional[str] = None  
+    unit: Optional[str] = None  
+    user_id: int  
+    added_date: Optional[datetime] = None  
+    expiration_date: Optional[datetime] = None 
+    category: Optional[str] = None  
+    comment: Optional[str] = None  
+    is_shared: Optional[bool] = None  
+    shared_with: Optional[List[int]] = Field(default_factory=list)  
+    location: Optional[str] = None  
+    price: Optional[float] = None  
+
+@app.put("/update_pantry_item/")
+async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Depends(get_db)):
+    # Fetch the pantry item to update
+    pantry_item = db.query(Pantry).filter(Pantry.id == request.id, Pantry.user_id == request.user_id).first()
+
+    if not pantry_item:
+        raise HTTPException(status_code=404, detail="Pantry item not found or you do not have permission to update it.")
+
+    # Update pantry item fields if provided in the request
+    pantry_item.food_name = request.food_name if request.food_name else pantry_item.food_name
+    pantry_item.quantity = request.quantity if request.quantity is not None else pantry_item.quantity
+    pantry_item.unit = request.unit if request.unit else pantry_item.unit
+    pantry_item.added_date = request.added_date if request.added_date else pantry_item.added_date
+    pantry_item.expiration_date = request.expiration_date if request.expiration_date else pantry_item.expiration_date
+    pantry_item.category = request.category if request.category else pantry_item.category
+    pantry_item.comment = request.comment if request.comment else pantry_item.comment
+    pantry_item.is_shared = request.is_shared if request.is_shared is not None else pantry_item.is_shared
+    pantry_item.shared_with = request.shared_with if request.shared_with else pantry_item.shared_with
+    pantry_item.location = request.location if request.location else pantry_item.location
+    pantry_item.price = request.price if request.price is not None else pantry_item.price
+
+    db.commit()
+
+    return {"message": "Pantry item updated successfully", "item_id": pantry_item.id}
+
+
+class RemovePantryItemRequest(BaseModel):
+    id: int  # ID of the pantry item to remove
+    user_id: int  # ID of the user requesting the removal
+
+@app.put("/remove_pantry_item/")
+async def remove_pantry_item(request: RemovePantryItemRequest, db: Session = Depends(get_db)):
+    # Fetch the pantry item to remove
+    pantry_item = db.query(Pantry).filter(Pantry.id == request.id, Pantry.user_id == request.user_id).first()
+
+    if not pantry_item:
+        raise HTTPException(status_code=404, detail="Pantry item not found or you do not have permission to remove it.")
+
+    # Remove the pantry item
+    db.delete(pantry_item)
+    db.commit()
+
+    return {"message": "Pantry item removed successfully", "item_id": request.id}
+
+
+
+class AddFavoriteRequest(BaseModel):
+    user_id: int  # ID of the user
+    recipe_id: int  # ID of the recipe to add to favorites
+
+@app.post("/add_favorite_recipe/")
+async def add_favorite_recipe(data: AddFavoriteRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the recipe is already in the favorites list
+    if user.favorite_recipes is None:
+        user.favorite_recipes = []
+
+    if data.recipe_id in user.favorite_recipes:
+        raise HTTPException(status_code=400, detail="Recipe already in favorites")
+
+    # Add the recipe to the user's favorites
+    updated_favorites = user.favorite_recipes + [data.recipe_id]
+    user.favorite_recipes = updated_favorites
+
+    # Commit the changes to the database
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Recipe added to favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
+
+class removeFavoriteRequest(BaseModel):
+    user_id: int
+    recipe_id: int
+
+@app.post("/remove_favorite_recipe/")
+async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
+        raise HTTPException(status_code=404, detail="User not found")
 
-    if data.password != user.hashed_confirmation_code:
-    # if not verify_password(data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Incorrect password.")
-
-    user_data = {
-        "user_id": user.user_id,
-        "username": user.username,
-        "email": user.email,
-        "account_created_at": user.account_created_at,
-        "roommates": user.roommates,
-        "favorite_recipes": user.favorite_recipes,
-        "cooked_recipes": user.cooked_recipes,
-    }
-
-    return {"user_data": user_data}
-
-class UserCreate(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-@app.post("/signup")
-def signup(data: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(Users).filter(
-        (Users.username == data.username) | (Users.email == data.email)
-    ).first()
-
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Username or email already exists.")
+    # Check if the recipe is not in the favorites list
+    if user.favorite_recipes is None or data.recipe_id not in user.favorite_recipes:
+        raise HTTPException(status_code=400, detail="Recipe not in favorites")
     
-    # hashed_password = hash_password(data.password)
-    hashed_password = data.password
-    
-    new_user = Users(
-        username=data.username,
-        email=data.email,
-        hashed_confirmation_code=hashed_password,
-        account_created_at=datetime.now(),
-        roommates=[],
-        favorite_recipes=[],
-        cooked_recipes=[]
-    )
-    
-    db.add(new_user)
+    if data.recipe_id in user.favorite_recipes:
+        copy_favorites = []
+        copy_favorites = user.favorite_recipes
+        copy_favorites.remove(data.recipe_id)
+        user.favorite_recipes = copy_favorites
+
     db.commit()
-    db.refresh(new_user)
+    db.refresh(user)
 
-    return {"message": "User created successfully", "user_id": new_user.user_id}
+    return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
+
+
+#adjust item quantities after cooking meals
