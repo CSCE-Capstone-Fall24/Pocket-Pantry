@@ -82,9 +82,7 @@ export default function LoginScreen({ setIsAuthenticated, setUserData }) {
         alert("good?");
         setIsAuthenticated(true);
         setUserData(data.user_data);
-        setSignupEmail('');
-        setSignupPassword('');
-        setSignupUsername('');
+        alert("Signed up successfully");
       } else {
         Alert.alert('Error', data.detail || 'Something went wrong. Please try again.');
         alert('Error' + data.detail || 'Something went wrong. Please try again.');

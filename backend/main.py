@@ -522,7 +522,17 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {"message": "User created successfully", "user_id": new_user.user_id}
+    user_data = {
+        "user_id": new_user.user_id,
+        "username": new_user.username,
+        "email": new_user.email,
+        "account_created_at": new_user.account_created_at,
+        "roommates": new_user.roommates,
+        "favorite_recipes": new_user.favorite_recipes,
+        "cooked_recipes": new_user.cooked_recipes,
+    }
+
+    return {"user_data": user_data}
 
 class Reset(BaseModel):
     user_id: int
