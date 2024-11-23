@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserContext } from '@/components/contexts/UserContext';
 import Roommates from '@/components/Roommates';
 import FavoritedRecipes from '@/components/FavoriteRecipes';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
@@ -72,6 +73,7 @@ export default function Profile() {
       <SafeAreaView>
         {/* Header */}
         <View style={styles.header}>
+          <Ionicons style={styles.title} name="person" color="#ff8667" />
           <Text style={styles.title}>Your Profile</Text>
         </View>
 
@@ -163,7 +165,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   title: {
     marginTop: 25,
@@ -251,8 +253,6 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     marginTop: 10,
-    marginLeft: 150,
-    marginRight: 150,
     padding: 10,
     backgroundColor: '#ff8667',
     borderRadius: 5,
