@@ -54,4 +54,3 @@ const styles = StyleSheet.create({
     borderColor: 'lightgray'
   }
 });
-
