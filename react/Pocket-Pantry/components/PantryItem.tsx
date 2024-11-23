@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable }
 import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { Picker } from '@react-native-picker/picker';
 
 type PantryProps = {
   id: number
@@ -14,19 +15,36 @@ type PantryProps = {
 };
 
 const PantryItem = (props: PantryProps) => {
+  {/* Functions - edit window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => setWindowVisible(false);
 
+  {/* Functions - edit quantity */}
   const [quantity, setQuantity] = useState(props.quantity.toString());
   const [tempQuantity, setTempQuantity] = useState(quantity);
 
-  const [isScrollerVisible, setScrollerVisible] = useState(false);
-  const openScroller = () => setScrollerVisible(true);
-  const closeScroller = () => setScrollerVisible(false);
+  {/* Functions - edit unit */}
+  const [unit, setUnit] = useState(props.unit);
+  const [tempUnit, setTempUnit] = useState(unit);
+  const [isUnitPickerVisible, setUnitPickerVisible] = useState(false);
+  const openUnitPicker = () => setUnitPickerVisible(true);
+  const closeUnitPicker = () => setUnitPickerVisible(false);  
+  const units = [
+    "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
+    "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
+    "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
+    "bottles", "packets", "bunches", "leaves", "stones", "sprigs"
+  ];
+
+  {/* Functions - edit expiration date */}
+  const [isExpirationPickerVisible, setExpirationPickerVisible] = useState(false);
+  const openExpirationPicker = () => setExpirationPickerVisible(true);
+  const closeExpirationPicker = () => setExpirationPickerVisible(false);
   const [expiration, setExpiration] = useState(props.expiration);
   const [tempExpiration, setTempExpiration] = useState(expiration);
 
+  {/* Functions - set item as shared */}
   const [shared, setShared] = useState(props.shared);
   const [tempShared, setTempShared] = useState(shared);
   const tempSharedToggle = (index: number) => {
@@ -35,17 +53,20 @@ const PantryItem = (props: PantryProps) => {
     );
   };
 
+  {/* Functions - cancel/save user changes */}
   const handleCancel = () => {
-    setTempQuantity(quantity);
-    setTempExpiration(expiration);
+    setTempQuantity(quantity)
+    setTempUnit(unit)
+    setTempExpiration(expiration)
     setTempShared(shared)
   }
   const handleSave = () => {
     if (tempQuantity != '' && !isNaN(Number(tempQuantity))) {
-      setQuantity(tempQuantity);
+      setQuantity(tempQuantity)
     } else {
-      setTempQuantity(quantity);
+      setTempQuantity(quantity)
     }
+    setUnit(tempUnit)
     setExpiration(tempExpiration);
     setShared(tempShared)
   };
@@ -62,7 +83,7 @@ const PantryItem = (props: PantryProps) => {
           {shared[2] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
           {shared[3] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
         </View>
-        <Text style={styles.itemDetails}>{quantity} {props.unit}   Exp. {expiration.toLocaleDateString()}</Text>
+        <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
       </View>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
@@ -92,36 +113,72 @@ const PantryItem = (props: PantryProps) => {
                 value={tempQuantity}
                 onChangeText={(value) => setTempQuantity(value)}
               />
-              <Text style={styles.windowText}>  {props.unit}</Text>
+              
+              {/* Edit unit */}
+              <TouchableOpacity
+                  style={styles.pickerInput}
+                  onPress={openUnitPicker}
+                >
+                  <Text style={styles.windowText}>{tempUnit}</Text>
+                </TouchableOpacity>
             </View>
+
+            {/* Unit picker */}
+            <Modal
+              transparent={true}
+              animationType="slide"
+              visible={isUnitPickerVisible}
+              onRequestClose={closeUnitPicker}
+            >
+              <Pressable style={styles.pickerSpacer} onPress={closeUnitPicker}></Pressable>
+              <View>
+                <View style={styles.doneButtonContainer}>
+                  <TouchableOpacity onPress={closeUnitPicker}>
+                    <Text style={styles.doneButtonText}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.unitPicker}>
+                  {isUnitPickerVisible && (
+                    <Picker
+                      selectedValue={tempUnit}
+                      onValueChange={(value) => setTempUnit(value)}
+                    >
+                      {units.map((unit, index) => (
+                        <Picker.Item key={index} label={unit} value={unit} />
+                      ))}
+                    </Picker>
+                  )}
+                </View>
+              </View>
+            </Modal>
 
             {/* Edit expiration date */}
             <View style={styles.expirationContainer}>
               <Text style={styles.windowText}>Edit expiration date:  </Text>
               <TouchableOpacity
-                style={styles.expirationInput}
-                onPress={openScroller}
+                style={styles.pickerInput}
+                onPress={openExpirationPicker}
               >
                 <Text style={styles.windowText}>{tempExpiration.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Expiration date scroller */}
+            {/* Expiration date picker */}
             <Modal
               transparent={true}
               animationType="slide"
-              visible={isScrollerVisible}
-              onRequestClose={closeScroller}
+              visible={isExpirationPickerVisible}
+              onRequestClose={closeExpirationPicker}
             >
-              <Pressable style={styles.scrollerSpacer} onPress={closeScroller}></Pressable>
+              <Pressable style={styles.pickerSpacer} onPress={closeExpirationPicker}></Pressable>
               <View>
                 <View style={styles.doneButtonContainer}>
-                  <TouchableOpacity onPress={closeScroller}>
+                  <TouchableOpacity onPress={closeExpirationPicker}>
                     <Text style={styles.doneButtonText}>Done</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.scroller}>
-                  {isScrollerVisible && (
+                <View style={styles.expirationPicker}>
+                  {isExpirationPickerVisible && (
                     <DateTimePicker
                       value={tempExpiration}
                       mode="date"
@@ -182,7 +239,7 @@ const PantryItem = (props: PantryProps) => {
               </View>
             </View>  
 
-            {/* Cancel/save changes */}
+            {/* Cancel/save user changes */}
             <View style={styles.rowAlignment}>
               <TouchableOpacity 
                 style={styles.cancelButton}
@@ -260,6 +317,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quantityInput: {
+    marginRight: 10,
     width: 70,
     borderWidth: 1,
     borderRadius: 8,
@@ -272,16 +330,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  expirationInput: {
+  pickerInput: {
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
     padding: 10,
   },
-  scrollerSpacer: {
+  pickerSpacer: {
     flex: 1,
   },
-  scroller: {
+  unitPicker: {
+    paddingBottom: 30,
+    backgroundColor: 'gray',
+  },
+  expirationPicker: {
     paddingBottom: 30,
     alignItems: 'center',
     backgroundColor: 'gray',

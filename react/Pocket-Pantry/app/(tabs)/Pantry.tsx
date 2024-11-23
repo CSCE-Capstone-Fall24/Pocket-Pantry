@@ -5,35 +5,54 @@ import { BlurView } from 'expo-blur';
 import PantryItem from '@/components/PantryItem';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { Picker } from '@react-native-picker/picker';
 
 export default function Pantry () {
-  const [items, setItems] = useState([
-    { id: 1, name: "Ingredient1", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
-    { id: 2, name: "Ingredient2", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
-    { id: 3, name: "Ingredient3", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
-    { id: 4, name: "Ingredient4", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
-  ]);
+  interface Item {
+    id: number;
+    name: string;
+    quantity: number;
+    unit: string;
+    expiration: Date;
+    shared: boolean[];
+  }
+  const [items, setItems] = useState<Item[]>([]);
 
+  {/* Functions - add item window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
     setWindowVisible(false);
     setNewName('');
     setNewQuantity('');
-    setNewUnit('');
+    setNewUnit('oz');
     setNewExpiration(new Date());
     setNewShared([false, false, false, false]);
   };
 
+  {/* Functions - new item name/quantity */}
   const [newName, setNewName] = useState('');
   const [newQuantity, setNewQuantity] = useState('');
-  const [newUnit, setNewUnit] = useState('');
+
+   {/* Functions - new item unit */}
+  const [newUnit, setNewUnit] = useState('oz');
+  const [isUnitPickerVisible, setUnitPickerVisible] = useState(false);
+  const openUnitPicker = () => setUnitPickerVisible(true);
+  const closeUnitPicker = () => setUnitPickerVisible(false);  
+  const units = [
+    "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
+    "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
+    "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
+    "bottles", "packets", "bunches", "leaves", "stones", "sprigs"
+  ];
   
+   {/* Functions - new item expiration date */}
   const [newExpiration, setNewExpiration] = useState(new Date());
-  const [isScrollerVisible, setScrollerVisible] = useState(false);
-  const openScroller = () => setScrollerVisible(true);
-  const closeScroller = () => setScrollerVisible(false);
+  const [isExpirationPickerVisible, setExpirationPickerVisible] = useState(false);
+  const openExpirationPicker = () => setExpirationPickerVisible(true);
+  const closeExpirationPicker = () => setExpirationPickerVisible(false);
   
+   {/* Functions - set new item as shared */}
   const [newShared, setNewShared] = useState([false, false, false, false]);
   const newSharedToggle = (index: number) => {
     setNewShared((prevState) =>
@@ -41,10 +60,11 @@ export default function Pantry () {
     );
   };
 
+  {/* Functions - add item */}
   const addItem = () => {
     if (isNaN(Number(newQuantity))) {
       Alert.alert('Quantity must be a number.');
-    } else if (newName && newQuantity && newExpiration && newShared) {
+    } else if (newName && newQuantity && newUnit && newExpiration && newShared) {
       const newItem = {
         id: items.length + 1,
         name: newName,
@@ -104,38 +124,72 @@ export default function Pantry () {
                   value={newQuantity}
                   onChangeText={(value) => setNewQuantity(value)}
                 />
+
+                {/* Input unit */}
+                <TouchableOpacity
+                  style={styles.pickerInput}
+                  onPress={openUnitPicker}
+                >
+                  <Text style={styles.windowText}>{newUnit}</Text>
+                </TouchableOpacity>
               </View>
 
-              {/* Input unit */}
+              {/* Unit picker */}
+              <Modal
+                transparent={true}
+                animationType="slide"
+                visible={isUnitPickerVisible}
+                onRequestClose={closeUnitPicker}
+              >
+                <Pressable style={styles.pickerSpacer} onPress={closeUnitPicker}></Pressable>
+                <View>
+                  <View style={styles.doneButtonContainer}>
+                    <TouchableOpacity onPress={closeUnitPicker}>
+                      <Text style={styles.doneButtonText}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.unitPicker}>
+                    {isUnitPickerVisible && (
+                      <Picker
+                        selectedValue={newUnit}
+                        onValueChange={(newUnit) => setNewUnit(newUnit)}
+                      >
+                        {units.map((unit, index) => (
+                          <Picker.Item key={index} label={unit} value={unit} />
+                        ))}
+                      </Picker>
+                    )}
+                  </View>
+                </View>
+              </Modal>
               
-
               {/* Input expiration date */}
               <View style={styles.expirationContainer}>
                 <Text style={styles.windowText}>Expiration date:  </Text>
                 <TouchableOpacity
-                  style={styles.expirationInput}
-                  onPress={openScroller}
+                  style={styles.pickerInput}
+                  onPress={openExpirationPicker}
                 >
                   <Text style={styles.windowText}>{newExpiration.toLocaleDateString()}</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Expiration date scroller */}
+              {/* Expiration date picker */}
               <Modal
                 transparent={true}
                 animationType="slide"
-                visible={isScrollerVisible}
-                onRequestClose={closeScroller}
+                visible={isExpirationPickerVisible}
+                onRequestClose={closeExpirationPicker}
               >
-                <Pressable style={styles.scrollerSpacer} onPress={closeScroller}></Pressable>
+                <Pressable style={styles.pickerSpacer} onPress={closeExpirationPicker}></Pressable>
                 <View>
                   <View style={styles.doneButtonContainer}>
-                    <TouchableOpacity onPress={closeScroller}>
+                    <TouchableOpacity onPress={closeExpirationPicker}>
                       <Text style={styles.doneButtonText}>Done</Text>
                     </TouchableOpacity>
                   </View>
-                  <View style={styles.scroller}>
-                    {isScrollerVisible && (
+                  <View style={styles.expirationPicker}>
+                    {isExpirationPickerVisible && (
                       <DateTimePicker
                         value={newExpiration}
                         mode="date"
@@ -303,6 +357,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quantityInput: {
+    marginRight: 10,
     width: 70,
     borderWidth: 1,
     borderRadius: 8,
@@ -315,16 +370,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  expirationInput: {
+  pickerInput: {
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
     padding: 10,
   },
-  scrollerSpacer: {
+  pickerSpacer: {
     flex: 1,
   },
-  scroller: {
+  unitPicker: {
+    paddingBottom: 30,
+    backgroundColor: 'gray',
+  },
+  expirationPicker: {
     paddingBottom: 30,
     alignItems: 'center',
     backgroundColor: 'gray',
