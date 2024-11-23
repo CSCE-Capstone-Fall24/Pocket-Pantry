@@ -78,6 +78,7 @@ export default function Meal () {
             style={styles.mealSearchBarInner}
             placeholder = "Search for meals"
             placeholderTextColor = "black"
+            onChangeText={(value) => setSearch(value)}
           />
           <Ionicons name="search-outline" size={40} color="#ff8667"/>
         </View>
