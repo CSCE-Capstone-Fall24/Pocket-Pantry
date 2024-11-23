@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import or_, and_, any_, cast, Integer, func
+from sqlalchemy import or_, and_, any_, not_, cast, Integer, func
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
 
+from itertools import combinations
 from datetime import datetime
 import copy
 
@@ -63,6 +64,28 @@ def convert_from_grams(quantity, unit_name):
         return quantity / GRAMS_CONVERSION[unit_name]
     raise ValueError(f"Unit '{unit_name}' is not recognized")
 
+def convert_list_to_grams(quantities, unit_names):
+    if len(quantities) != len(unit_names):
+        raise ValueError("The number of quantities must match the number of unit names")
+    converted_quantities = []
+    for quantity, unit_name in zip(quantities, unit_names):
+        if unit_name in GRAMS_CONVERSION:
+            converted_quantities.append(quantity * GRAMS_CONVERSION[unit_name])
+        else:
+            raise ValueError(f"Unit '{unit_name}' is not recognized")
+    return converted_quantities
+
+def convert_list_from_grams(quantities, unit_names):
+    if len(quantities) != len(unit_names):
+        raise ValueError("The number of quantities must match the number of unit names")
+    converted_quantities = []
+    for quantity, unit_name in zip(quantities, unit_names):
+        if unit_name in GRAMS_CONVERSION:
+            converted_quantities.append(quantity / GRAMS_CONVERSION[unit_name])
+        else:
+            raise ValueError(f"Unit '{unit_name}' is not recognized")
+    return converted_quantities
+    
 
 @app.get("/")
 async def root():
@@ -749,19 +772,119 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
 #add quantity considerations for recipe searching
 #complete logic for shopping list generation
 
+
+#####################################################################################################################
 #Generate Shopping List
 @app.post("/shopping_list/")
 async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
 
-    #fetch planned meals
-    planned_m = db.query(PlannedMeals).filter(PlannedMeals.user_id == user_id).all()
-    """
-    or_(
-            Pantry.user_id.in_(user_list),
+    #fetch planned meals of the individual user and those that are shared with them
+    planned_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
+        or_(
+            PlannedMeals.user_id == user_id,
             and_(
-                Pantry.is_shared == True,
-                Pantry.shared_with.op('&&')(user_list)
+                PlannedMeals.is_shared == True,
+                user_id == any_(PlannedMeals.shared_with)
             )
         )
-    """
+    ).all()
+
+    user_matches_by_meal = []
+    unique_users = set()  # Use a set to avoid duplicates automatically
+
+    for meal in planned_meals:
+        user_list = []
+        user_list.append(meal.user_id)
+        user_list.extend(meal.shared_with)
+        user_list = sorted(user_list)  # Sort for consistency in pairing
+        user_matches_by_meal.append(user_list)
+
+    user_matches_unique = []
+
+    for user_match in user_matches_by_meal:
+        if user_match not in user_matches_unique:
+            user_matches_unique.append(user_match)
+
+    # Find all unique individual users
+    for user_match in user_matches_unique:
+        unique_users.update(user_match)  # Add all users from each list to the set
+
+    # Convert to a sorted list if needed
+    unique_users = sorted(unique_users)
+
+    # Find all 2-pair connections
+    pair_connections = set()  # Use a set to avoid duplicate pairs
+
+    for user_match in user_matches_unique:
+        # Generate all 2-pair combinations
+        pairs = combinations(user_match, 2)  # Generate all 2-pair combinations
+        pair_connections.update(pairs)  # Add pairs to the set
+
+    # Convert the set to a list if needed
+    pair_connections = list(pair_connections)
+    unique_users = list(unique_users)
+
+    #fetches the planned meal info (meal_id, users oon meal, ingredient names, quantities, units) and scales/converts info
+    meal_info = []
+
+    for meal in planned_meals:
+        meal_id = meal.meal_id
+        users = []
+        users.append(meal.user_id)
+        users.append(meal.shared_with)
+        users = users.sort() 
+        #query recipe table (recipes_good for meal info)
+        recipe_details = db.query(Recipes).filter(Recipes.recipe_id == meal.recipe_id).first()
+        ingredient_names = recipe_details.ingredients
+        quantities = recipe_details.ingredient_quantities
+        quantities = [num * (meal.n_servings/recipe_details.serving_size) for num in quantities]
+        units = recipe_details.ingredient_units
+        quantities = convert_list_to_grams(quantities, units)
+        indv_meal_info = [meal_id, users, ingredient_names, quantities, units]
+        meal_info.append(indv_meal_info)
+
+    #fetches the proper user inventory sets for calculating the shopping list
+    inventory_info = []
+
+    #individual pantries info gathering
+    for user in unique_users:
+        users = []
+        users.append(user)
+        inv = db.query(Pantry).filter(Pantry.user_id == user).all()
+        ingredient_names = [pantry_item.food_name for pantry_item in inv]
+        quantities = [pantry_item.quantity for pantry_item in inv]
+        units = [pantry_item.unit for pantry_item in inv]
+        quantities = convert_list_to_grams(quantities, units)
+        pantry_info = [users, ingredient_names, quantities, units]
+        inventory_info.append(pantry_info)
+
+
+    #pair pantries info gathering
+    for pair in pair_connections:
+        pantry_items = db.query(Pantry).filter(
+            and_(
+                # Condition 1: Pantry.user_id is not in unique_users
+                not_(Pantry.user_id.in_(unique_users)),
+
+                # Condition 2: Both IDs in the pair are in Pantry.shared_with, and no other IDs from unique_users (except user_id) are in Pantry.shared_with
+                Pantry.shared_with.contains(pair),
+                not_(
+                    or_(
+                        *(user for user in unique_users if user != user_id and user not in pair)
+                    )
+                )
+            )
+        ).all()
+        ingredient_names = [pantry_item.food_name for pantry_item in pantry_items]
+        quantities = [pantry_item.quantity for pantry_item in pantry_items]
+        units = [pantry_item.unit for pantry_item in pantry_items]
+        quantities = convert_list_to_grams(quantities, units)
+        pantry_info = [pair, ingredient_names, quantities, units]
+        inventory_info.append(pantry_info)
+
+    for user in unique_users:
+        inv = db.query(Pantry).filter(
+            
+        )
+
     return
