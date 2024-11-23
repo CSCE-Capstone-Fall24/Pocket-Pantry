@@ -1,24 +1,31 @@
 import React, { useState } from 'react'
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { BlurView } from 'expo-blur';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
-type PantryProps = {
+type ShoppingProps = {
   name: string
   quantity: number
 }
 
-const ShoppingItem = (props: PantryProps) => {
+const ShoppingItem = (props: ShoppingProps) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
 
   return (
-    <View>
+    <View style={styles.container}>
 
-      {/* Touch item to edit */}
-      <TouchableOpacity style={styles.itemButton} onPress={openModal}>
-          <Text style={styles.itemButtonText}>{props.name}</Text>
-          <Text style={styles.itemButtonText}>{props.quantity}</Text>
+      {/* Item information */}
+      <View style={styles.itemContainer}>
+        <Text style={styles.itemName}>{props.name}</Text>
+        <View style={styles.itemDetailsContainer}>
+          <Text style={styles.itemDetailsText}>{props.quantity} lbs   Exp. 11/30/24</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.editButton} onPress={openModal}>
+        <Ionicons name="pencil" size={26} color="gray"/>
       </TouchableOpacity>
 
       {/* Pop-up edit window */}
@@ -28,12 +35,10 @@ const ShoppingItem = (props: PantryProps) => {
         visible={isModalVisible}
         onRequestClose={closeModal}
       >
-        {/* Background blur */}
         <BlurView
           style={StyleSheet.absoluteFill}
           intensity={20}
         />
-        {/* Window content */}
         <View style={styles.modalContainerAlignment}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalText}>Edit Ingredient</Text>
@@ -49,41 +54,54 @@ const ShoppingItem = (props: PantryProps) => {
 }
 
 const styles = StyleSheet.create({
-    itemButton: {
-      paddingVertical: 12,
-      flexDirection: 'row',
-      justifyContent: 'space-between'
-    },
-    itemButtonText: {
-      marginHorizontal: 25,
-      fontSize: 20,
-    },
-    modalContainerAlignment: {
-      flex: 1,
-      justifyContent: 'center',
-    },
-    modalContainer: {
-      marginHorizontal: 50,
-      padding: 20,
-      backgroundColor: 'white',
-      borderRadius: 10,
-      alignItems: 'center',
-    },
-    modalText: {
-      fontSize: 18,
-      marginBottom: 20,
-    },
-    modalButton: {
-      backgroundColor: '#ff8667',
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 10,
-    },
-    modalButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  itemContainer: {
+    marginVertical: 10,
+    marginLeft: 25,
+  },
+  itemName: {
+    marginBottom: 5,
+    fontSize: 20,
+  },
+  itemDetailsContainer: {
+    flexDirection: 'row',
+  },
+  itemDetailsText: {
+    color: 'gray',
+  },
+  editButton: {
+    marginRight: 5,
+    padding: 20,
+  },
+  modalContainerAlignment: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modalContainer: {
+    marginHorizontal: 50,
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  modalText: {
+    marginBottom: 20,
+    fontSize: 18,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: '#ff8667',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default ShoppingItem
