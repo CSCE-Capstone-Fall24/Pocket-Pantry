@@ -1,17 +1,20 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Alert } from 'react-native'
 import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Picker } from '@react-native-picker/picker';
 
 type PantryProps = {
-  id: number
-  name: string
-  quantity: number
-  unit: string
-  expiration: Date
-  shared: boolean[]
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  expiration: Date;
+  shared: boolean[];
+  roommates: string[];
+  deleteItem: (id: string) => void;
 };
 
 const PantryItem = (props: PantryProps) => {
@@ -34,7 +37,7 @@ const PantryItem = (props: PantryProps) => {
     "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
     "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
     "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
-    "bottles", "packets", "bunches", "leaves", "stones", "sprigs"
+    "bottles", "packets", "bunches", "leaves", "stones", "sprigs",
   ];
 
   {/* Functions - edit expiration date */}
@@ -47,28 +50,54 @@ const PantryItem = (props: PantryProps) => {
   {/* Functions - set item as shared */}
   const [shared, setShared] = useState(props.shared);
   const [tempShared, setTempShared] = useState(shared);
-  const tempSharedToggle = (index: number) => {
-    setTempShared((prevState) =>
-      prevState.map((item, i) => (i === index ? !item : item))
-    );
+  const sharedToggle = (index: number) => {
+    setTempShared((prevState) => {
+      const updatedState = [...prevState];
+      updatedState[index] = !updatedState[index];
+      return updatedState;
+    });
   };
 
   {/* Functions - cancel/save user changes */}
   const handleCancel = () => {
-    setTempQuantity(quantity)
-    setTempUnit(unit)
-    setTempExpiration(expiration)
-    setTempShared(shared)
+    setTempQuantity(quantity);
+    setTempUnit(unit);
+    setTempExpiration(expiration);
+    setTempShared(shared);
   }
   const handleSave = () => {
-    if (tempQuantity != '' && !isNaN(Number(tempQuantity))) {
-      setQuantity(tempQuantity)
+    if (isNaN(Number(tempQuantity))) {
+      Alert.alert('Please enter a valid quantity.');
+    } else if (tempQuantity != '' && Number(tempQuantity) <= 0) {
+      props.deleteItem(props.id);
     } else {
-      setTempQuantity(quantity)
+      if (tempQuantity != '') {
+        setQuantity(tempQuantity);
+      } else {
+        setTempQuantity(quantity);
+      }
+      setUnit(tempUnit);
+      setExpiration(tempExpiration);
+      setShared(tempShared);
+      closeWindow();
     }
-    setUnit(tempUnit)
-    setExpiration(tempExpiration);
-    setShared(tempShared)
+  };
+
+  {/* Functions - confirm choice to delete item */}
+  const confirmDelete = () => {
+    Alert.alert(
+      'Delete item?',
+      ``,
+      [{
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'OK',
+        onPress: () => props.deleteItem(props.id),
+      }],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -97,17 +126,15 @@ const PantryItem = (props: PantryProps) => {
         visible={isWindowVisible}
         onRequestClose={closeWindow}
       >
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          intensity={20}
-        />
+        <BlurView style={StyleSheet.absoluteFill} intensity={20}/>
         <View style={styles.windowAlignment}>
-          <View style={styles.window}>
+          <View style={styles.windowContainer}>
             <Text style={styles.windowTitle}>{props.name}</Text>
+            <Text style={styles.windowSubtitle}>{props.category}</Text>
             
             {/* Edit quantity */}
-            <View style={styles.quantityContainer}>
-              <Text style={styles.windowText}>Edit quantity:  </Text>
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldText}>Edit quantity:  </Text>
               <TextInput
                 style={styles.quantityInput}
                 value={tempQuantity}
@@ -115,11 +142,8 @@ const PantryItem = (props: PantryProps) => {
               />
               
               {/* Edit unit */}
-              <TouchableOpacity
-                  style={styles.pickerInput}
-                  onPress={openUnitPicker}
-                >
-                  <Text style={styles.windowText}>{tempUnit}</Text>
+              <TouchableOpacity style={styles.pickerInput} onPress={openUnitPicker}>
+                  <Text style={styles.fieldText}>{tempUnit}</Text>
                 </TouchableOpacity>
             </View>
 
@@ -137,15 +161,10 @@ const PantryItem = (props: PantryProps) => {
                     <Text style={styles.doneButtonText}>Done</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.unitPicker}>
+                <View style={styles.pickerA}>
                   {isUnitPickerVisible && (
-                    <Picker
-                      selectedValue={tempUnit}
-                      onValueChange={(value) => setTempUnit(value)}
-                    >
-                      {units.map((unit, index) => (
-                        <Picker.Item key={index} label={unit} value={unit} />
-                      ))}
+                    <Picker selectedValue={tempUnit} onValueChange={(value) => setTempUnit(value)}>
+                      {units.map((unit, index) => (<Picker.Item key={index} label={unit} value={unit}/>))}
                     </Picker>
                   )}
                 </View>
@@ -153,13 +172,10 @@ const PantryItem = (props: PantryProps) => {
             </Modal>
 
             {/* Edit expiration date */}
-            <View style={styles.expirationContainer}>
-              <Text style={styles.windowText}>Edit expiration date:  </Text>
-              <TouchableOpacity
-                style={styles.pickerInput}
-                onPress={openExpirationPicker}
-              >
-                <Text style={styles.windowText}>{tempExpiration.toLocaleDateString()}</Text>
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldText}>Edit expiration date:  </Text>
+              <TouchableOpacity style={styles.pickerInput} onPress={openExpirationPicker}>
+                <Text style={styles.fieldText}>{tempExpiration.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
 
@@ -177,15 +193,13 @@ const PantryItem = (props: PantryProps) => {
                     <Text style={styles.doneButtonText}>Done</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.expirationPicker}>
+                <View style={styles.pickerB}>
                   {isExpirationPickerVisible && (
                     <DateTimePicker
                       value={tempExpiration}
                       mode="date"
                       display="spinner"
-                      onChange={(event, date) => {
-                        if (date) setTempExpiration(date);
-                      }}
+                      onChange={(event, date) => {if (date) setTempExpiration(date);}}
                     />
                   )}
                 </View>
@@ -195,8 +209,8 @@ const PantryItem = (props: PantryProps) => {
             {/* Set item as shared */}
             <View style={styles.sharedSpacer}>
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user1:  </Text>
-                <Pressable onPress={() => tempSharedToggle(0)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[0]}:  </Text>
+                <Pressable onPress={() => sharedToggle(0)}>
                   {tempShared[0] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
                   ) : (
@@ -206,8 +220,8 @@ const PantryItem = (props: PantryProps) => {
               </View>
 
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user2:  </Text>
-                <Pressable onPress={() => tempSharedToggle(1)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[1]}:  </Text>
+                <Pressable onPress={() => sharedToggle(1)}>
                   {tempShared[1] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
                   ) : (
@@ -217,8 +231,8 @@ const PantryItem = (props: PantryProps) => {
               </View>
 
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user3:  </Text>
-                <Pressable onPress={() => tempSharedToggle(2)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[2]}:  </Text>
+                <Pressable onPress={() => sharedToggle(2)}>
                   {tempShared[2] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
                   ) : (
@@ -228,8 +242,8 @@ const PantryItem = (props: PantryProps) => {
               </View>
 
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user4:  </Text>
-                <Pressable onPress={() => tempSharedToggle(3)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[3]}:  </Text>
+                <Pressable onPress={() => sharedToggle(3)}>
                   {tempShared[3] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
                   ) : (
@@ -241,26 +255,19 @@ const PantryItem = (props: PantryProps) => {
 
             {/* Cancel/save user changes */}
             <View style={styles.rowAlignment}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => {
-                  closeWindow();
-                  handleCancel();
-                }}
-              >
+              <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); handleCancel(); }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={() => {
-                  closeWindow();
-                  handleSave();
-                }}
-              >
+              <TouchableOpacity style={styles.saveButton} onPress={() => { handleSave(); }}>
                 <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Delete item */}
+            <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
+              <Ionicons name="trash" size={32} color="#ff5555" />
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -296,7 +303,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  window: {
+  windowContainer: {
     marginHorizontal: 50,
     borderRadius: 8,
     padding: 35,
@@ -306,13 +313,18 @@ const styles = StyleSheet.create({
   windowTitle: {
     fontSize: 24,
     fontWeight: 600,
-    marginBottom: 30,
+    marginBottom: 15,
   },
-  windowText: {
+  windowSubtitle: {
+    fontWeight: 600,
+    marginBottom: 35,
+    color: 'gray',
+  },
+  fieldText: {
     fontSize: 16,
   },
-  quantityContainer: {
-    marginBottom: 25,
+  fieldContainer: {
+    marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -325,25 +337,21 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
   },
-  expirationContainer: {
-    marginBottom: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   pickerInput: {
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
     padding: 10,
+    backgroundColor: '#f0f0f0',
   },
   pickerSpacer: {
     flex: 1,
   },
-  unitPicker: {
+  pickerA: {
     paddingBottom: 30,
     backgroundColor: 'gray',
   },
-  expirationPicker: {
+  pickerB: {
     paddingBottom: 30,
     alignItems: 'center',
     backgroundColor: 'gray',
@@ -361,13 +369,13 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   sharedSpacer: {
-    marginBottom: 15,
+    marginBottom: 12,
     alignItems: 'center',
   },
   sharedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   cancelButton: {
     marginRight: 35,
@@ -398,6 +406,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  deleteButton: {
+    marginTop: 35,
+  }
 });
 
 export default PantryItem
