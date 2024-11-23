@@ -7,11 +7,12 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 type MealProps = {
   id: number
   name: string
-  quantity: number // Change to servings
-  unit: string // Probably remove this
-  expiration: Date // Change to just date; this is for the day we plan to cook the meal
+  servings: number // Change to servings (done)
+  unit: string // Probably remove this (I don't think we should)
+  date: Date // Change to just date; this is for the day we plan to cook the meal (done)
   shared: boolean[]
   // Add an ingredients array; probably gonna be a string array
+  //ingredients: string[]
 };
 
 const MealItem = (props: MealProps) => {
@@ -19,14 +20,14 @@ const MealItem = (props: MealProps) => {
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => setWindowVisible(false);
 
-  const [quantity, setQuantity] = useState(props.quantity.toString());
-  const [tempQuantity, setTempQuantity] = useState(quantity);
+  const [servings, setServings] = useState(props.servings.toString());
+  const [tempServings, setTempServings] = useState(servings);
 
   const [isScrollerVisible, setScrollerVisible] = useState(false);
   const openScroller = () => setScrollerVisible(true);
   const closeScroller = () => setScrollerVisible(false);
-  const [expiration, setExpiration] = useState(props.expiration);
-  const [tempExpiration, setTempExpiration] = useState(expiration);
+  const [date, setDate] = useState(props.date);
+  const [tempDate, setTempDate] = useState(date);
 
   const [shared, setShared] = useState(props.shared);
   const [tempShared, setTempShared] = useState(shared);
@@ -37,17 +38,17 @@ const MealItem = (props: MealProps) => {
   };
 
   const handleCancel = () => {
-    setTempQuantity(quantity);
-    setTempExpiration(expiration);
+    setTempServings(servings);
+    setTempDate(date);
     setTempShared(shared)
   }
   const handleSave = () => {
-    if (tempQuantity != '' && !isNaN(Number(tempQuantity))) {
-      setQuantity(tempQuantity);
+    if (tempServings != '' && !isNaN(Number(tempServings))) {
+      setServings(tempServings);
     } else {
-      setTempQuantity(quantity);
+      setTempServings(servings);
     }
-    setExpiration(tempExpiration);
+    setDate(tempDate);
     setShared(tempShared)
   };
 
@@ -63,7 +64,7 @@ const MealItem = (props: MealProps) => {
           {shared[2] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
           {shared[3] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
         </View>
-        <Text style={styles.itemDetails}>{quantity} {props.unit}   Exp. {expiration.toLocaleDateString()}</Text>
+        <Text style={styles.itemDetails}>{servings} {props.unit}   Cook by: {date.toLocaleDateString()}</Text>
       </View>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
@@ -85,29 +86,29 @@ const MealItem = (props: MealProps) => {
           <View style={styles.window}>
             <Text style={styles.windowTitle}>{props.name}</Text>
             
-            {/* Edit quantity */}
-            <View style={styles.quantityContainer}>
-              <Text style={styles.windowText}>Edit quantity:  </Text>
+            {/* Edit servings */}
+            <View style={styles.servingsContainer}>
+              <Text style={styles.windowText}>Edit servings:  </Text>
               <TextInput
-                style={styles.quantityInput}
-                value={tempQuantity}
-                onChangeText={(value) => setTempQuantity(value)}
+                style={styles.servingsInput}
+                value={tempServings}
+                onChangeText={(value) => setTempServings(value)}
               />
               <Text style={styles.windowText}>  {props.unit}</Text>
             </View>
 
-            {/* Edit expiration date */}
-            <View style={styles.expirationContainer}>
-              <Text style={styles.windowText}>Edit expiration date:  </Text>
+            {/* Edit date to cook */}
+            <View style={styles.dateContainer}>
+              <Text style={styles.windowText}>Edit date to cook meal:  </Text>
               <TouchableOpacity
-                style={styles.expirationInput}
+                style={styles.dateInput}
                 onPress={openScroller}
               >
-                <Text style={styles.windowText}>{tempExpiration.toLocaleDateString()}</Text>
+                <Text style={styles.windowText}>{tempDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Expiration date scroller */}
+            {/* Date to cook scroller */}
             <Modal
               transparent={true}
               animationType="slide"
@@ -124,11 +125,11 @@ const MealItem = (props: MealProps) => {
                 <View style={styles.scroller}>
                   {isScrollerVisible && (
                     <DateTimePicker
-                      value={tempExpiration}
+                      value={tempDate}
                       mode="date"
                       display="spinner"
                       onChange={(event, date) => {
-                        if (date) setTempExpiration(date);
+                        if (date) setTempDate(date);
                       }}
                     />
                   )}
@@ -255,12 +256,12 @@ const styles = StyleSheet.create({
   windowText: {
     fontSize: 16,
   },
-  quantityContainer: {
+  servingsContainer: {
     marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  quantityInput: {
+  servingsInput: {
     width: 70,
     borderWidth: 1,
     borderRadius: 8,
@@ -268,12 +269,12 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
   },
-  expirationContainer: {
+  dateContainer: {
     marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  expirationInput: {
+  dateInput: {
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',

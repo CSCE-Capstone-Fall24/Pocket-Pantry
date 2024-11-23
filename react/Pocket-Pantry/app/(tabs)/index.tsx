@@ -8,10 +8,10 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 
 export default function Meal () {
   const [items, setItems] = useState([
-    { id: 1, name: "Meal1", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
-    { id: 2, name: "Meal2", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
-    { id: 3, name: "Meal3", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
-    { id: 4, name: "Meal4", quantity: 10, unit: "lbs", expiration: new Date(), shared: [false, false, false, false] },
+    { id: 1, name: "Meal1", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
+    { id: 2, name: "Meal2", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
+    { id: 3, name: "Meal3", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
+    { id: 4, name: "Meal4", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
   ]);
 
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -19,17 +19,17 @@ export default function Meal () {
   const closeWindow = () => {
     setWindowVisible(false);
     setNewName('');
-    setNewQuantity('');
+    setNewServings('');
     setNewUnit('');
-    setNewExpiration(new Date());
+    setNewDate(new Date());
     setNewShared([false, false, false, false]);
   };
 
   const [newName, setNewName] = useState('');
-  const [newQuantity, setNewQuantity] = useState('');
+  const [newServings, setNewServings] = useState('');
   const [newUnit, setNewUnit] = useState('');
   
-  const [newExpiration, setNewExpiration] = useState(new Date());
+  const [newDate, setNewDate] = useState(new Date());
   const [isScrollerVisible, setScrollerVisible] = useState(false);
   const openScroller = () => setScrollerVisible(true);
   const closeScroller = () => setScrollerVisible(false);
@@ -42,15 +42,15 @@ export default function Meal () {
   };
 
   const addItem = () => {
-    if (isNaN(Number(newQuantity))) {
-      Alert.alert('Quantity must be a number.');
-    } else if (newName && newQuantity && newExpiration && newShared) {
+    if (isNaN(Number(newServings))) {
+      Alert.alert('Servings must be a number.');
+    } else if (newName && newServings && newDate && newShared) {
       const newItem = {
         id: items.length + 1,
         name: newName,
-        quantity: Number(newQuantity),
+        servings: Number(newServings),
         unit: newUnit,
-        expiration: newExpiration,
+        date: newDate,
         shared: newShared,
       };
       setItems([...items, newItem]);
@@ -69,8 +69,8 @@ export default function Meal () {
           Meal Plan
           </Text>
           <Text style={styles.category}>
-            (this is Nick's branch)
-          </Text>
+            (this is Jacob's branch)
+            </Text>
           <TouchableOpacity style={styles.addButton} onPress={openWindow}>
             <Ionicons name="add-outline" size={40} color="white"/>
           </TouchableOpacity>
@@ -101,31 +101,31 @@ export default function Meal () {
                 />
               </View>
 
-              {/* Input quantity */}
-              <View style={styles.quantityContainer}>
-                <Text style={styles.windowText}>Quantity:  </Text>
+              {/* Input servings */}
+              <View style={styles.servingsContainer}>
+                <Text style={styles.windowText}>Servings:  </Text>
                 <TextInput
-                  style={styles.quantityInput}
-                  value={newQuantity}
-                  onChangeText={(value) => setNewQuantity(value)}
+                  style={styles.servingsInput}
+                  value={newServings}
+                  onChangeText={(value) => setNewServings(value)}
                 />
               </View>
 
               {/* Input unit */}
               
 
-              {/* Input expiration date */}
-              <View style={styles.expirationContainer}>
-                <Text style={styles.windowText}>Expiration date:  </Text>
+              {/* Input date to cook meal*/}
+              <View style={styles.dateContainer}>
+                <Text style={styles.windowText}>Date to cook meal:  </Text>
                 <TouchableOpacity
-                  style={styles.expirationInput}
+                  style={styles.dateInput}
                   onPress={openScroller}
                 >
-                  <Text style={styles.windowText}>{newExpiration.toLocaleDateString()}</Text>
+                  <Text style={styles.windowText}>{newDate.toLocaleDateString()}</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Expiration date scroller */}
+              {/* Cook date scroller */}
               <Modal
                 transparent={true}
                 animationType="slide"
@@ -142,11 +142,11 @@ export default function Meal () {
                   <View style={styles.scroller}>
                     {isScrollerVisible && (
                       <DateTimePicker
-                        value={newExpiration}
+                        value={newDate}
                         mode="date"
                         display="spinner"
                         onChange={(event, date) => {
-                          if (date) setNewExpiration(date);
+                          if (date) setNewDate(date);
                         }}
                       />
                     )}
@@ -229,7 +229,7 @@ export default function Meal () {
         {items.map((item) => (
           <View key={item.id}>
             <View style={styles.line}></View>
-            <MealItem id={item.id} name={item.name} quantity={item.quantity} unit={item.unit} expiration={item.expiration} shared={item.shared}/>
+            <MealItem id={item.id} name={item.name} servings={item.servings} unit={item.unit} date={item.date} shared={item.shared}/>
           </View>
         ))}
         
@@ -302,12 +302,12 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
   },
-  quantityContainer: {
+  servingsContainer: {
     marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  quantityInput: {
+  servingsInput: {
     width: 70,
     borderWidth: 1,
     borderRadius: 8,
@@ -315,12 +315,12 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
   },
-  expirationContainer: {
+  dateContainer: {
     marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  expirationInput: {
+  dateInput: {
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
