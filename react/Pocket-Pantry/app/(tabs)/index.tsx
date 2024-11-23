@@ -5,13 +5,22 @@ import { BlurView } from 'expo-blur';
 import MealItem from '@/components/MealItem';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
+import Roommates from '@/components/Roommates';
 
 export default function Meal () {
   const [items, setItems] = useState([
-    { id: 1, name: "Meal1", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
-    { id: 2, name: "Meal2", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
-    { id: 3, name: "Meal3", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
-    { id: 4, name: "Meal4", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
+    { id: 1, name: "Meal1", servings: 1, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] },
+    { id: 2, name: "Meal2", servings: 2, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] },
+    { id: 3, name: "Meal3", servings: 3, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] },
+    { id: 4, name: "Meal4", servings: 4, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] }
   ]);
 
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -20,14 +29,12 @@ export default function Meal () {
     setWindowVisible(false);
     setNewName('');
     setNewServings('');
-    setNewUnit('');
     setNewDate(new Date());
     setNewShared([false, false, false, false]);
   };
 
   const [newName, setNewName] = useState('');
   const [newServings, setNewServings] = useState('');
-  const [newUnit, setNewUnit] = useState('');
   
   const [newDate, setNewDate] = useState(new Date());
   const [isScrollerVisible, setScrollerVisible] = useState(false);
@@ -49,11 +56,10 @@ export default function Meal () {
         id: items.length + 1,
         name: newName,
         servings: Number(newServings),
-        unit: newUnit,
         date: newDate,
         shared: newShared,
       };
-      setItems([...items, newItem]);
+      //setItems([...items, newItem]);
       closeWindow();
     } else {
       Alert.alert('Please fill out all fields.');
@@ -66,10 +72,10 @@ export default function Meal () {
 
         <View style={styles.header}>
           <Text style={styles.title}>
-          Meal Plan
+            Meal Plan
           </Text>
           <Text style={styles.category}>
-            (this is Jacob's branch)
+            (this is Nick's branch)
             </Text>
           <TouchableOpacity style={styles.addButton} onPress={openWindow}>
             <Ionicons name="add-outline" size={40} color="white"/>
@@ -229,7 +235,9 @@ export default function Meal () {
         {items.map((item) => (
           <View key={item.id}>
             <View style={styles.line}></View>
-            <MealItem id={item.id} name={item.name} servings={item.servings} unit={item.unit} date={item.date} shared={item.shared}/>
+            <MealItem id={item.id} name={item.name} servings={item.servings} date={item.date}
+              shared={item.shared} roommates={item.roommates}
+              ingredients={item.ingredients} ingredient_units={item.ingredient_units} ingredient_quantities={item.ingredient_quantities}/>
           </View>
         ))}
         

@@ -7,12 +7,13 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 type MealProps = {
   id: number
   name: string
-  servings: number // Change to servings (done)
-  unit: string // Probably remove this (I don't think we should)
-  date: Date // Change to just date; this is for the day we plan to cook the meal (done)
+  servings: number
+  date: Date
   shared: boolean[]
-  // Add an ingredients array; probably gonna be a string array
-  //ingredients: string[]
+  roommates: string[]
+  ingredients: string[]
+  ingredient_units: string[]
+  ingredient_quantities: number[]
 };
 
 const MealItem = (props: MealProps) => {
@@ -57,6 +58,9 @@ const MealItem = (props: MealProps) => {
 
       {/* Displayed item information */}
       <View style={styles.itemContainer}>
+        <Text style={styles.dateContainer}>
+          {date.toLocaleDateString()}
+        </Text>
         <View style={styles.rowAlignment}>
           <Text style={styles.itemName}>{props.name}</Text>
           {shared[0] ? (<Text>  <Ionicons name="ellipse" size={13} color="#e167a4"/></Text>) : (null)}
@@ -64,7 +68,6 @@ const MealItem = (props: MealProps) => {
           {shared[2] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
           {shared[3] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
         </View>
-        <Text style={styles.itemDetails}>{servings} {props.unit}   Cook by: {date.toLocaleDateString()}</Text>
       </View>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
@@ -94,7 +97,6 @@ const MealItem = (props: MealProps) => {
                 value={tempServings}
                 onChangeText={(value) => setTempServings(value)}
               />
-              <Text style={styles.windowText}>  {props.unit}</Text>
             </View>
 
             {/* Edit date to cook */}
@@ -270,9 +272,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dateContainer: {
-    marginBottom: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    color: 'gray',
+    fontSize: 24,
+    fontWeight: 600,
   },
   dateInput: {
     borderWidth: 1,
