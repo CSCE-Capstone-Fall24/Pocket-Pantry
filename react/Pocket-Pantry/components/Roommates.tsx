@@ -25,7 +25,7 @@ export default function Roommates() {
 
   const handleAddRoommate = async () => {
     try {
-      const response = await fetch(`${API_URL}/add_roommate`, {
+      const response = await fetch(`${API_URL}/add_roommate/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,8 +54,9 @@ export default function Roommates() {
   };
 
   const handleRemoveRoommate = async (roommateId: number) => {
+    alert("trying to remove roommate");
     try {
-      const response = await fetch(`${API_URL}/remove_roommate`, {
+      const response = await fetch(`${API_URL}/remove_roommate/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,16 +75,16 @@ export default function Roommates() {
         roommates: updatedRoommates.updated_roommates,
       }));
 
-      Alert.alert('Success', 'Roommate removed successfully!');
+      alert('Success, Roommate removed successfully!');
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Could not remove roommate. Please try again.');
+      alert('Error, Could not remove roommate. Please try again.');
     }
   };
 
   const refreshRoommates = async () => {
     try {
-      const response = await fetch(`${API_URL}/get_roommates?user_id=${userData?.user_id}`, {
+      const response = await fetch(`${API_URL}/get_roommates/?user_id=${userData?.user_id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
