@@ -83,7 +83,7 @@ const PantryItem = (props: PantryProps) => {
     <View style={styles.container}>
 
       {/* Displayed item information */}
-      <View style={styles.itemContainer}>
+      {/* <View style={styles.itemContainer}>
         <View style={styles.rowAlignment}>
           <Text style={styles.itemName}>{props.name}</Text>
           {shared[0] ? (<Text>  <Ionicons name="ellipse" size={13} color="#e167a4"/></Text>) : (null)}
@@ -92,22 +92,28 @@ const PantryItem = (props: PantryProps) => {
           {shared[3] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
         </View>
         <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
-      </View>
-      {/* <View style={styles.itemContainer}>
+      </View> */}
+      <View style={styles.itemContainer}>
         <View style={styles.rowAlignment}>
           <Text style={styles.itemName}>{props.name}</Text>
-          {props.canShareWith.map((roommate, index) =>
-            shared[index] ? (
+          {props.canShareWith.map((roommate, index) => {
+            const baseHue = 30;
+            const hueShift = 15;
+            const hue = (baseHue + index * hueShift) % 360;
+            const color = `hsl(${hue}, 100%, 50%)`;
+
+            return shared[index] ? (
               <Ionicons
                 key={roommate.id}
                 name="ellipse"
                 size={13}
-                color={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
+                color={color}
               />
-            ) : null
-          )}
+            ) : null;
+          })}
+
         </View>
-      </View> */}
+      </View>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
         <Ionicons name="pencil" size={26} color="gray"/>
@@ -263,18 +269,25 @@ const PantryItem = (props: PantryProps) => {
             </View>   */}
 
             <View style={styles.sharedSpacer}>
-              {props.canShareWith.map((roommate, index) => (
-                <View key={roommate.id} style={styles.sharedContainer}>
-                  <Text style={styles.windowText}>Shared with {roommate.name}: </Text>
-                  <Pressable onPress={() => tempSharedToggle(index)}>
-                    {tempShared[index] ? (
-                      <Ionicons name="checkmark-circle" size={32} color="#2fb1ff" />
-                    ) : (
-                      <Ionicons name="ellipse-outline" size={32} color="#2fb1ff" />
-                    )}
-                  </Pressable>
-                </View>
-              ))}
+              {props.canShareWith.map((roommate, index) => {
+                const baseHue = 30;
+                const hueShift = 15;
+                const hue = (baseHue + index * hueShift) % 360;
+                const color = `hsl(${hue}, 100%, 50%)`;
+
+                return (
+                  <View key={roommate.id} style={styles.sharedContainer}>
+                    <Text style={styles.windowText}>Shared with {roommate.name}: </Text>
+                    <Pressable onPress={() => tempSharedToggle(index)}>
+                      {tempShared[index] ? (
+                        <Ionicons name="checkmark-circle" size={32} color={color} /> // Use calculated HSL color
+                      ) : (
+                        <Ionicons name="ellipse-outline" size={32} color={color} /> // Use calculated HSL color
+                      )}
+                    </Pressable>
+                  </View>
+                );
+              })}
             </View>
 
 

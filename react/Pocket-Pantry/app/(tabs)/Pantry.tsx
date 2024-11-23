@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -7,6 +7,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Picker } from '@react-native-picker/picker';
 import { useUserContext } from '@/components/contexts/UserContext';
+
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 export default function Pantry () {
   type Roommate = {
@@ -23,6 +25,7 @@ export default function Pantry () {
     expiration: Date;
     shared: boolean[];
   }
+
   const [items, setItems] = useState<Item[]>([]);
   const { userData, setUserData } = useUserContext();
   const reciprocatedRoommates = userData.roommates
@@ -32,6 +35,35 @@ export default function Pantry () {
     name: roommate.username,
     isReciprocal: roommate.is_reciprocated,
   }));
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await fetch(`${API_URL}/whole_pantry/?user_id=${userData.user_id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch items");
+        }
+        const data = await response.json();
+        console.log(data);
+
+        const transformedItems: Item[] = data.map((item: any) => ({
+          id: item.pantry_id,
+          name: item.food_name,
+          quantity: item.quantity,
+          unit: item.unit,
+          expiration: new Date(item.expiration_date),
+          shared: item.shared_with.map(() => false), 
+        }));
+
+        setItems(transformedItems);
+        alert("GOT ITEMS AS\n" + transformedItems);
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
+    };
+
+    fetchItems();
+  }, []);
 
   {/* Functions - add item window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -43,6 +75,7 @@ export default function Pantry () {
     setNewUnit('oz');
     setNewExpiration(new Date());
     setNewShared([false, false, false, false]);
+    setNewShared(new Array(reciprocatedRoommates.length).fill(false));
   };
 
   {/* Functions - new item name/quantity */}
@@ -68,7 +101,8 @@ export default function Pantry () {
   const closeExpirationPicker = () => setExpirationPickerVisible(false);
   
    {/* Functions - set new item as shared */}
-  const [newShared, setNewShared] = useState([false, false, false, false]);
+  // const [newShared, setNewShared] = useState([false, false, false, false]);
+  const [newShared, setNewShared] = useState<boolean[]>(new Array(reciprocatedRoommates.length).fill(false));
   const newSharedToggle = (index: number) => {
     setNewShared((prevState) =>
       prevState.map((item, i) => (i === index ? !item : item))
@@ -76,24 +110,50 @@ export default function Pantry () {
   };
 
   {/* Functions - add item */}
-  const addItem = () => {
+  const addItem = async () => {
     if (isNaN(Number(newQuantity))) {
       Alert.alert('Quantity must be a number.');
     } else if (newName && newQuantity && newUnit && newExpiration && newShared) {
+      // Prepare the item object to send to the backend
       const newItem = {
-        id: items.length + 1,
-        name: newName,
+        food_name: newName,
         quantity: Number(newQuantity),
         unit: newUnit,
-        expiration: newExpiration,
-        shared: newShared,
+        user_id: userData.user_id, // assuming `userData` contains the user's ID
+        expiration_date: newExpiration.toISOString(), // format the expiration date as ISO string
+        shared_with: reciprocatedRoommates
+          .filter((roommate: Roommate) => newShared[reciprocatedRoommates.indexOf(roommate)]) // Only include roommates selected as shared
+          .map((roommate: Roommate) => roommate.id),
       };
-      setItems([...items, newItem]);
-      closeWindow();
+  
+      try {
+        // Make the API request to add the item
+        const response = await fetch(`${API_URL}/add_item/`, {
+          method: 'POST', // Use POST method to send data
+          headers: {
+            'Content-Type': 'application/json', // Set the content type to JSON
+          },
+          body: JSON.stringify(newItem), // Convert the item to JSON
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to add item to pantry');
+        }
+  
+        const addedItem = await response.json(); // Get the response from the backend
+  
+        // Optionally, update the local state with the added item
+        setItems(prevItems => [...prevItems, addedItem]);
+        closeWindow(); // Close the modal
+      } catch (error) {
+        console.error('Error adding item:', error);
+        alert('Error, Failed to add item.');
+      }
     } else {
-      Alert.alert('Please fill out all fields.');
+      alert('Please fill out all fields.');
     }
   };
+  
 
   return (
     <ScrollView>
@@ -265,20 +325,28 @@ export default function Pantry () {
                 </View>
               </View> */}
 
-            <View style={styles.sharedSpacer}>
-              {reciprocatedRoommates.map((roommate: Roommate, index: number) => (
-                <View key={roommate.id} style={styles.sharedContainer}>
-                  <Text style={styles.windowText}>Shared with {roommate.name}: </Text>
-                  <Pressable onPress={() => newSharedToggle(index)}>
-                    {newShared[index] ? (
-                      <Ionicons name="checkmark-circle" size={32} color="#2fb1ff" />
-                    ) : (
-                      <Ionicons name="ellipse-outline" size={32} color="#2fb1ff" />
-                    )}
-                  </Pressable>
-                </View>
-              ))}
-            </View>
+              <View style={styles.sharedSpacer}>
+                {reciprocatedRoommates.map((roommate: Roommate, index: number) => {
+                  const baseHue = 30;
+                  const hueShift = 15;
+                  const hue = (baseHue + index * hueShift) % 360;
+                  const color = `hsl(${hue}, 100%, 50%)`;
+
+                  return (
+                    <View key={roommate.id} style={styles.sharedContainer}>
+                      <Text style={styles.windowText}>Shared with {roommate.name}: </Text>
+                      <Pressable onPress={() => newSharedToggle(index)}>
+                        {newShared[index] ? (
+                          <Ionicons name="checkmark-circle" size={32} color={color} /> // Use calculated HSL color
+                        ) : (
+                          <Ionicons name="ellipse-outline" size={32} color={color} /> // Use calculated HSL color
+                        )}
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </View>
+
 
               {/* Cancel/save new item */}
               <View style={styles.rowAlignment}>
