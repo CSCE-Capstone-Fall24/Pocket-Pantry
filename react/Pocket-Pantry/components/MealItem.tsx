@@ -14,6 +14,9 @@ type MealProps = {
   ingredients: string[]
   ingredient_units: string[]
   ingredient_quantities: number[]
+  // Add cook time (string unless this is a Time object, similar to Date)
+  // Add cook steps
+  // view http://47.218.196.222:8000/planned_meals?user_id=4 for more info
 };
 
 const MealItem = (props: MealProps) => {
@@ -70,11 +73,11 @@ const MealItem = (props: MealProps) => {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.editButton} onPress={openWindow}>
-        <Ionicons name="pencil" size={26} color="gray"/>
+      <TouchableOpacity style={styles.viewButton} onPress={openWindow}>
+        <Ionicons name="pencil" size={26} color="gray"/> {/*change this to View button*/}
       </TouchableOpacity>
 
-      {/* Edit window */}
+      {/* View window */}
       <Modal
         transparent={true}
         animationType="fade"
@@ -88,26 +91,26 @@ const MealItem = (props: MealProps) => {
         <View style={styles.windowAlignment}>
           <View style={styles.window}>
             <Text style={styles.windowTitle}>{props.name}</Text>
-            
-            {/* Edit servings */}
-            <View style={styles.servingsContainer}>
-              <Text style={styles.windowText}>Edit servings:  </Text>
-              <TextInput
-                style={styles.servingsInput}
-                value={tempServings}
-                onChangeText={(value) => setTempServings(value)}
-              />
-            </View>
 
             {/* Edit date to cook */}
             <View style={styles.dateContainer}>
-              <Text style={styles.windowText}>Edit date to cook meal:  </Text>
+              <Text style={styles.windowText}>Planned To Cook On:  </Text>
               <TouchableOpacity
                 style={styles.dateInput}
                 onPress={openScroller}
               >
                 <Text style={styles.windowText}>{tempDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
+            </View>
+            
+            {/* Edit servings */}
+            <View style={styles.servingsContainer}>
+              <Text style={styles.windowText}>Servings:  </Text>
+              <TextInput
+                style={styles.servingsInput}
+                value={tempServings}
+                onChangeText={(value) => setTempServings(value)}
+              />
             </View>
 
             {/* Date to cook scroller */}
@@ -186,6 +189,14 @@ const MealItem = (props: MealProps) => {
               </View>
             </View>  
 
+            {/* List Ingredients */}
+
+            {/* Cook Time */}
+
+            {/* Recipe Steps */}
+
+            {/* Cooked and Remove buttons */}
+            
             {/* Cancel/save changes */}
             <View style={styles.rowAlignment}>
               <TouchableOpacity 
@@ -235,7 +246,7 @@ const styles = StyleSheet.create({
   itemDetails: {
     color: 'gray',
   },
-  editButton: {
+  viewButton: {
     marginRight: 5,
     padding: 20,
   },
@@ -247,7 +258,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 50,
     borderRadius: 8,
     padding: 35,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: 'white',
   },
   windowTitle: {

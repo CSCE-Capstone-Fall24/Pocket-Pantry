@@ -76,7 +76,7 @@ export default function Meal () {
           </Text>
           <Text style={styles.category}>
             (this is Nick's branch)
-            </Text>
+          </Text>
           <TouchableOpacity style={styles.addButton} onPress={openWindow}>
             <Ionicons name="add-outline" size={40} color="white"/>
           </TouchableOpacity>
