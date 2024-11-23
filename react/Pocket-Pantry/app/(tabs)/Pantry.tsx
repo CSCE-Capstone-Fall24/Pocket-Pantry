@@ -6,8 +6,15 @@ import PantryItem from '@/components/PantryItem';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Picker } from '@react-native-picker/picker';
+import { useUserContext } from '@/components/contexts/UserContext';
 
 export default function Pantry () {
+  type Roommate = {
+    id: number; 
+    name: string; 
+    isReciprocal: boolean;
+  };
+  
   interface Item {
     id: number;
     name: string;
@@ -17,6 +24,14 @@ export default function Pantry () {
     shared: boolean[];
   }
   const [items, setItems] = useState<Item[]>([]);
+  const { userData, setUserData } = useUserContext();
+  const reciprocatedRoommates = userData.roommates
+  .filter((roommate: { is_reciprocated: any; }) => roommate.is_reciprocated)
+  .map((roommate: { roommate_id: any; username: any; is_reciprocated: any; }) => ({
+    id: roommate.roommate_id,
+    name: roommate.username,
+    isReciprocal: roommate.is_reciprocated,
+  }));
 
   {/* Functions - add item window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -204,7 +219,7 @@ export default function Pantry () {
               </Modal>
 
               {/* Set item as shared */}
-              <View style={styles.sharedSpacer}>
+              {/* <View style={styles.sharedSpacer}>
                 <View style={styles.sharedContainer}>
                   <Text style={styles.windowText}>Shared with user1:  </Text>
                   <Pressable onPress={() => newSharedToggle(0)}>
@@ -248,7 +263,22 @@ export default function Pantry () {
                     )}
                   </Pressable>
                 </View>
-              </View>
+              </View> */}
+
+            <View style={styles.sharedSpacer}>
+              {reciprocatedRoommates.map((roommate: Roommate, index: number) => (
+                <View key={roommate.id} style={styles.sharedContainer}>
+                  <Text style={styles.windowText}>Shared with {roommate.name}: </Text>
+                  <Pressable onPress={() => newSharedToggle(index)}>
+                    {newShared[index] ? (
+                      <Ionicons name="checkmark-circle" size={32} color="#2fb1ff" />
+                    ) : (
+                      <Ionicons name="ellipse-outline" size={32} color="#2fb1ff" />
+                    )}
+                  </Pressable>
+                </View>
+              ))}
+            </View>
 
               {/* Cancel/save new item */}
               <View style={styles.rowAlignment}>
@@ -278,7 +308,13 @@ export default function Pantry () {
         {items.map((item) => (
           <View key={item.id}>
             <View style={styles.line}></View>
-            <PantryItem id={item.id} name={item.name} quantity={item.quantity} unit={item.unit} expiration={item.expiration} shared={item.shared}/>
+            <PantryItem id={item.id} 
+                        name={item.name} 
+                        quantity={item.quantity} 
+                        unit={item.unit} 
+                        expiration={item.expiration} 
+                        shared={item.shared}
+                        canShareWith={reciprocatedRoommates}/>
           </View>
         ))}
         
