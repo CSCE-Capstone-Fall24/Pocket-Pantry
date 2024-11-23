@@ -8,15 +8,16 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 
 export default function Meal () {
   const [items, setItems] = useState([
-    { id: 1, name: "Meal1", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
-    { id: 2, name: "Meal2", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
-    { id: 3, name: "Meal3", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
-    { id: 4, name: "Meal4", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false] },
+    { id: 1, name: "Meal1", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false], ingredients: ["ingredient1", "ingredient2", "ingredient3", "ingredient4", "ingredient5"]  },
+    { id: 2, name: "Meal2", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false], ingredients: ["ingredient1", "ingredient2", "ingredient3", "ingredient4", "ingredient5"]  },
+    { id: 3, name: "Meal3", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false], ingredients: ["ingredient1", "ingredient2", "ingredient3", "ingredient4", "ingredient5"]  },
+    { id: 4, name: "Meal4", servings: 10, unit: "lbs", date: new Date(), shared: [false, false, false, false], ingredients: ["ingredient1", "ingredient2", "ingredient3", "ingredient4", "ingredient5"]  },
   ]);
 
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
+    setSearch('');
     setWindowVisible(false);
     setNewName('');
     setNewServings('');
@@ -25,6 +26,7 @@ export default function Meal () {
     setNewShared([false, false, false, false]);
   };
 
+  const [newSearch, setSearch] = useState('');
   const [newName, setNewName] = useState('');
   const [newServings, setNewServings] = useState('');
   const [newUnit, setNewUnit] = useState('');
@@ -52,6 +54,7 @@ export default function Meal () {
         unit: newUnit,
         date: newDate,
         shared: newShared,
+        ingredients: ['','','','',''],
       };
       setItems([...items, newItem]);
       closeWindow();
@@ -68,12 +71,15 @@ export default function Meal () {
           <Text style={styles.title}>
           Meal Plan
           </Text>
-          <Text style={styles.category}>
-            (this is Jacob's branch)
-            </Text>
-          <TouchableOpacity style={styles.addButton} onPress={openWindow}>
-            <Ionicons name="add-outline" size={40} color="white"/>
-          </TouchableOpacity>
+        </View>
+
+        <View style={styles.mealSearchBarOuter}>
+          <TextInput
+            style={styles.mealSearchBarInner}
+            placeholder = "Search for meals"
+            placeholderTextColor = "black"
+          />
+          <Ionicons name="search-outline" size={40} color="#ff8667"/>
         </View>
 
         {/* Add item window */}
@@ -229,7 +235,7 @@ export default function Meal () {
         {items.map((item) => (
           <View key={item.id}>
             <View style={styles.line}></View>
-            <MealItem id={item.id} name={item.name} servings={item.servings} unit={item.unit} date={item.date} shared={item.shared}/>
+            <MealItem id={item.id} name={item.name} servings={item.servings} unit={item.unit} date={item.date} shared={item.shared} ingredients={item.ingredients}/>
           </View>
         ))}
         
@@ -306,6 +312,23 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  mealSearchBarOuter: {
+    marginLeft: 20,
+    width: 300,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: 'lightgray',
+    padding: 10,
+    fontSize: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    
+  },
+  mealSearchBarInner: {
+    marginLeft: 10,
+    width: 250,
+    fontSize: 16,
   },
   servingsInput: {
     width: 70,

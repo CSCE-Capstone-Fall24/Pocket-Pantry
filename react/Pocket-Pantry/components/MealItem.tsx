@@ -12,7 +12,7 @@ type MealProps = {
   date: Date // Change to just date; this is for the day we plan to cook the meal (done)
   shared: boolean[]
   // Add an ingredients array; probably gonna be a string array
-  //ingredients: string[]
+  ingredients: string[]
 };
 
 const MealItem = (props: MealProps) => {
@@ -37,10 +37,14 @@ const MealItem = (props: MealProps) => {
     );
   };
 
+  const [ingredients, setIngredients] = useState(props.ingredients.toString());
+  const [tempIngredients, setTempIngredients] = useState(ingredients);
+
   const handleCancel = () => {
     setTempServings(servings);
     setTempDate(date);
     setTempShared(shared)
+    setTempIngredients(ingredients)
   }
   const handleSave = () => {
     if (tempServings != '' && !isNaN(Number(tempServings))) {
@@ -50,6 +54,7 @@ const MealItem = (props: MealProps) => {
     }
     setDate(tempDate);
     setShared(tempShared)
+    setIngredients(ingredients)
   };
 
   return (
@@ -260,6 +265,14 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  mealSearchBar: {
+    width: 70,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: 'lightgray',
+    padding: 10,
+    fontSize: 16,
   },
   servingsInput: {
     width: 70,
