@@ -14,7 +14,7 @@ type MealProps = {
   ingredients: string[]
   ingredient_units: string[]
   ingredient_quantities: number[]
-  // Add cook time (string unless this is a Time object, similar to Date)
+  // Add cook time (string unless there is a Time object, similar to Date)
   // Add cook steps
   // view http://47.218.196.222:8000/planned_meals?user_id=4 for more info
 };
