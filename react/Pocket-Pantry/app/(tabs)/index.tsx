@@ -26,6 +26,7 @@ export default function Meal () {
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
+    setSearch('');
     setWindowVisible(false);
     setNewName('');
     setNewServings('');
@@ -33,6 +34,7 @@ export default function Meal () {
     setNewShared([false, false, false, false]);
   };
 
+  const [newSearch, setSearch] = useState('');
   const [newName, setNewName] = useState('');
   const [newServings, setNewServings] = useState('');
   
@@ -58,6 +60,7 @@ export default function Meal () {
         servings: Number(newServings),
         date: newDate,
         shared: newShared,
+        ingredients: ['','','','',''],
       };
       //setItems([...items, newItem]);
       closeWindow();
@@ -80,6 +83,16 @@ export default function Meal () {
           <TouchableOpacity style={styles.addButton} onPress={openWindow}>
             <Ionicons name="add-outline" size={40} color="white"/>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.mealSearchBarOuter}>
+          <TextInput
+            style={styles.mealSearchBarInner}
+            placeholder = "Search for meals" // This should maybe be gray to distinguish it from actual text inputs
+            placeholderTextColor = "black"
+            onChangeText={(value) => setSearch(value)}
+          />
+          <Ionicons name="search-outline" size={40} color="#ff8667"/>
         </View>
 
         {/* Add item window */}
@@ -314,6 +327,23 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  mealSearchBarOuter: {
+    marginLeft: 20,
+    width: 300,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: 'lightgray',
+    padding: 10,
+    fontSize: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    
+  },
+  mealSearchBarInner: {
+    marginLeft: 10,
+    width: 250,
+    fontSize: 16,
   },
   servingsInput: {
     width: 70,

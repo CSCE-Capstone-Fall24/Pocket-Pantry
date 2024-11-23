@@ -44,6 +44,12 @@ export default function Profile () {
 };
 
 const styles = StyleSheet.create({
+  title: {
+    marginTop: 25,
+    marginLeft: 25,
+    fontSize: 32,
+    fontWeight: 700,
+  },
   header: {
     marginLeft: 25,
     marginVertical: 25,
