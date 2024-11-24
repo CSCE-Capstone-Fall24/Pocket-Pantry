@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
 
 from itertools import combinations
+from collections import Counter
 from datetime import datetime
 import copy
 
@@ -711,7 +712,7 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
 
     if current_best_matches:
         for i in reversed(locs_of_ingredients_not_possessed):
-            quantities_scaled_and_converted[i].remove()
+            quantities_scaled_and_converted.remove(quantities_scaled_and_converted[i])
 
     #convert relevant ingredient quantities to grams on the copy
     for i in range(len(corresponding_pantry_item_quantities)):
@@ -789,40 +790,30 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         )
     ).all()
 
+    # Collect unique users
+    unique_users = {user_id}  # Initialize with the given user_id
+
+    # Create user_matches_by_meal
     user_matches_by_meal = []
-    unique_users = set()  # Use a set to avoid duplicates automatically
-
     for meal in planned_meals:
-        user_list = []
-        user_list.append(meal.user_id)
-        user_list.extend(meal.shared_with)
-        user_list = sorted(user_list)  # Sort for consistency in pairing
+        user_list = [meal.user_id] + meal.shared_with
         user_matches_by_meal.append(user_list)
+        unique_users.update(user_list)  # Add all users from this meal to unique_users
 
-    user_matches_unique = []
-
-    for user_match in user_matches_by_meal:
-        if user_match not in user_matches_unique:
-            user_matches_unique.append(user_match)
-
-    # Find all unique individual users
-    for user_match in user_matches_unique:
-        unique_users.update(user_match)  # Add all users from each list to the set
-
-    # Convert to a sorted list if needed
+    # Convert unique_users to a sorted list
     unique_users = sorted(unique_users)
 
-    # Find all 2-pair connections
-    pair_connections = set()  # Use a set to avoid duplicate pairs
+    # Generate all combinations of user IDs
+    all_combinations = []
+    for r in range(1, len(unique_users) + 1):
+        all_combinations.extend(combinations(unique_users, r))
 
-    for user_match in user_matches_unique:
-        # Generate all 2-pair combinations
-        pairs = combinations(user_match, 2)  # Generate all 2-pair combinations
-        pair_connections.update(pairs)  # Add pairs to the set
+    # Convert tuples to lists
+    all_combinations = [list(comb) for comb in all_combinations]
 
-    # Convert the set to a list if needed
-    pair_connections = list(pair_connections)
-    unique_users = list(unique_users)
+    for i in range(len(all_combinations) -1, -1, -1):
+        if len(all_combinations[i]) == 1:
+            del all_combinations[i]
 
     #fetches the planned meal info (meal_id, users oon meal, ingredient names, quantities, units) and scales/converts info
     meal_info = []
@@ -832,7 +823,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         users = []
         users.append(meal.user_id)
         users.append(meal.shared_with)
-        users = users.sort() 
+        users = sorted(users)
         #query recipe table (recipes_good for meal info)
         recipe_details = db.query(Recipes).filter(Recipes.recipe_id == meal.recipe_id).first()
         ingredient_names = recipe_details.ingredients
@@ -843,6 +834,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         indv_meal_info = [meal_id, users, ingredient_names, quantities, units]
         meal_info.append(indv_meal_info)
 
+
     #fetches the proper user inventory sets for calculating the shopping list
     inventory_info = []
 
@@ -850,7 +842,16 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
     for user in unique_users:
         users = []
         users.append(user)
-        inv = db.query(Pantry).filter(Pantry.user_id == user).all()
+        inv = db.query(Pantry).filter(
+            and_(
+                Pantry.user_id == user,  # User ID matches the provided user
+                not_(
+                    or_(
+                        *(Pantry.shared_with.contains([u]) for u in unique_users)  # No unique_users IDs in shared_with
+                    )
+                )
+            )
+        ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
         quantities = [pantry_item.quantity for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
@@ -858,33 +859,160 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         pantry_info = [users, ingredient_names, quantities, units]
         inventory_info.append(pantry_info)
 
-
-    #pair pantries info gathering
-    for pair in pair_connections:
-        pantry_items = db.query(Pantry).filter(
+    #pantry info gathering of combinations where user_id is in the combo and meal.shared_with contains 
+    # the others in the combo but no other unique users (part 2)
+    for combo in all_combinations:
+        inv = db.query(Pantry).filter(
             and_(
-                # Condition 1: Pantry.user_id is not in unique_users
-                not_(Pantry.user_id.in_(unique_users)),
+                # Condition 1: Pantry.user_id is equal to one of the user IDs in the combo
+                Pantry.user_id.in_(combo),
 
-                # Condition 2: Both IDs in the pair are in Pantry.shared_with, and no other IDs from unique_users (except user_id) are in Pantry.shared_with
-                Pantry.shared_with.contains(pair),
+                # Condition 2: Pantry.shared_with contains the other user IDs in the combo
+                Pantry.shared_with.contains([user for user in combo if user != Pantry.user_id]),
+
+                # Condition 3: Pantry.shared_with contains no user_ids in unique_users besides the IDs in the combo
                 not_(
                     or_(
-                        *(user for user in unique_users if user != user_id and user not in pair)
+                        *(Pantry.shared_with.contains([user]) for user in unique_users if user not in combo)
                     )
                 )
             )
         ).all()
-        ingredient_names = [pantry_item.food_name for pantry_item in pantry_items]
-        quantities = [pantry_item.quantity for pantry_item in pantry_items]
-        units = [pantry_item.unit for pantry_item in pantry_items]
+        ingredient_names = [pantry_item.food_name for pantry_item in inv]
+        quantities = [pantry_item.quantity for pantry_item in inv]
+        units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
-        pantry_info = [pair, ingredient_names, quantities, units]
+        pantry_info = [combo, ingredient_names, quantities, units]
         inventory_info.append(pantry_info)
 
+    #pantries info gathering of combinations of associated users in meal where they are in the shared_with
+    #and the user_id of the item is not aninvolved user in the meal planning(part 3)
+    for combo in all_combinations:
+        inv = db.query(Pantry).filter(
+            and_(
+                # Condition 1: Pantry.user_id is not in unique_users
+                not_(Pantry.user_id.in_(unique_users)),
+
+                # Condition 2: Pantry.shared_with contains all user IDs in combo
+                Pantry.shared_with.contains(combo),
+
+                # Condition 3: Pantry.shared_with must not contain other IDs from unique_users
+                not_(
+                    or_(
+                        *(Pantry.shared_with.contains([user]) for user in unique_users if user not in combo)
+                    )
+                )
+            )
+        ).all()
+        ingredient_names = [pantry_item.food_name for pantry_item in inv]
+        quantities = [pantry_item.quantity for pantry_item in inv]
+        units = [pantry_item.unit for pantry_item in inv]
+        quantities = convert_list_to_grams(quantities, units)
+        pantry_info = [combo, ingredient_names, quantities, units]
+        inventory_info.append(pantry_info)
+    
+    #pantry info gathering where the item is shared with just one unique user from unique_users
+    #  and the user_id is not in unique_users
     for user in unique_users:
         inv = db.query(Pantry).filter(
-            
-        )
+            and_(
+                # Condition 1: Pantry.user_id is not equal to any user in unique_users
+                not_(Pantry.user_id.in_(unique_users)),
 
-    return
+                # Condition 2: The user being checked is the only unique user in Pantry.shared_with
+                Pantry.shared_with == [user]
+            )
+        ).all()
+        ingredient_names = [pantry_item.food_name for pantry_item in inv]
+        quantities = [pantry_item.quantity for pantry_item in inv]
+        units = [pantry_item.unit for pantry_item in inv]
+        quantities = convert_list_to_grams(quantities, units)
+        pantry_info = [user, ingredient_names, quantities, units]
+        inventory_info.append(pantry_info)
+
+        #math calculation of needed ingredients and amounts
+        for meal in meal_info:
+            for pantry in inventory_info:
+                if all(user in meal[2] for user in pantry[0]):
+                    for idx_meal, ingredient in enumerate(meal[2]):
+                        highest_score = 0
+                        best_match_index = None  # To store the index of the best matching item
+
+                        for idx_inv, item in enumerate(pantry[1]):
+                            # Calculate the similarity ratio
+                            ratio = fuzz.ratio(ingredient.lower(), item.lower())
+
+                            # Update the highest score and best match index if ratio > 70
+                            if ratio > 70 and ratio > highest_score and meal[3][idx_inv] > 0 and pantry[1][idx_inv] > 0:
+                                highest_score = ratio
+                                best_match_index = idx_inv
+
+                        # If a match is found, print or store the result
+                        if best_match_index is not None:
+                            if meal[3][idx_meal] <= pantry[1][best_match_index]:
+                                pantry[1][best_match_index] -= meal[3][idx_meal]
+                                meal[3][idx_meal] = 0
+                            else:
+                                meal[3][idx_meal] -= pantry[1][best_match_index]
+                                pantry[1][idx_inv] = 0
+    #convert units back
+    for meal in meal_info:
+        meal[3] = convert_list_from_grams(meal[3], meal[4])
+
+    shopping_list = []
+
+    for meal in meal_info:
+        #remove 0 quantities here
+        for zero_idx in range(len(meal[3]) - 1, -1, -1):  # Iterate backward
+            if meal[3][zero_idx] == 0:
+                del meal[2][zero_idx]
+                del meal[3][zero_idx]
+                del meal[4][zero_idx]
+        if len(shopping_list) != 0: #if shoppinglist doesn't have any shopping info yet then add first group
+            for idx_match, group in enumerate(shopping_list):
+                group_match_index = None
+                if Counter(meal[1]) == Counter(group[0]):
+                    group_match_index = idx_match
+            if group_match_index != None:
+                for ingredient_idx, ingredient_name in enumerate(meal[2]):
+                    match_found = False
+                    for shop_idx, item_name in enumerate(shopping_list[group_match_index][1]):
+                        if item_name == ingredient_name:
+                            match_found = True
+                            shopping_list[group_match_index][2][shop_idx] += meal[3][ingredient_idx]
+                    if match_found == False:
+                        shopping_list[group_match_index][1].append(ingredient_name)
+                        shopping_list[group_match_index][2].append(meal[3][ingredient_idx])
+                        shopping_list[group_match_index][3].append(meal[4][ingredient_idx])
+            else:
+                new_group = []
+                new_group.append(meal[1])
+                new_group.append(meal[2])
+                new_group.append(meal[3])
+                new_group.append(meal[4])
+                shopping_list.append(new_group)
+        else:
+            new_group = []
+            new_group.append(meal[1])
+            new_group.append(meal[2])
+            new_group.append(meal[3])
+            new_group.append(meal[4])
+            shopping_list.append(new_group) #add new group line
+
+    #fix shopping_list format
+    for idx in range(shopping_list):
+        shopping_list[idx].append(shopping_list[idx][0])
+        shopping_list[idx].append(shopping_list[idx][1])
+        shopping_list[idx].append(shopping_list[idx][2])
+        shopping_list[idx].append(shopping_list[idx][3])
+        del shopping_list[idx][0]
+
+    #a matrix of lists - return_matrix [x][3] - matrix dimensions
+    #return_matrix [x] - each row is a list of things to shop based on users for shared meal groups
+    #return_matrix [x][0] - column 0 is the list of users for that shoppiing list portion (starting user's individual shopping list)
+    #return_matrix [x][1] - column 1 is the list of the ingredients to be shopped for that group
+    #return_matrix [x][2] - column 2 is the of list of quantities for the ingredients
+    #return_matrix [x][3] - column 3 is the list of units for the ingredients
+    return shopping_list
+
+
