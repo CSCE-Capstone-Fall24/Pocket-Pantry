@@ -3,19 +3,23 @@ from sqlalchemy import or_, and_, any_, not_, cast, Integer, func
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import NoResultFound
 
 from itertools import combinations
 from datetime import datetime
 import copy
 
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from fuzzywuzzy import fuzz, process
 
 from database import get_db
 from models import Recipes, Users, PlannedMeals, Pantry
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
 
 GRAMS_CONVERSION = {
     # Volume to grams (based on water density)
@@ -86,6 +90,16 @@ def convert_list_from_grams(quantities, unit_names):
             raise ValueError(f"Unit '{unit_name}' is not recognized")
     return converted_quantities
     
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace '*' with specific origins like ['http://localhost:19000'] for stricter access
+    allow_credentials=True,
+    allow_methods=["*"],  # HTTP methods allowed (e.g., ['GET', 'POST', 'PUT'])
+    allow_headers=["*"],  # HTTP headers allowed (e.g., ['Content-Type', 'Authorization'])
+)
+
+
 
 @app.get("/")
 async def root():
@@ -1014,4 +1028,63 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
     #return_matrix [x][3] - column 3 is the list of units for the ingredients
     return shopping_list
 
+
+
+class UserLogin(BaseModel):
+    username: str = None
+    email: str = None
+    password: str
+
+@app.post("/login")
+def login(data: UserLogin, db: Session = Depends(get_db)):
+    if not data.username and not data.email:
+        raise HTTPException(status_code=400, detail="Username or email is required.")
+
+    query = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    )
+
+    user = query.first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if data.password != user.hashed_confirmation_code:
+    # if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    return {"user_id": user.user_id}
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+@app.post("/signup")
+def signup(data: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    ).first()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username or email already exists.")
+    
+    # hashed_password = hash_password(data.password)
+    hashed_password = data.password
+    
+    new_user = Users(
+        username=data.username,
+        email=data.email,
+        hashed_confirmation_code=hashed_password,
+        account_created_at=datetime.now(),
+        roommates=[],
+        favorite_recipes=[],
+        cooked_recipes=[]
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User created successfully", "user_id": new_user.user_id}
 

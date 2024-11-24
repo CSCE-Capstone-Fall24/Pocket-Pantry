@@ -1,20 +1,29 @@
+import React, { useEffect, useState } from 'react';
+import { Text } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
 import 'react-native-reanimated';
+import Login from './login';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { UserProvider, useUserContext } from '@/components/contexts/UserContext';
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  const { userId, setUserId } = useUserContext();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  console.log("thing is " + API_URL);
+
 
   useEffect(() => {
     if (loaded) {
@@ -26,12 +35,30 @@ export default function RootLayout() {
     return null;
   }
 
+  if (isAuthenticated) {
+    return (
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Text style={{ backgroundColor: 'yellow' }}>user_id {userId}</Text>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </ThemeProvider>
+    );
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: true }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <Login 
+      setIsAuthenticated={setIsAuthenticated}
+      setUserId={setUserId}
+    />
+  );
+}
+
+export default function Layout() {
+  return (
+    <UserProvider>
+      <RootLayout />
+    </UserProvider>
   );
 }
