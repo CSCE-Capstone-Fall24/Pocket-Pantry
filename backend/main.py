@@ -5,7 +5,6 @@ from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.dialects import postgresql
 
 from itertools import combinations
-from collections import Counter
 from datetime import datetime
 import copy
 
@@ -954,7 +953,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
                                 meal[3][idx_meal] = 0
                             else:
                                 meal[3][idx_meal] -= pantry[1][best_match_index]
-                                pantry[1][idx_inv] = 0
+                                pantry[1][best_match_index] = 0
     #convert units back
     for meal in meal_info:
         meal[3] = convert_list_from_grams(meal[3], meal[4])
@@ -971,7 +970,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         if len(shopping_list) != 0: #if shoppinglist doesn't have any shopping info yet then add first group
             for idx_match, group in enumerate(shopping_list):
                 group_match_index = None
-                if Counter(meal[1]) == Counter(group[0]):
+                if sorted(meal[1]) == sorted(group[0]):
                     group_match_index = idx_match
             if group_match_index != None:
                 for ingredient_idx, ingredient_name in enumerate(meal[2]):
@@ -1000,7 +999,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             shopping_list.append(new_group) #add new group line
 
     #fix shopping_list format
-    for idx in range(shopping_list):
+    for idx in range(len(shopping_list)):
         shopping_list[idx].append(shopping_list[idx][0])
         shopping_list[idx].append(shopping_list[idx][1])
         shopping_list[idx].append(shopping_list[idx][2])
