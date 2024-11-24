@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import MealItem from '@/components/MealItem';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
+
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 export default function Meal () {
   const [items, setItems] = useState([
@@ -43,6 +45,33 @@ export default function Meal () {
     );
   };
 
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await fetch(`${API_URL}/all_recipes`);
+        const data = await response.json();
+        setSearch(data);
+        console.log("FETCHING");
+      } catch (error) {
+        console.error('Error fetching recipes:', error);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
+  
+  const renderRecipes = ({item}:{item:any}) => (
+    <MealItem
+      id={item.id}
+      name={item.food_name}
+      servings={item.servings}
+      unit={item.unit}
+      date={item.expiration_date}
+      shared={item.shared}
+      ingredients={item.ingredients}
+    />
+  );
+
   const addItem = () => {
     if (isNaN(Number(newServings))) {
       Alert.alert('Servings must be a number.');
@@ -65,7 +94,7 @@ export default function Meal () {
 
   return (
     <ScrollView>
-      <SafeAreaView>
+      <SafeAreaView style={styles.scrollerSpacer}>
 
         <View style={styles.header}>
           <Text style={styles.title}>
@@ -82,6 +111,12 @@ export default function Meal () {
           />
           <Ionicons name="search-outline" size={40} color="#ff8667"/>
         </View>
+        <FlatList
+          data={newSearch}
+          keyExtractor={(item) => item.recipe_id.toString}
+          renderItem={renderRecipes}
+          ItemSeparatorComponent={() => <View style={styles.line}></View>}
+        />
 
         {/* Add item window */}
         <Modal
