@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Alert } from 'react-native'
-import { BlurView } from 'expo-blur';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import DateTimePicker from '@react-native-community/datetimepicker'
-import { Picker } from '@react-native-picker/picker';
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable } from "react-native";
+import { BlurView } from "expo-blur";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
 
 type PantryProps = {
   id: string;
@@ -18,6 +18,18 @@ type PantryProps = {
 };
 
 const PantryItem = (props: PantryProps) => {
+  const units = [
+    "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
+    "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
+    "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
+    "bottles", "packets", "bunches", "leaves", "stones", "sprigs",
+  ];
+  const sharedColors = [
+    "#e167a4", "#f4737e", "#ff8667", "#ffb778",
+    "#fde289", "#ade693", "#89e0b3", "#78dbde",
+    "#6eabd7", "#7a6ed7","#ae5da2",
+  ];
+  
   {/* Functions - edit window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
@@ -33,12 +45,6 @@ const PantryItem = (props: PantryProps) => {
   const [isUnitPickerVisible, setUnitPickerVisible] = useState(false);
   const openUnitPicker = () => setUnitPickerVisible(true);
   const closeUnitPicker = () => setUnitPickerVisible(false);  
-  const units = [
-    "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
-    "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
-    "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
-    "bottles", "packets", "bunches", "leaves", "stones", "sprigs",
-  ];
 
   {/* Functions - edit expiration date */}
   const [isExpirationPickerVisible, setExpirationPickerVisible] = useState(false);
@@ -67,11 +73,11 @@ const PantryItem = (props: PantryProps) => {
   }
   const handleSave = () => {
     if (isNaN(Number(tempQuantity))) {
-      Alert.alert('Please enter a valid quantity.');
-    } else if (tempQuantity != '' && Number(tempQuantity) <= 0) {
+      Alert.alert("Please enter a valid quantity.");
+    } else if (tempQuantity != "" && Number(tempQuantity) <= 0) {
       props.deleteItem(props.id);
     } else {
-      if (tempQuantity != '') {
+      if (tempQuantity != "") {
         setQuantity(tempQuantity);
       } else {
         setTempQuantity(quantity);
@@ -86,16 +92,9 @@ const PantryItem = (props: PantryProps) => {
   {/* Functions - confirm choice to delete item */}
   const confirmDelete = () => {
     Alert.alert(
-      'Delete item?',
+      "Delete item?",
       ``,
-      [{
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'OK',
-        onPress: () => props.deleteItem(props.id),
-      }],
+      [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id), }],
       { cancelable: true }
     );
   };
@@ -104,16 +103,17 @@ const PantryItem = (props: PantryProps) => {
     <View style={styles.container}>
 
       {/* Displayed item information */}
+      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
       <View style={styles.itemContainer}>
         <View style={styles.rowAlignment}>
-          <Text style={styles.itemName}>{props.name}</Text>
-          {shared[0] ? (<Text>  <Ionicons name="ellipse" size={13} color="#e167a4"/></Text>) : (null)}
-          {shared[1] ? (<Text>  <Ionicons name="ellipse" size={13} color="#f4737e"/></Text>) : (null)}
-          {shared[2] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
-          {shared[3] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ffb778"/></Text>) : (null)}
+          <Text style={styles.itemName}>{props.name} </Text>
+          {props.roommates.map((roommate: string, index: number) => {
+            return shared[index] ? (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>) : null;
+          })}
         </View>
         <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
       </View>
+      </ScrollView>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
         <Ionicons name="pencil" size={26} color="gray"/>
@@ -129,7 +129,7 @@ const PantryItem = (props: PantryProps) => {
         <BlurView style={StyleSheet.absoluteFill} intensity={20}/>
         <View style={styles.windowAlignment}>
           <View style={styles.windowContainer}>
-            <Text style={styles.windowTitle}>{props.name}</Text>
+            <Text style={styles.windowTitle} numberOfLines={1} ellipsizeMode="tail">{props.name}</Text>
             <Text style={styles.windowSubtitle}>{props.category}</Text>
             
             {/* Edit quantity */}
@@ -207,51 +207,24 @@ const PantryItem = (props: PantryProps) => {
             </Modal>
 
             {/* Set item as shared */}
-            <View style={styles.sharedSpacer}>
-              <View style={styles.sharedContainer}>
-                <Text style={styles.fieldText}>Shared with {props.roommates[0]}:  </Text>
-                <Pressable onPress={() => sharedToggle(0)}>
-                  {tempShared[0] ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#e167a4"/>
-                  )}
-                </Pressable>
-              </View>
-
-              <View style={styles.sharedContainer}>
-                <Text style={styles.fieldText}>Shared with {props.roommates[1]}:  </Text>
-                <Pressable onPress={() => sharedToggle(1)}>
-                  {tempShared[1] ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#f4737e"/>
-                  )}
-                </Pressable>
-              </View>
-
-              <View style={styles.sharedContainer}>
-                <Text style={styles.fieldText}>Shared with {props.roommates[2]}:  </Text>
-                <Pressable onPress={() => sharedToggle(2)}>
-                  {tempShared[2] ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#ff8667"/>
-                  )}
-                </Pressable>
-              </View>
-
-              <View style={styles.sharedContainer}>
-                <Text style={styles.fieldText}>Shared with {props.roommates[3]}:  </Text>
-                <Pressable onPress={() => sharedToggle(3)}>
-                  {tempShared[3] ? (
-                    <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
-                  ) : (
-                    <Ionicons name="ellipse-outline" size={32} color="#ffb778"/>
-                  )}
-                </Pressable>
-              </View>
-            </View>  
+            <ScrollView horizontal={false} style={styles.sharedScroll}>
+                <View style={styles.sharedAlignment}>
+                  {props.roommates.map((roommate: string, index: number) => {
+                    return (
+                      <View key={roommate} style={styles.sharedContainer}>
+                        <Text style={styles.fieldText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                        <Pressable style={styles.iconSpacer} onPress={() => sharedToggle(index)}>
+                          {tempShared[index] ? (
+                            <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                          ) : (
+                            <Ionicons name="ellipse-outline" size={32} color={sharedColors[index]}/>
+                          )}
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+                </View>
+              </ScrollView>  
 
             {/* Cancel/save user changes */}
             <View style={styles.rowAlignment}>
@@ -277,38 +250,39 @@ const PantryItem = (props: PantryProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   itemContainer: {
     marginVertical: 10,
     marginLeft: 25,
   },
   rowAlignment: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   itemName: {
+    flexShrink: 1,
     marginBottom: 5,
     fontSize: 20,
   },
   itemDetails: {
-    color: 'gray',
+    color: "gray",
   },
   editButton: {
-    marginRight: 5,
+    marginHorizontal: 5,
     padding: 20,
   },
   windowAlignment: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   windowContainer: {
     marginHorizontal: 50,
     borderRadius: 8,
     padding: 35,
-    alignItems: 'center',
-    backgroundColor: 'white',
+    alignItems: "center",
+    backgroundColor: "white",
   },
   windowTitle: {
     fontSize: 24,
@@ -318,64 +292,77 @@ const styles = StyleSheet.create({
   windowSubtitle: {
     fontWeight: 600,
     marginBottom: 35,
-    color: 'gray',
+    color: "gray",
   },
   fieldText: {
     fontSize: 16,
   },
   fieldContainer: {
     marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   quantityInput: {
     marginRight: 10,
     width: 70,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: 'lightgray',
+    borderColor: "lightgray",
     padding: 10,
     fontSize: 16,
   },
   pickerInput: {
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: 'lightgray',
+    borderColor: "lightgray",
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
   },
   pickerSpacer: {
     flex: 1,
   },
   pickerA: {
     paddingBottom: 30,
-    backgroundColor: 'gray',
+    backgroundColor: "lightgray",
   },
   pickerB: {
     paddingBottom: 30,
-    alignItems: 'center',
-    backgroundColor: 'gray',
+    alignItems: "center",
+    backgroundColor: "lightgray",
   },
   doneButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    backgroundColor: 'gray',
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    backgroundColor: "lightgray",
   },
   doneButtonText: {
     marginTop: 15,
     marginHorizontal: 25,
-    color: '#2fb1ff',
+    color: "#2fb1ff",
     fontSize: 20,
     fontWeight: 600,
   },
-  sharedSpacer: {
-    marginBottom: 12,
-    alignItems: 'center',
+  sharedScroll: {
+    marginBottom: 35,
+    maxHeight: 220,
+    width: 250,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: "lightgray",
+  },
+  sharedAlignment: {
+    marginTop: 22,
+    marginBottom: 10,
+    marginHorizontal: 35,
+    alignItems: "center",
   },
   sharedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  iconSpacer: {
+    marginLeft: 5,
   },
   cancelButton: {
     marginRight: 35,
@@ -383,28 +370,28 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 8,
     borderColor: "#ff8667",
-    alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: 'white',
+    alignItems: "center",
+    backgroundColor: "white",
   },
   cancelButtonText: {
-    color: '#ff8667',
+    color: "#ff8667",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   saveButton: {
     width: 90,
     borderWidth: 2,
     borderRadius: 8,
     borderColor: "#ff8667",
-    alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: '#ff8667',
+    alignItems: "center",
+    backgroundColor: "#ff8667",
   },
   saveButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   deleteButton: {
     marginTop: 35,
