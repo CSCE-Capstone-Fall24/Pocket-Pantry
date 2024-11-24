@@ -211,44 +211,88 @@ def add_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
     }
    
 @app.post("/remove_roommate/")
-def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
+def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.user_id == data.user_id).first()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.roommates is None:
-        return {"message": "You have no roommates", "user_id": data.user_id}
+    if not user.roommates or data.roommate_id not in user.roommates:
+        return {"message": "Roommate not found in your list", "user_id": data.user_id}
     
     try:
-        idx = user.roommates.index(data.roommate_id)
-        splice = user.roommates[:idx] + user.roommates[idx + 1:]
-        user.roommates = splice
-
+        # Remove roommate from user's list
+        user.roommates = [rid for rid in user.roommates if rid != data.roommate_id]
         db.commit()
         db.refresh(user)
 
+        # Remove user_id from roommate's list
+        roommate = db.query(Users).filter(Users.user_id == data.roommate_id).first()
+        if roommate:
+            roommate.roommates = [rid for rid in roommate.roommates if rid != data.user_id]
+            db.commit()
+            db.refresh(roommate)
+
+        # Remove shared items for pantry and planned meals
+        # Remove user_id from anything roommate_id shared with them
+        db.query(Pantry).filter(
+            Pantry.shared_with.contains([data.user_id]),
+            Pantry.owner_id == data.roommate_id
+        ).update(
+            {"shared_with": Pantry.shared_with.op("||")([data.user_id])},
+            synchronize_session=False
+        )
+
+        db.query(PlannedMeals).filter(
+            PlannedMeals.shared_with.contains([data.user_id]),
+            PlannedMeals.owner_id == data.roommate_id
+        ).update(
+            {"shared_with": PlannedMeals.shared_with.op("||")([data.user_id])},
+            synchronize_session=False
+        )
+
+        # Remove roommate_id from anything user_id shared with them
+        db.query(Pantry).filter(
+            Pantry.shared_with.contains([data.roommate_id]),
+            Pantry.owner_id == data.user_id
+        ).update(
+            {"shared_with": Pantry.shared_with.op("||")([data.roommate_id])},
+            synchronize_session=False
+        )
+
+        db.query(PlannedMeals).filter(
+            PlannedMeals.shared_with.contains([data.roommate_id]),
+            PlannedMeals.owner_id == data.user_id
+        ).update(
+            {"shared_with": PlannedMeals.shared_with.op("||")([data.roommate_id])},
+            synchronize_session=False
+        )
+
+        db.commit()
+
+        # Prepare updated roommates list for response
         roommate_data = []
         for roommate_id in user.roommates:
-            roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
-            if not roommate:
+            roommate_info = db.query(Users).filter(Users.user_id == roommate_id).first()
+            if not roommate_info:
                 continue
 
-            is_reciprocated = data.user_id in roommate.roommates
+            is_reciprocated = data.user_id in roommate_info.roommates
             roommate_data.append({
-                "roommate_id": roommate.user_id,
-                "username": roommate.username,
+                "roommate_id": roommate_info.user_id,
+                "username": roommate_info.username,
                 "is_reciprocated": is_reciprocated,
             })
 
         return {
-            "message": "Roommate added successfully",
+            "message": "Roommate removed successfully",
             "user_id": data.user_id,
             "updated_roommates": roommate_data,
         }
     
-    except ValueError:
-        return {"message": "User not found in your roommates"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.get("/get_roommates/")
 def get_roommates(user_id: int, db: Session = Depends(get_db)):
@@ -382,7 +426,7 @@ class PantryItemCreate(BaseModel):
     location: Optional[str] = None
     price: Optional[float] = None
 
-@app.get("/add_item/")
+@app.post("/add_item/")
 async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db)):
     pantry_item = Pantry(
         food_name=item.food_name,
