@@ -33,9 +33,9 @@ export default function Meal () {
     shared: boolean[];
     roommates: string[];
     ingredients: string[];
-    ingredient_units: string[];
-    ingredient_quantities: number[];
-    cook_time: number;
+    ingredientUnits: string[];
+    ingredientQuantities: number[];
+    cookTime: number;
     recipe: string;
     deleteMeal: (id: string) => void;
   }
@@ -89,14 +89,28 @@ export default function Meal () {
         servings: Number(newServings),
         date: newDate,
         shared: newShared,
+        roommates: roommates,
         ingredients: ['','','','',''],
+        ingredientUnits: ['','','','',''],
+        ingredientQuantities: [0,0,0,0,0],
+        cookTime: 0,
+        recipe: "",
+        deleteMeal: deleteMeal,
       };
-      //setItems([...items, newItem]);
+      setMeals([...meals, newMeal]);
       closeWindow();
     } else {
       Alert.alert('Please fill out all fields.');
     }
   };
+
+  {/* Functions - delete meal */}
+  const deleteMeal = (id: string) => {
+    setMeals((prevMeals) => prevMeals.filter(meal => meal.id !== id));
+  };
+
+  {/* Functions - date headers */}
+  // TODO:
 
   return (
     <ScrollView>
@@ -124,7 +138,7 @@ export default function Meal () {
           <Ionicons name="search-outline" size={40} color="#ff8667"/>
         </View>
 
-        {/* Add item window */}
+        {/* Add meal window */}
         <Modal
           transparent={true}
           animationType="fade"
@@ -136,12 +150,12 @@ export default function Meal () {
             intensity={20}
           />
           <View style={styles.windowAlignment}>
-            <View style={styles.window}>
+            <View style={styles.windowContainer}>
               <Text style={styles.windowTitle}>Add item</Text>
               
               {/* Input name */}
-              <View style={styles.nameContainer}>
-                <Text style={styles.windowText}>Name:  </Text>
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldText}>Name:  </Text>
                 <TextInput
                   style={styles.nameInput}
                   value={newName}
@@ -150,10 +164,10 @@ export default function Meal () {
               </View>
 
               {/* Input servings */}
-              <View style={styles.servingsContainer}>
-                <Text style={styles.windowText}>Servings:  </Text>
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldText}>Servings:  </Text>
                 <TextInput
-                  style={styles.servingsInput}
+                  style={styles.nameInput}
                   value={newServings}
                   onChangeText={(value) => setNewServings(value)}
                 />
@@ -163,10 +177,10 @@ export default function Meal () {
               
 
               {/* Input date to cook meal*/}
-              <View style={styles.dateContainer}>
-                <Text style={styles.windowText}>Date to cook meal:  </Text>
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldText}>Date to cook meal:  </Text>
                 <TouchableOpacity
-                  style={styles.dateInput}
+                  style={styles.nameInput}
                   onPress={openScroller}
                 >
                   <Text style={styles.windowText}>{newDate.toLocaleDateString()}</Text>
@@ -430,6 +444,23 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  mealSearchBarOuter: {
+    marginLeft: 20,
+    width: 300,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: 'lightgray',
+    padding: 10,
+    fontSize: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    
+  },
+  mealSearchBarInner: {
+    marginLeft: 10,
+    width: 250,
+    fontSize: 16,
   },
   date: {
     marginTop: 30,
