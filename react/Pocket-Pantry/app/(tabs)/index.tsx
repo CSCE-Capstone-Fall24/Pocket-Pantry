@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import RecipeItem from '@/components/RecipeItem';
 import MealItem from '@/components/MealItem';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -52,6 +53,7 @@ export default function Meal () {
         const data = await response.json();
         setSearch(data);
         console.log("FETCHING");
+        console.log(data);
       } catch (error) {
         console.error('Error fetching recipes:', error);
       }
@@ -61,14 +63,13 @@ export default function Meal () {
   }, []);
   
   const renderRecipes = ({item}:{item:any}) => (
-    <MealItem
-      id={item.id}
-      name={item.food_name}
-      servings={item.servings}
-      unit={item.unit}
-      date={item.expiration_date}
-      shared={item.shared}
+    <RecipeItem
+      id={item.recipe_id}
+      name={item.name}
+      ingredientUnit={item.ingredient_units}
       ingredients={item.ingredients}
+      ingredientQuantities={item.ingredient_quantities}
+      servings={item.serving_size}
     />
   );
 
@@ -113,7 +114,7 @@ export default function Meal () {
         </View>
         <FlatList
           data={newSearch}
-          keyExtractor={(item) => item.recipe_id.toString}
+          keyExtractor={(item) => item.recipe_id.toString()}
           renderItem={renderRecipes}
           ItemSeparatorComponent={() => <View style={styles.line}></View>}
         />
