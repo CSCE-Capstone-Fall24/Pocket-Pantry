@@ -173,54 +173,46 @@ export default function Meal () {
                 />
               </View>
 
-              {/* Input unit */}
-              
-
               {/* Input date to cook meal*/}
               <View style={styles.fieldContainer}>
                 <Text style={styles.fieldText}>Date to cook meal:  </Text>
-                <TouchableOpacity
-                  style={styles.nameInput}
-                  onPress={openScroller}
-                >
-                  <Text style={styles.windowText}>{newDate.toLocaleDateString()}</Text>
+                <TouchableOpacity style={styles.pickerInput} onPress={openDatePicker}>
+                  <Text style={styles.fieldText}>{newDate.toLocaleDateString()}</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Cook date scroller */}
+              {/* Date to cook picker */}
               <Modal
                 transparent={true}
                 animationType="slide"
-                visible={isScrollerVisible}
-                onRequestClose={closeScroller}
+                visible={isDatePickerVisible}
+                onRequestClose={closeDatePicker}
               >
-                <Pressable style={styles.scrollerSpacer} onPress={closeScroller}></Pressable>
+                <Pressable style={styles.pickerSpacer} onPress={closeDatePicker}></Pressable>
                 <View>
                   <View style={styles.doneButtonContainer}>
-                    <TouchableOpacity onPress={closeScroller}>
+                    <TouchableOpacity onPress={closeDatePicker}>
                       <Text style={styles.doneButtonText}>Done</Text>
                     </TouchableOpacity>
                   </View>
-                  <View style={styles.scroller}>
-                    {isScrollerVisible && (
+                  <View style={styles.pickerB}>
+                    {isDatePickerVisible && (
                       <DateTimePicker
                         value={newDate}
                         mode="date"
                         display="spinner"
-                        onChange={(event, date) => {
-                          if (date) setNewDate(date);
-                        }}
+                        onChange={(event, date) => {if (date) setNewDate(date);}}
                       />
                     )}
                   </View>
                 </View>
               </Modal>
 
-              {/* Set item as shared */}
+              {/* Set new meal as shared */}
               <View style={styles.sharedSpacer}>
                 <View style={styles.sharedContainer}>
-                  <Text style={styles.windowText}>Shared with user1:  </Text>
-                  <Pressable onPress={() => newSharedToggle(0)}>
+                  <Text style={styles.fieldText}>Shared with {roommates[0]}:  </Text>
+                  <Pressable onPress={() => sharedToggle(0)}>
                     {newShared[0] ? (
                       <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
                     ) : (
@@ -230,8 +222,8 @@ export default function Meal () {
                 </View>
 
                 <View style={styles.sharedContainer}>
-                  <Text style={styles.windowText}>Shared with user2:  </Text>
-                  <Pressable onPress={() => newSharedToggle(1)}>
+                  <Text style={styles.fieldText}>Shared with {roommates[1]}:  </Text>
+                  <Pressable onPress={() => sharedToggle(1)}>
                     {newShared[1] ? (
                       <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
                     ) : (
@@ -241,8 +233,8 @@ export default function Meal () {
                 </View>
 
                 <View style={styles.sharedContainer}>
-                  <Text style={styles.windowText}>Shared with user3:  </Text>
-                  <Pressable onPress={() => newSharedToggle(2)}>
+                  <Text style={styles.fieldText}>Shared with {roommates[2]}:  </Text>
+                  <Pressable onPress={() => sharedToggle(2)}>
                     {newShared[2] ? (
                       <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
                     ) : (
@@ -252,8 +244,8 @@ export default function Meal () {
                 </View>
 
                 <View style={styles.sharedContainer}>
-                  <Text style={styles.windowText}>Shared with user4:  </Text>
-                  <Pressable onPress={() => newSharedToggle(3)}>
+                  <Text style={styles.fieldText}>Shared with {roommates[3]}:  </Text>
+                  <Pressable onPress={() => sharedToggle(3)}>
                     {newShared[3] ? (
                       <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
                     ) : (
@@ -265,21 +257,11 @@ export default function Meal () {
 
               {/* Cancel/save new item */}
               <View style={styles.rowAlignment}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => {
-                    closeWindow();
-                  }}
-                >
+                <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); }}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
-                  style={styles.saveButton}
-                  onPress={() => {
-                    addItem();
-                  }}
-                >
+                <TouchableOpacity style={styles.saveButton} onPress={() => { addMeal(); }}>
                   <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
               </View>
@@ -287,15 +269,43 @@ export default function Meal () {
           </View>
         </Modal>
 
-        <Text style={styles.category}>MEAT, POULTRY & SEAFOOD</Text>
-        {items.map((item) => (
-          <View key={item.id}>
+        <Text style={styles.date}>MEAT, POULTRY & SEAFOOD</Text>
+        {meals.map((meal) => (
+          <View key={meal.id}>
             <View style={styles.line}></View>
-            <MealItem id={item.id} name={item.name} servings={item.servings} date={item.date}
-              shared={item.shared} roommates={item.roommates}
-              ingredients={item.ingredients} ingredient_units={item.ingredient_units} ingredient_quantities={item.ingredient_quantities}/>
+            <MealItem id={meal.id} name={meal.name} servings={meal.servings} date={meal.date}
+              shared={meal.shared} roommates={meal.roommates}
+              ingredients={meal.ingredients} ingredientUnits={meal.ingredientUnits} ingredientQuantities={meal.ingredientQuantities}
+              cookTime={meal.cookTime} recipe={meal.recipe}
+              deleteMeal={deleteMeal}/>
           </View>
         ))}
+
+        {/* {categorizedItems.map((categoryGroup) => (
+          categoryGroup.items.length > 0 && (
+            <View key={categoryGroup.category}>
+              <Text style={styles.category}>
+                {categoriesB[categoriesA.indexOf(categoryGroup.category)]}
+              </Text>
+              {categoryGroup.items.map((item) => (
+                <View key={item.id}>
+                  <View style={styles.line}></View>
+                  <PantryItem
+                    id={item.id}
+                    name={item.name}
+                    category={item.category}
+                    quantity={item.quantity}
+                    unit={item.unit}
+                    expiration={item.expiration}
+                    shared={item.shared}
+                    roommates={item.roommates}
+                    deleteItem={deleteItem}
+                  />
+                </View>
+              ))}
+            </View>
+          )
+        ))} */}
         
       </SafeAreaView>
     </ScrollView>
