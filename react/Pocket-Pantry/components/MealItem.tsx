@@ -1,76 +1,119 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Alert } from 'react-native'
 import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 
 type MealProps = {
-  id: number
-  name: string
-  servings: number
-  date: Date
-  shared: boolean[]
-  roommates: string[]
-  ingredients: string[]
-  ingredient_units: string[]
-  ingredient_quantities: number[]
-  // Add cook time (string unless there is a Time object, similar to Date)
-  // Add cook steps
+  id: string;
+  name: string;
+  servings: number;
+  date: Date;
+  shared: boolean[];
+  roommates: string[];
+  ingredients: string[];
+  ingredientUnits: string[];
+  ingredientQuantities: number[];
+  cookTime: number; // cook time is in minutes
+  recipe: string; // this is cook_steps
   // view http://47.218.196.222:8000/planned_meals?user_id=4 for more info
+  deleteMeal: (id: string) => void;
 };
 
 const MealItem = (props: MealProps) => {
+  {/* Functions - view window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => setWindowVisible(false);
 
+  {/* Functions - edit servings */}
   const [servings, setServings] = useState(props.servings.toString());
   const [tempServings, setTempServings] = useState(servings);
 
-  const [isScrollerVisible, setScrollerVisible] = useState(false);
-  const openScroller = () => setScrollerVisible(true);
-  const closeScroller = () => setScrollerVisible(false);
+  {/* Functions - edit date to cook*/}
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const openDatePicker = () => setDatePickerVisible(true);
+  const closeDatePicker = () => setDatePickerVisible(false);
   const [date, setDate] = useState(props.date);
   const [tempDate, setTempDate] = useState(date);
 
+  {/* Functions - set meal as shared */}
   const [shared, setShared] = useState(props.shared);
   const [tempShared, setTempShared] = useState(shared);
-  const tempSharedToggle = (index: number) => {
-    setTempShared((prevState) =>
-      prevState.map((item, i) => (i === index ? !item : item))
-    );
+  const sharedToggle = (index: number) => {
+    setTempShared((prevState) => {
+      const updatedState = [...prevState];
+      updatedState[index] = !updatedState[index];
+      return updatedState;
+    });
   };
 
+  {/* Functions - set ingredient arrays */}
   const [ingredients, setIngredients] = useState(props.ingredients.toString());
-  const [tempIngredients, setTempIngredients] = useState(ingredients);
+  const [ingredientUnits, setIngredientUnits] = useState(props.ingredientUnits.toString());
+  const [ingredientQuantities, setIngredientQuantities] = useState(props.ingredientQuantities.toString());
+  const [tempIngredientQuantities, setTempIngredientQuantities] = useState(ingredientQuantities);
 
+  {/* Functions - set cook time */}
+  const [cookTime, setCookTime] = useState(props.cookTime.toString());
+
+  {/* Functions - set recipe */}
+  const [recipe, setRecipe] = useState(props.recipe.toString());
+
+  {/* Functions - cancel/save user changes */}
   const handleCancel = () => {
     setTempServings(servings);
     setTempDate(date);
-    setTempShared(shared)
-    setTempIngredients(ingredients)
+    setTempShared(shared);
+    setTempIngredientQuantities(ingredientQuantities);
   }
   const handleSave = () => {
-    if (tempServings != '' && !isNaN(Number(tempServings))) {
-      setServings(tempServings);
+    if (isNaN(Number(tempServings))) {
+      Alert.alert('Please enter a valid number of servings.');
+    } else if (tempServings != '' && Number(tempServings) <= 0) {
+      props.deleteMeal(props.id);
     } else {
-      setTempServings(servings);
+      setIngredientQuantities(
+        String(Number(tempIngredientQuantities) * (Number(tempServings)/Number(servings)))
+      ); // idk if this actually works properly; needs to be tested
+      if (tempServings != '') {
+        setServings(tempServings);
+      } else {
+        setTempServings(servings);
+      }
+      setDate(date);
+      setShared(tempShared);
+      closeWindow();
     }
-    setDate(tempDate);
-    setShared(tempShared)
-    setIngredients(ingredients)
+  };
+
+  {/* Functions - confirm choice to delete meal */}
+  const confirmDelete = () => {
+    Alert.alert(
+      'Delete meal?',
+      ``,
+      [{
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'OK',
+        onPress: () => props.deleteMeal(props.id),
+      }],
+      { cancelable: true }
+    );
   };
 
   return (
     <View style={styles.container}>
 
       {/* Displayed item information */}
-      <View style={styles.itemContainer}>
+      <View style={styles.mealContainer}>
         <Text style={styles.dateContainer}>
           {date.toLocaleDateString()}
         </Text>
         <View style={styles.rowAlignment}>
-          <Text style={styles.itemName}>{props.name}</Text>
+          <Text style={styles.mealName}>{props.name}</Text>
           {shared[0] ? (<Text>  <Ionicons name="ellipse" size={13} color="#e167a4"/></Text>) : (null)}
           {shared[1] ? (<Text>  <Ionicons name="ellipse" size={13} color="#f4737e"/></Text>) : (null)}
           {shared[2] ? (<Text>  <Ionicons name="ellipse" size={13} color="#ff8667"/></Text>) : (null)}
@@ -94,23 +137,47 @@ const MealItem = (props: MealProps) => {
           intensity={20}
         />
         <View style={styles.windowAlignment}>
-          <View style={styles.window}>
+          <View style={styles.windowContainer}>
             <Text style={styles.windowTitle}>{props.name}</Text>
 
             {/* Edit date to cook */}
             <View style={styles.dateContainer}>
-              <Text style={styles.windowText}>Planned To Cook On:  </Text>
-              <TouchableOpacity
-                style={styles.dateInput}
-                onPress={openScroller}
-              >
-                <Text style={styles.windowText}>{tempDate.toLocaleDateString()}</Text>
+              <Text style={styles.fieldText}>Planned To Cook On:  </Text>
+              <TouchableOpacity style={styles.pickerInput} onPress={openDatePicker}>
+                <Text style={styles.fieldText}>{tempDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
-            
+
+            {/* Date to cook picker */}
+            <Modal
+              transparent={true}
+              animationType="slide"
+              visible={isDatePickerVisible}
+              onRequestClose={closeDatePicker}
+            >
+              <Pressable style={styles.pickerSpacer} onPress={closeDatePicker}></Pressable>
+              <View>
+                <View style={styles.doneButtonContainer}>
+                  <TouchableOpacity onPress={closeDatePicker}>
+                    <Text style={styles.doneButtonText}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.pickerB}>
+                  {isDatePickerVisible && (
+                    <DateTimePicker
+                      value={tempDate}
+                      mode="date"
+                      display="spinner"
+                      onChange={(event, date) => {if (date) setTempDate(date);}}
+                    />
+                  )}
+                </View>
+              </View>
+            </Modal>
+
             {/* Edit servings */}
-            <View style={styles.servingsContainer}>
-              <Text style={styles.windowText}>Servings:  </Text>
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldText}>Servings:  </Text>
               <TextInput
                 style={styles.servingsInput}
                 value={tempServings}
@@ -118,40 +185,11 @@ const MealItem = (props: MealProps) => {
               />
             </View>
 
-            {/* Date to cook scroller */}
-            <Modal
-              transparent={true}
-              animationType="slide"
-              visible={isScrollerVisible}
-              onRequestClose={closeScroller}
-            >
-              <Pressable style={styles.scrollerSpacer} onPress={closeScroller}></Pressable>
-              <View>
-                <View style={styles.doneButtonContainer}>
-                  <TouchableOpacity onPress={closeScroller}>
-                    <Text style={styles.doneButtonText}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.scroller}>
-                  {isScrollerVisible && (
-                    <DateTimePicker
-                      value={tempDate}
-                      mode="date"
-                      display="spinner"
-                      onChange={(event, date) => {
-                        if (date) setTempDate(date);
-                      }}
-                    />
-                  )}
-                </View>
-              </View>
-            </Modal>
-
-            {/* Set item as shared */}
+            {/* Set meal as shared */}
             <View style={styles.sharedSpacer}>
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user1:  </Text>
-                <Pressable onPress={() => tempSharedToggle(0)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[0]}:  </Text>
+                <Pressable onPress={() => sharedToggle(0)}>
                   {tempShared[0] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
                   ) : (
@@ -161,8 +199,8 @@ const MealItem = (props: MealProps) => {
               </View>
 
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user2:  </Text>
-                <Pressable onPress={() => tempSharedToggle(1)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[1]}:  </Text>
+                <Pressable onPress={() => sharedToggle(1)}>
                   {tempShared[1] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
                   ) : (
@@ -172,8 +210,8 @@ const MealItem = (props: MealProps) => {
               </View>
 
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user3:  </Text>
-                <Pressable onPress={() => tempSharedToggle(2)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[2]}:  </Text>
+                <Pressable onPress={() => sharedToggle(2)}>
                   {tempShared[2] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
                   ) : (
@@ -183,8 +221,8 @@ const MealItem = (props: MealProps) => {
               </View>
 
               <View style={styles.sharedContainer}>
-                <Text style={styles.windowText}>Shared with user4:  </Text>
-                <Pressable onPress={() => tempSharedToggle(3)}>
+                <Text style={styles.fieldText}>Shared with {props.roommates[3]}:  </Text>
+                <Pressable onPress={() => sharedToggle(3)}>
                   {tempShared[3] ? (
                     <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
                   ) : (
@@ -192,7 +230,7 @@ const MealItem = (props: MealProps) => {
                   )}
                 </Pressable>
               </View>
-            </View>  
+            </View>   
 
             {/* List Ingredients */}
 
@@ -202,25 +240,13 @@ const MealItem = (props: MealProps) => {
 
             {/* Cooked and Remove buttons */}
             
-            {/* Cancel/save changes */}
+            {/* Cancel/save user changes */}
             <View style={styles.rowAlignment}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => {
-                  closeWindow();
-                  handleCancel();
-                }}
-              >
+              <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); handleCancel(); }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={() => {
-                  closeWindow();
-                  handleSave();
-                }}
-              >
+              <TouchableOpacity style={styles.saveButton} onPress={() => { handleSave(); }}>
                 <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -236,7 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  itemContainer: {
+  mealContainer: {
     marginVertical: 10,
     marginLeft: 25,
   },
@@ -244,11 +270,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  itemName: {
+  mealName: {
     marginBottom: 5,
     fontSize: 20,
   },
-  itemDetails: {
+  mealDetails: {
     color: 'gray',
   },
   viewButton: {
@@ -259,7 +285,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  window: {
+  windowContainer: {
     marginHorizontal: 50,
     borderRadius: 8,
     padding: 35,
@@ -271,11 +297,16 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     marginBottom: 30,
   },
-  windowText: {
+  windowSubtitle: {
+    fontWeight: 600,
+    marginBottom: 35,
+    color: 'gray',
+  },
+  fieldText: {
     fontSize: 16,
   },
-  servingsContainer: {
-    marginBottom: 25,
+  fieldContainer: {
+    marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -302,16 +333,21 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 600,
   },
-  dateInput: {
+  pickerInput: {
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
     padding: 10,
+    backgroundColor: '#f0f0f0',
   },
-  scrollerSpacer: {
+  pickerSpacer: {
     flex: 1,
   },
-  scroller: {
+  pickerA: {
+    paddingBottom: 30,
+    backgroundColor: 'gray',
+  },
+  pickerB: {
     paddingBottom: 30,
     alignItems: 'center',
     backgroundColor: 'gray',
@@ -329,13 +365,13 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   sharedSpacer: {
-    marginBottom: 15,
+    marginBottom: 12,
     alignItems: 'center',
   },
   sharedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   cancelButton: {
     marginRight: 35,
@@ -366,6 +402,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  deleteButton: {
+    marginTop: 35,
+  }
 });
 
 export default MealItem;

@@ -6,26 +6,46 @@ import MealItem from '@/components/MealItem';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 //import Roommates from '@/components/Roommates';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Meal () {
-  const [items, setItems] = useState([
-    { id: 1, name: "Meal1", servings: 1, date: new Date(),
+  /*const [items, setItems] = useState([
+    { id: "1", name: "Meal1", servings: 1, date: new Date(),
       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
       ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] },
-    { id: 2, name: "Meal2", servings: 2, date: new Date(),
+    { id: "2", name: "Meal2", servings: 2, date: new Date(),
       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
       ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] },
-    { id: 3, name: "Meal3", servings: 3, date: new Date(),
+    { id: "3", name: "Meal3", servings: 3, date: new Date(),
       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
       ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] },
-    { id: 4, name: "Meal4", servings: 4, date: new Date(),
+    { id: "4", name: "Meal4", servings: 4, date: new Date(),
       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
       ingredients: ["apple", "orange", "tomato"], ingredient_units: ["lbs", "oz", "purple"], ingredient_quantities: [1, 2, 3] }
-  ]);
+  ]);*/
 
+  interface Meal {
+    id: string;
+    name: string;
+    servings: number;
+    date: Date;
+    shared: boolean[];
+    roommates: string[];
+    ingredients: string[];
+    ingredient_units: string[];
+    ingredient_quantities: number[];
+    cook_time: number;
+    recipe: string;
+    deleteMeal: (id: string) => void;
+  }
+  const [meals, setMeals] = useState<Meal[]>([]);
+
+  {/* Functions - search meal window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
+    // We'll need to tie this in with our meal search algorithm
     setSearch('');
     setWindowVisible(false);
     setNewName('');
@@ -33,29 +53,38 @@ export default function Meal () {
     setNewDate(new Date());
     setNewShared([false, false, false, false]);
   };
-
   const [newSearch, setSearch] = useState('');
+
+  {/* Functions - new meal name */}
   const [newName, setNewName] = useState('');
+
+  {/* Functions - new meal servings */}
   const [newServings, setNewServings] = useState('');
   
+  {/* Functions - new date to cook */}
   const [newDate, setNewDate] = useState(new Date());
-  const [isScrollerVisible, setScrollerVisible] = useState(false);
-  const openScroller = () => setScrollerVisible(true);
-  const closeScroller = () => setScrollerVisible(false);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const openDatePicker = () => setDatePickerVisible(true);
+  const closeDatePicker = () => setDatePickerVisible(false);
   
+  {/* Functions - set new meal as shared */}
+  const roommates = ["BrianG", "ConnorH", "NickC", "JacobM"];
   const [newShared, setNewShared] = useState([false, false, false, false]);
-  const newSharedToggle = (index: number) => {
-    setNewShared((prevState) =>
-      prevState.map((item, i) => (i === index ? !item : item))
-    );
+  const sharedToggle = (index: number) => {
+    setNewShared((prevState) => {
+      const updatedState = [...prevState];
+      updatedState[index] = !updatedState[index];
+      return updatedState;
+    });
   };
 
-  const addItem = () => {
+    {/* Functions - add meal */}
+  const addMeal = () => {
     if (isNaN(Number(newServings))) {
       Alert.alert('Servings must be a number.');
     } else if (newName && newServings && newDate && newShared) {
-      const newItem = {
-        id: items.length + 1,
+      const newMeal = {
+        id: uuidv4(),
         name: newName,
         servings: Number(newServings),
         date: newDate,
@@ -77,8 +106,8 @@ export default function Meal () {
           <Text style={styles.title}>
             Meal Plan
           </Text>
-          <Text style={styles.category}>
-            (Frontend Branch)
+          <Text style={styles.tempSubtitle}>
+            (Frontend Branch) {/* This will need to be removed */}
           </Text>
           <TouchableOpacity style={styles.addButton} onPress={openWindow}>
             <Ionicons name="add-outline" size={40} color="white"/>
@@ -270,6 +299,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 700,
   },
+  tempSubtitle: { // This will need to be removed
+    marginTop: 30,
+    marginBottom: 10,
+    marginLeft: 25,
+    color: 'gray',
+    fontWeight: 600,
+  },
   addButton: {
     marginTop: 25,
     marginRight: 25,
@@ -280,22 +316,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ff8667',
   },
-  category: {
-    marginTop: 30,
-    marginBottom: 10,
-    marginLeft: 25,
-    color: 'gray',
-    fontWeight: 600,
-  },
-  line: {
-    borderBottomWidth: 1,
-    borderColor: 'lightgray',
-  },
   windowAlignment: {
     flex: 1,
     justifyContent: 'center',
   },
-  window: {
+  windowContainer: {
     marginHorizontal: 50,
     borderRadius: 8,
     padding: 35,
@@ -307,45 +332,24 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     marginBottom: 30,
   },
-  windowText: {
-    fontSize: 16,
-  },
-  nameContainer: {
-    marginBottom: 25,
+  fieldContainer: {
+    marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  fieldText: {
+    fontSize: 16,
   },
   nameInput: {
-    width: 135,
+    width: 145,
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
     padding: 10,
     fontSize: 16,
   },
-  servingsContainer: {
-    marginBottom: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  mealSearchBarOuter: {
-    marginLeft: 20,
-    width: 300,
-    borderWidth: 1,
-    borderRadius: 8,
-    borderColor: 'lightgray',
-    padding: 10,
-    fontSize: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    
-  },
-  mealSearchBarInner: {
-    marginLeft: 10,
-    width: 250,
-    fontSize: 16,
-  },
-  servingsInput: {
+  quantityInput: {
+    marginRight: 10,
     width: 70,
     borderWidth: 1,
     borderRadius: 8,
@@ -353,21 +357,22 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
   },
-  dateContainer: {
-    marginBottom: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateInput: {
+  pickerInput: {
+    maxWidth: 170,
     borderWidth: 1,
     borderRadius: 8,
     borderColor: 'lightgray',
     padding: 10,
+    backgroundColor: '#f0f0f0',
   },
-  scrollerSpacer: {
+  pickerSpacer: {
     flex: 1,
   },
-  scroller: {
+  pickerA: {
+    paddingBottom: 30,
+    backgroundColor: 'gray',
+  },
+  pickerB: {
     paddingBottom: 30,
     alignItems: 'center',
     backgroundColor: 'gray',
@@ -385,13 +390,13 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   sharedSpacer: {
-    marginBottom: 15,
+    marginBottom: 12,
     alignItems: 'center',
   },
   sharedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   rowAlignment: {
     flexDirection: 'row',
@@ -425,5 +430,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  date: {
+    marginTop: 30,
+    marginBottom: 10,
+    marginLeft: 25,
+    color: 'gray',
+    fontWeight: 600,
+  },
+  line: {
+    borderBottomWidth: 1,
+    borderColor: 'lightgray',
   },
 });
