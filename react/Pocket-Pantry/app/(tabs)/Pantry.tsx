@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
-import PantryItem from '@/components/PantryItem';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import DateTimePicker from '@react-native-community/datetimepicker'
-import { Picker } from '@react-native-picker/picker';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
+import PantryItem from "@/components/PantryItem";
 
 export default function Pantry () {
   interface Item {
@@ -22,6 +22,12 @@ export default function Pantry () {
     deleteItem: (id: string) => void;
   }
   const [items, setItems] = useState<Item[]>([]);
+
+  type Roommate = {
+    id: number; 
+    name: string; 
+    isReciprocal: boolean;
+  };
 
   const categoriesA = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
@@ -43,34 +49,39 @@ export default function Pantry () {
     "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
     "bottles", "packets", "bunches", "leaves", "stones", "sprigs",
   ];
+  const sharedColors = [
+    "#e167a4", "#f4737e", "#ff8667", "#ffb778",
+    "#fde289", "#ade693", "#89e0b3", "#78dbde",
+    "#6eabd7", "#7a6ed7","#ae5da2",
+  ];
 
   {/* Functions - add item window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
     setWindowVisible(false);
-    setNewName('');
-    setNewCategory('Proteins');
-    setNewQuantity('');
-    setNewUnit('pieces');
+    setNewName("");
+    setNewCategory("Proteins");
+    setNewQuantity("");
+    setNewUnit("pieces");
     setNewExpiration(new Date());
     setNewShared([false, false, false, false]);
   };
 
   {/* Functions - new item name */}
-  const [newName, setNewName] = useState('');
+  const [newName, setNewName] = useState("");
 
   {/* Functions - new item category */}
-  const [newCategory, setNewCategory] = useState('Proteins');
+  const [newCategory, setNewCategory] = useState("Proteins");
   const [isCategoryPickerVisible, setCategoryPickerVisible] = useState(false);
   const openCategoryPicker = () => setCategoryPickerVisible(true);
   const closeCategoryPicker = () => setCategoryPickerVisible(false);
   
   {/* Functions - new item quantity */}
-  const [newQuantity, setNewQuantity] = useState('');
+  const [newQuantity, setNewQuantity] = useState("");
 
   {/* Functions - new item unit */}
-  const [newUnit, setNewUnit] = useState('pieces');
+  const [newUnit, setNewUnit] = useState("pieces");
   const [isUnitPickerVisible, setUnitPickerVisible] = useState(false);
   const openUnitPicker = () => setUnitPickerVisible(true);
   const closeUnitPicker = () => setUnitPickerVisible(false);
@@ -82,8 +93,12 @@ export default function Pantry () {
   const closeExpirationPicker = () => setExpirationPickerVisible(false);
   
   {/* Functions - set new item as shared */}
-  const roommates = ["BrianG", "ConnorH", "NickC", "JacobM"];
-  const [newShared, setNewShared] = useState([false, false, false, false]);
+  const reciprocatedRoommates = [
+    "username1", "username2", "username3333333333", "username4",
+    "username5", "username6", "username7", "username8",
+    "username9", "username10", "username11",
+  ];
+  const [newShared, setNewShared] = useState<boolean[]>(new Array(reciprocatedRoommates.length).fill(false));
   const sharedToggle = (index: number) => {
     setNewShared((prevState) => {
       const updatedState = [...prevState];
@@ -95,9 +110,9 @@ export default function Pantry () {
   {/* Functions - add item */}
   const addItem = () => {
     if (!(newName && newQuantity)) {
-      Alert.alert('Please fill out all fields.');
+      Alert.alert("Please fill out all fields.");
     } else if (isNaN(Number(newQuantity)) || Number(newQuantity) <= 0) {
-      Alert.alert('Please enter a valid quantity.');
+      Alert.alert("Please enter a valid quantity.");
     } else {
       const newItem = {
         id: uuidv4(),
@@ -107,7 +122,7 @@ export default function Pantry () {
         unit: newUnit,
         expiration: newExpiration,
         shared: newShared,
-        roommates: roommates,
+        roommates: reciprocatedRoommates,
         deleteItem: deleteItem,
       };
       setItems([...items, newItem]);
@@ -122,8 +137,7 @@ export default function Pantry () {
 
   {/* Functions - category headers */}
   const categorizedItems = categoriesA.map((category) => ({
-    category,
-    items: items.filter((item) => item.category === category),
+    category, items: items.filter((item) => item.category === category),
   }));
 
   return (
@@ -270,51 +284,24 @@ export default function Pantry () {
               </Modal>
 
               {/* Set new item as shared */}
-              <View style={styles.sharedSpacer}>
-                <View style={styles.sharedContainer}>
-                  <Text style={styles.fieldText}>Shared with {roommates[0]}:  </Text>
-                  <Pressable onPress={() => sharedToggle(0)}>
-                    {newShared[0] ? (
-                      <Ionicons name="checkmark-circle" size={32} color="#e167a4"/>
-                    ) : (
-                      <Ionicons name="ellipse-outline" size={32} color="#e167a4"/>
-                    )}
-                  </Pressable>
+              <ScrollView horizontal={false} style={styles.sharedScroll}>
+                <View style={styles.sharedAlignment}>
+                    {reciprocatedRoommates.map((roommate: string, index: number) => {
+                      return (
+                        <View key={roommate} style={styles.sharedContainer}>
+                          <Text style={styles.fieldText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                          <Pressable style={styles.iconSpacer} onPress={() => sharedToggle(index)}>
+                            {newShared[index] ? (
+                              <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
+                            ) : (
+                              <Ionicons name="ellipse-outline" size={32} color={sharedColors[index%11]}/>
+                            )}
+                          </Pressable>
+                        </View>
+                      );
+                    })}
                 </View>
-
-                <View style={styles.sharedContainer}>
-                  <Text style={styles.fieldText}>Shared with {roommates[1]}:  </Text>
-                  <Pressable onPress={() => sharedToggle(1)}>
-                    {newShared[1] ? (
-                      <Ionicons name="checkmark-circle" size={32} color="#f4737e"/>
-                    ) : (
-                      <Ionicons name="ellipse-outline" size={32} color="#f4737e"/>
-                    )}
-                  </Pressable>
-                </View>
-
-                <View style={styles.sharedContainer}>
-                  <Text style={styles.fieldText}>Shared with {roommates[2]}:  </Text>
-                  <Pressable onPress={() => sharedToggle(2)}>
-                    {newShared[2] ? (
-                      <Ionicons name="checkmark-circle" size={32} color="#ff8667"/>
-                    ) : (
-                      <Ionicons name="ellipse-outline" size={32} color="#ff8667"/>
-                    )}
-                  </Pressable>
-                </View>
-
-                <View style={styles.sharedContainer}>
-                  <Text style={styles.fieldText}>Shared with {roommates[3]}:  </Text>
-                  <Pressable onPress={() => sharedToggle(3)}>
-                    {newShared[3] ? (
-                      <Ionicons name="checkmark-circle" size={32} color="#ffb778"/>
-                    ) : (
-                      <Ionicons name="ellipse-outline" size={32} color="#ffb778"/>
-                    )}
-                  </Pressable>
-                </View>
-              </View>
+              </ScrollView>
 
               {/* Cancel/save new item */}
               <View style={styles.rowAlignment}>
@@ -330,6 +317,7 @@ export default function Pantry () {
           </View>
         </Modal>
 
+        {/* Display items */}
         {categorizedItems.map((categoryGroup) => (
           categoryGroup.items.length > 0 && (
             <View key={categoryGroup.category}>
@@ -362,8 +350,8 @@ export default function Pantry () {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   title: {
     marginTop: 25,
@@ -377,20 +365,20 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ff8667',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ff8667",
   },
   windowAlignment: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   windowContainer: {
     marginHorizontal: 50,
     borderRadius: 8,
     padding: 35,
-    alignItems: 'center',
-    backgroundColor: 'white',
+    alignItems: "center",
+    backgroundColor: "white",
   },
   windowTitle: {
     fontSize: 24,
@@ -399,8 +387,8 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   fieldText: {
     fontSize: 16,
@@ -409,7 +397,7 @@ const styles = StyleSheet.create({
     width: 145,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: 'lightgray',
+    borderColor: "lightgray",
     padding: 10,
     fontSize: 16,
   },
@@ -418,7 +406,7 @@ const styles = StyleSheet.create({
     width: 70,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: 'lightgray',
+    borderColor: "lightgray",
     padding: 10,
     fontSize: 16,
   },
@@ -426,46 +414,59 @@ const styles = StyleSheet.create({
     maxWidth: 170,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: 'lightgray',
+    borderColor: "lightgray",
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
   },
   pickerSpacer: {
     flex: 1,
   },
   pickerA: {
     paddingBottom: 30,
-    backgroundColor: 'gray',
+    backgroundColor: "lightgray",
   },
   pickerB: {
     paddingBottom: 30,
-    alignItems: 'center',
-    backgroundColor: 'gray',
+    alignItems: "center",
+    backgroundColor: "lightgray",
   },
   doneButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    backgroundColor: 'gray',
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    backgroundColor: "lightgray",
   },
   doneButtonText: {
     marginTop: 15,
     marginHorizontal: 25,
-    color: '#2fb1ff',
+    color: "#2fb1ff",
     fontSize: 20,
     fontWeight: 600,
   },
-  sharedSpacer: {
-    marginBottom: 12,
-    alignItems: 'center',
+  sharedScroll: {
+    marginBottom: 35,
+    maxHeight: 220,
+    width: 250,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: "lightgray",
+  },
+  sharedAlignment: {
+    marginTop: 22,
+    marginBottom: 10,
+    marginHorizontal: 35,
+    alignItems: "center",
   },
   sharedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  iconSpacer: {
+    marginLeft: 5,
   },
   rowAlignment: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   cancelButton: {
     marginRight: 35,
@@ -473,38 +474,38 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 8,
     borderColor: "#ff8667",
-    alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: 'white',
+    alignItems: "center",
+    backgroundColor: "white",
   },
   cancelButtonText: {
-    color: '#ff8667',
+    color: "#ff8667",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   saveButton: {
     width: 90,
     borderWidth: 2,
     borderRadius: 8,
     borderColor: "#ff8667",
-    alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: '#ff8667',
+    alignItems: "center",
+    backgroundColor: "#ff8667",
   },
   saveButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   category: {
     marginTop: 40,
     marginBottom: 10,
     marginLeft: 25,
-    color: 'gray',
+    color: "gray",
     fontWeight: 600,
   },
   line: {
     borderBottomWidth: 1,
-    borderColor: 'lightgray',
+    borderColor: "lightgray",
   },
 });
