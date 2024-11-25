@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from "@expo/vector-icons/Ionicons";
+import MealItem from "@/components/MealItem";
+import RecipeItem from "@/components/RecipeItem";
 
 export default function MealPlan () {
 
@@ -13,15 +15,15 @@ export default function MealPlan () {
   };
 
   return (
-    <ScrollView>
-      <SafeAreaView> 
+    <SafeAreaView> 
+      <View style={styles.header}>
+        <Text style={styles.title}>Meal Plan</Text>
+        <TouchableOpacity style={styles.addButton} onPress={openWindow}>
+          <Ionicons name="add-outline" size={40} color="white"/>
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.header}>
-          <Text style={styles.title}>Meal Plan</Text>
-          <TouchableOpacity style={styles.addButton} onPress={openWindow}>
-            <Ionicons name="add-outline" size={40} color="white"/>
-          </TouchableOpacity>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* Recipe search window */}
         <Modal
@@ -31,8 +33,9 @@ export default function MealPlan () {
           onRequestClose={closeWindow}
         >
           <View style={styles.windowContainer}>
-            <View style={styles.windowHeader}>
-              
+            <View style={styles.windowHeader}> 
+
+              {/* Search bar */}
               <View style={styles.searchBarContainer}>
                 <TextInput
                   style={styles.searchBar}
@@ -44,19 +47,59 @@ export default function MealPlan () {
                 </View>
               </View>
 
+              {/* Close button */}
               <TouchableOpacity style={styles.closeButton} onPress={closeWindow}>
                 <Ionicons name="close-outline" size={32} color="white"/>
               </TouchableOpacity>
             </View>
 
-            <ScrollView>
+            {/* Filter button */}
+            <TouchableOpacity style={styles.filterButton}>
+              <Ionicons name="add-outline" size={20} color="gray"/>
+              <Text style={styles.filterText}>Add filter</Text>
+            </TouchableOpacity>
 
+            <View style={styles.line}></View>
+
+            {/* Recipe results */}
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.resultsContainer}>
+              <View>
+
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+                <RecipeItem/>
+
+              </View>
+              <View style={styles.resultsBuffer}></View>
             </ScrollView>
           </View>
         </Modal>
 
-      </SafeAreaView>
-    </ScrollView>
+        {/* Display planned meals */}
+        <Text style={styles.dateHeader}>WEDNESDAY 11/27/2024</Text>
+        <MealItem/>
+        <MealItem/>
+        <MealItem/>
+        <MealItem/>
+        <MealItem/>
+
+        <Text style={styles.dateHeader}>SATURDAY 11/30/2024</Text>
+        <MealItem/>
+        <MealItem/>
+        <MealItem/>
+        <MealItem/>
+        <MealItem/>
+
+        <View style={styles.itemBuffer}></View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -64,6 +107,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingBottom: 25,
   },
   title: {
     marginTop: 30,
@@ -93,9 +137,8 @@ const styles = StyleSheet.create({
   },
   searchBarContainer: {
     marginLeft: 30,
-    height: 40,
-    width: "68%",
-    borderRadius: 20,
+    width: "69%",
+    borderRadius: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -105,6 +148,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
     flex: 1,
     flexShrink: 1,
+    paddingVertical: 12,
     fontSize: 16,
     backgroundColor: "#f0f0f0",
   },
@@ -119,5 +163,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "gray",
+  },
+  filterButton: {
+    marginLeft: 30,
+    marginVertical: 10,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+  filterText: {
+    fontSize: 16,
+    fontWeight: 500,
+    color: "gray",
+  },
+  line: {
+    borderBottomWidth: 0.5,
+    borderColor: "lightgray",
+  },
+  resultsContainer: {
+    backgroundColor: "#f0f0f0",
+  },
+  resultsBuffer: {
+    height: 40,
+  },
+  dateHeader: {
+    marginTop: 40,
+    marginLeft: 25,
+    color: "gray",
+    fontWeight: 600,
+  },
+  itemBuffer: {
+    height: 80,
   },
 });

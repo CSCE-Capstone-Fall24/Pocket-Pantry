@@ -64,19 +64,12 @@ export default function Pantry () {
     isReciprocal: boolean;
   };
 
-  const categoriesA = [
+  const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
     "Bakery, Grains & Dried Goods", "Canned & Jarred Goods",
     "Frozen Foods", "Baking Essentials", "Condiments, Sauces & Dressings",
     "Herbs, Spices & Seasonings", "Oils, Fats & Vinegars",
     "Beverages", "Snacks & Treats", "Specialty & Miscellaneous", "Uncategorized"
-  ];
-  const categoriesB = [
-    "PROTEINS", "FRESH PRODUCE", "DAIRY & ALTERNATIVES",
-    "BAKERY, GRAINS & DRIED GOODS", "CANNED & JARRED GOODS",
-    "FROZEN FOODS", "BAKING ESSENTIALS", "CONDIMENTS, SAUCES & DRESSINGS",
-    "HERBS, SPICES & SEASONINGS", "OILS, FATS & VINEGARS",
-    "BEVERAGES", "SNACKS & TREATS", "SPECIALTY & MISCELLANEOUS", "UNCATEGORIZED"
   ];
   const units = [
     "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
@@ -247,7 +240,7 @@ export default function Pantry () {
 
   {/* Functions - category headers */}
   const categorizedItems = [
-    ...categoriesA.map((category) => ({
+    ...categories.map((category) => ({
       category,
       items: items.filter(
         (item) => item.category && item.category.toLowerCase() === category.toLowerCase()
@@ -258,7 +251,7 @@ export default function Pantry () {
       items: items.filter(
         (item) =>
           !item.category || // Check if category is null/undefined
-          !categoriesA.some(
+          !categories.some(
             (category) => item.category.toLowerCase() === category.toLowerCase()
           )
       ),
@@ -269,16 +262,16 @@ export default function Pantry () {
   // console.log(categorizedItems);
 
   return (
-    <ScrollView>
-      <SafeAreaView>
-
-        <View style={styles.header}>
-          <Text style={styles.title}>Pantry</Text>
-          <TouchableOpacity style={styles.addButton} onPress={openWindow}>
-            <Ionicons name="add-outline" size={40} color="white"/>
-          </TouchableOpacity>
-        </View>
-
+    <SafeAreaView>
+      <View style={styles.header}>
+        <Text style={styles.title}>Pantry</Text>
+        <TouchableOpacity style={styles.addButton} onPress={openWindow}>
+          <Ionicons name="add-outline" size={40} color="white"/>
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView showsVerticalScrollIndicator={false}>
+      
         {/* Add item window */}
         <Modal
           transparent={true}
@@ -328,7 +321,7 @@ export default function Pantry () {
                   <View style={styles.pickerA}>
                     {isCategoryPickerVisible && (
                       <Picker selectedValue={newCategory} onValueChange={(newCategory) => setNewCategory(newCategory)}>
-                        {categoriesA.map((category, index) => (
+                        {categories.map((category, index) => (
                           <Picker.Item key={index} label={category} value={category} />
                         ))}
                       </Picker>
@@ -414,27 +407,27 @@ export default function Pantry () {
               </Modal>
 
               {/* Set new item as shared */}
-              <ScrollView horizontal={false} style={styles.sharedScroll}>
-                <View style={styles.sharedAlignment}>
-                    {reciprocatedRoommates.map((roommate: string, index: number) => {
-                      return (
-                        <View key={roommate} style={styles.sharedContainer}>
-                          <Text style={styles.fieldText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
-                          <Pressable style={styles.iconSpacer} onPress={() => sharedToggle(index)}>
-                            {newShared[index] ? (
-                              <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
-                            ) : (
-                              <Ionicons name="ellipse-outline" size={32} color={sharedColors[index%11]}/>
-                            )}
-                          </Pressable>
-                        </View>
-                      );
-                    })}
-                </View>
-              </ScrollView>
+              {reciprocatedRoommates.length > 0 && (
+                <ScrollView horizontal={false} style={styles.sharedScroll}>
+                  {reciprocatedRoommates.map((roommate: string, index: number) => {
+                    return (
+                      <View key={roommate} style={styles.sharedContainer}>
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                        <Pressable onPress={() => sharedToggle(index)}>
+                          {newShared[index] ? (
+                            <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
+                          ) : (
+                            <Ionicons name="ellipse-outline" size={32} color={sharedColors[index%11]}/>
+                          )}
+                        </Pressable>
+                      </View>  
+                    );
+                  })}
+                </ScrollView>
+              )}
 
               {/* Cancel/save new item */}
-              <View style={styles.rowAlignment}>
+              <View style={styles.buttonAlignment}>
                 <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); }}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -453,12 +446,11 @@ export default function Pantry () {
             categorizedItems.map((categoryGroup) => (
               categoryGroup.items.length > 0 && (
                 <View key={categoryGroup.category}>
-                  <Text style={styles.category}>
-                    {categoriesB[categoriesA.indexOf(categoryGroup.category)]}
+                  <Text style={styles.categoryHeader}>
+                    {categories[categories.indexOf(categoryGroup.category)]}
                   </Text>
                   {categoryGroup.items.map((item) => (
                     <View key={item.id}>
-                      <View style={styles.line}></View>
                       <PantryItem
                         id={item.id}
                         name={item.name}
@@ -476,11 +468,11 @@ export default function Pantry () {
               )
             ))
           ) : (
-          <View><Text style={styles.category}>You have no pantry items</Text></View>
+          <View><Text style={styles.categoryHeader}>You have no pantry items</Text></View>
         )
       }
-      </SafeAreaView>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -488,6 +480,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingBottom: 25
   },
   title: {
     marginTop: 30,
@@ -506,15 +499,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#ff8667",
   },
   blurOverlay: {
-    backgroundColor: `rgba(0, 0, 0, ${.1})`
+    backgroundColor: `rgba(0, 0, 0, ${.15})`
   },
   windowAlignment: {
     flex: 1,
     justifyContent: "center",
   },
   windowContainer: {
-    marginHorizontal: 50,
-    borderRadius: 12,
+    marginHorizontal: 35,
+    borderRadius: 8,
     padding: 35,
     alignItems: "center",
     backgroundColor: "white",
@@ -522,10 +515,10 @@ const styles = StyleSheet.create({
   windowTitle: {
     fontSize: 24,
     fontWeight: 600,
-    marginBottom: 30,
+    marginBottom: 10,
   },
   fieldContainer: {
-    marginBottom: 20,
+    marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -561,18 +554,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pickerA: {
-    paddingBottom: 30,
-    backgroundColor: "lightgray",
+    paddingBottom: 35,
+    backgroundColor: "#f0f0f0",
   },
   pickerB: {
-    paddingBottom: 30,
+    paddingBottom: 35,
     alignItems: "center",
-    backgroundColor: "lightgray",
+    backgroundColor: "#f0f0f0",
   },
   doneButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    backgroundColor: "lightgray",
+    backgroundColor: "#f0f0f0",
   },
   doneButtonText: {
     marginTop: 15,
@@ -582,28 +575,28 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   sharedScroll: {
-    marginBottom: 35,
-    maxHeight: 220,
-    width: 250,
+    marginTop: 20,
+    maxHeight: 190,
+    width: 270,
     borderWidth: 1,
     borderRadius: 8,
     borderColor: "lightgray",
-  },
-  sharedAlignment: {
-    marginTop: 22,
-    marginBottom: 10,
-    marginHorizontal: 35,
-    alignItems: "center",
+    paddingTop: 12,
+    paddingHorizontal: 12,
   },
   sharedContainer: {
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
   },
-  iconSpacer: {
-    marginLeft: 5,
+  sharedText: {
+    marginRight: 5,
+    flexShrink: 1,
+    fontSize: 16,
   },
-  rowAlignment: {
+  buttonAlignment: {
+    marginTop: 35,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -636,15 +629,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  category: {
+  categoryHeader: {
     marginTop: 40,
-    marginBottom: 10,
     marginLeft: 25,
     color: "gray",
     fontWeight: 600,
   },
-  line: {
-    borderBottomWidth: 1,
-    borderColor: "lightgray",
+  itemBuffer: {
+    height: 80,
   },
 });
