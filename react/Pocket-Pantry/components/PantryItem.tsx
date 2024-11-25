@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Picker } from '@react-native-picker/picker';
-import Roommates from './Roommates';
+
 
 type Roommate = {
   id: number; 
@@ -94,7 +94,7 @@ const PantryItem = (props: PantryProps) => {
         <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
       </View> */}
       <View style={styles.itemContainer}>
-        <View style={styles.rowAlignment}>
+        {/* <View style={styles.rowAlignment}>
           <Text style={styles.itemName}>{props.name}</Text>
           {props.canShareWith.map((roommate, index) => {
             const baseHue = 30;
@@ -112,6 +112,27 @@ const PantryItem = (props: PantryProps) => {
             ) : null;
           })}
 
+        </View> */}
+
+        <View style={styles.rowAlignment}>
+          <Text style={styles.itemName}>{props.name}</Text>
+          
+          {/* Display colored dots for shared roommates */}
+          {props.canShareWith.map((roommate, index) => {
+            const baseHue = 30;
+            const hueShift = 15;
+            const hue = (baseHue + index * hueShift) % 360; // Color calculation for each roommate
+            const color = `hsl(${hue}, 100%, 50%)`;
+
+            console.log("CAN SHARE WITH IS, ");
+            console.log(props.canShareWith);
+            console.log("WHILE RMS ARE");
+            console.log(shared);
+
+            return shared[index] ? (
+              <Ionicons key={roommate.id} name="ellipse" size={13} color={color} />
+            ) : null;
+          })}
         </View>
       </View>
 

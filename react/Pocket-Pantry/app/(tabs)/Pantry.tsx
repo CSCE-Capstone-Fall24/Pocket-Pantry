@@ -44,7 +44,7 @@ export default function Pantry () {
           throw new Error("Failed to fetch items");
         }
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
 
         const transformedItems: Item[] = data.map((item: any) => ({
           id: item.pantry_id,
@@ -52,8 +52,10 @@ export default function Pantry () {
           quantity: item.quantity,
           unit: item.unit,
           expiration: new Date(item.expiration_date),
-          shared: item.shared_with.map(() => false), 
-        }));
+          shared: item.shared_with.map((sharedUserId: number) => 
+            reciprocatedRoommates.some((roommate: Roommate) => roommate.id === sharedUserId)
+          ),
+        }));        
 
         setItems(transformedItems);
         alert("GOT ITEMS AS\n" + transformedItems);
@@ -74,7 +76,7 @@ export default function Pantry () {
     setNewQuantity('');
     setNewUnit('oz');
     setNewExpiration(new Date());
-    setNewShared([false, false, false, false]);
+    // setNewShared([false, false, false, false]);
     setNewShared(new Array(reciprocatedRoommates.length).fill(false));
   };
 
@@ -125,26 +127,40 @@ export default function Pantry () {
           .filter((roommate: Roommate) => newShared[reciprocatedRoommates.indexOf(roommate)]) // Only include roommates selected as shared
           .map((roommate: Roommate) => roommate.id),
       };
+
+      console.log("INSERTING ITEM: ");
+      console.log(newItem);
   
       try {
-        // Make the API request to add the item
         const response = await fetch(`${API_URL}/add_item/`, {
-          method: 'POST', // Use POST method to send data
+          method: 'POST',
           headers: {
-            'Content-Type': 'application/json', // Set the content type to JSON
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(newItem), // Convert the item to JSON
+          body: JSON.stringify(newItem),
         });
   
         if (!response.ok) {
           throw new Error('Failed to add item to pantry');
         }
   
-        const addedItem = await response.json(); // Get the response from the backend
+        const addedItem = await response.json();
   
-        // Optionally, update the local state with the added item
-        setItems(prevItems => [...prevItems, addedItem]);
-        closeWindow(); // Close the modal
+        const transformedAddedItem: Item = {
+          id: addedItem.pantry_id,
+          name: addedItem.food_name,
+          quantity: addedItem.quantity,
+          unit: addedItem.unit,
+          expiration: new Date(addedItem.expiration_date),
+          shared: addedItem.shared_with.map((sharedUserId: number) => 
+            reciprocatedRoommates.some((roommate: Roommate) => roommate.id === sharedUserId)
+          ),
+        };
+  
+        setItems(prevItems => [...prevItems, transformedAddedItem]);
+  
+        // console.log(transformedAddedItem);
+        closeWindow();
       } catch (error) {
         console.error('Error adding item:', error);
         alert('Error, Failed to add item.');
