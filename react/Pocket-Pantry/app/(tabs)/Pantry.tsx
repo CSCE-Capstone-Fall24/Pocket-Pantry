@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -56,7 +56,7 @@ export default function Pantry () {
         shared: item.is_shared,
         shared_with: item.shared_with.sort(),
       }));
-      setItems(transformedItems);      
+      setItems([...transformedItems]);      
       console.log("GOT ITEMS AS\n");
       console.log(transformedItems)
 
@@ -89,7 +89,7 @@ export default function Pantry () {
     "Beverages", "Snacks & Treats", "Specialty & Miscellaneous", "Uncategorized"
   ];
   const units = [
-    "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
+    "pieces", "ounces", "lbs", "tbsp", "tsp", "fl oz", "cups", "pt",
     "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
     "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
     "bottles", "packets", "bunches", "leaves", "stones", "sprigs",
@@ -236,7 +236,7 @@ export default function Pantry () {
   };
 
   {/* Functions - category headers */}
-  const categorizedItems = [
+  const categorizedItems = useMemo (() => [
     ...categories.map((category) => ({
       category,
       items: items.filter(
@@ -253,10 +253,10 @@ export default function Pantry () {
           )
       ),
     },
-  ];
-  
+  ], [items]);
 
-  // console.log(categorizedItems);
+  console.log("NEW CAT");
+  console.log(categorizedItems);
 
   return (
     <View style={styles.container}>
@@ -452,9 +452,11 @@ export default function Pantry () {
                     {categoryGroup.category.toUpperCase()}
                   </Text>
                   {categoryGroup.items.map((item) => (
-                    <View key={item.id}>
+                    <View 
+                      // key={item.id}
+                    >
                       <PantryItem
-                        // key={item.id}
+                        key={item.id}
                         id={item.id}
                         user_id={item.user_id}
                         name={item.name}

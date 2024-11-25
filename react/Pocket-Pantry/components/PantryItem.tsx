@@ -79,13 +79,20 @@ const PantryItem = (props: PantryProps) => {
     });
     
     // console.log(props.shared_with.includes(props.recipRoommates[0].id.toString()));
-    console.log(props.recipRoommates);
-    console.log(props.shared_with);
+    // console.log(props.recipRoommates);
+    // console.log(props.shared_with);
 
     setShared(initialShared);
     setTempShared(initialShared);
-    console.log(initialShared);
-  }, [props.recipRoommates, props.shared_with]);
+
+    setQuantity(props.quantity.toString());
+    setTempQuantity(quantity);
+    setUnit(props.unit);
+    setTempUnit(unit);
+    setExpiration(props.expiration);
+    setTempExpiration(expiration);
+    // console.log(initialShared);
+  }, [props.recipRoommates, props.shared_with, props]);
 
   const sharedToggle = (index: number) => {
     setTempShared((prevState) => {
