@@ -6,6 +6,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { useUserContext } from "./contexts/UserContext";
 
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 // const TEST_USER_ID = '83';
 
 type Roommate = {
@@ -100,24 +101,69 @@ const PantryItem = (props: PantryProps) => {
     setTempExpiration(expiration);
     setTempShared(shared);
   }
-  const handleSave = () => {
-    // make POST request to EDIT item
+  // const handleSave = () => {
+  //   // make POST request to EDIT item
+  //   if (isNaN(Number(tempQuantity))) {
+  //     Alert.alert("Please enter a valid quantity.");
+  //   } else if (tempQuantity != "" && Number(tempQuantity) <= 0) {
+  //     props.deleteItem(props.id, props.user_id);
+  //   } else {
+  //     if (tempQuantity != "") {
+  //       setQuantity(tempQuantity);
+  //     } else {
+  //       setTempQuantity(quantity);
+  //     }
+  //     setUnit(tempUnit);
+  //     setExpiration(tempExpiration);
+  //     setShared(tempShared);
+  //     closeWindow();
+  //   }
+  // };
+  const handleSave = async () => {
     if (isNaN(Number(tempQuantity))) {
       Alert.alert("Please enter a valid quantity.");
     } else if (tempQuantity != "" && Number(tempQuantity) <= 0) {
       props.deleteItem(props.id, props.user_id);
     } else {
-      if (tempQuantity != "") {
+      const updatedItem = {
+        pantry_id: props.id,
+        quantity: tempQuantity,
+        unit: tempUnit,
+        expiration_date: tempExpiration.toISOString(),
+        shared_with: tempShared.filter((shared, index) => shared).map((_, index) => props.recipRoommates[index].id.toString()),
+      };
+  
+      try {
+        const response = await fetch(`${API_URL}/update_item/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedItem),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to update item');
+        }
+
+        alert("edited");
+        alert(response);
+        console.log(response);
+  
         setQuantity(tempQuantity);
-      } else {
-        setTempQuantity(quantity);
+        setUnit(tempUnit);
+        setExpiration(tempExpiration);
+        setShared(tempShared);
+
+        // maybe update parent list?
+  
+        closeWindow();
+      } catch (error) {
+        alert('An error occurred while saving the item.');
       }
-      setUnit(tempUnit);
-      setExpiration(tempExpiration);
-      setShared(tempShared);
-      closeWindow();
     }
   };
+  
 
   {/* Functions - confirm choice to delete item */}
   const confirmDelete = () => {
@@ -251,7 +297,7 @@ const PantryItem = (props: PantryProps) => {
             {
               userData.user_id == props.user_id ? (
                 // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
-                props.shared_with.length > 0 && (
+                // props.shared_with.length > 0 && (
                   <ScrollView horizontal={false} style={styles.sharedScroll}>
                       {props.recipRoommates.map((roommate: Roommate, index: number) => {
                         return (
@@ -267,7 +313,7 @@ const PantryItem = (props: PantryProps) => {
                         );
                       })}
                   </ScrollView>
-                )
+                // )
               ) : (
                 // USER VIEWING IS NOT OWNER
                 // SHOW OWNER
