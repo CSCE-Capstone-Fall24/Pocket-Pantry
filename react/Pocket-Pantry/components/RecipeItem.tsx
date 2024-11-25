@@ -14,3 +14,15 @@ export type RecipeProps = { // view http://47.218.196.222:8000/planned_meals?use
     cookTime: number; // cook time is in minutes
     recipeSteps: string; // this is cook_steps
 };
+
+const RecipeItem = (props: RecipeProps) => {
+    // Going into Recipe Search screen
+    
+    // Need a function to add to planned meals, which should create a MealItem and copy over RecipeProps
+        // mealServings will just copy recipeServings, but users will be able to add/remove servings
+            // should not be able to do 0 servings, users will just need to remove planned meal at that point
+        // mealID will be assigned a random value similar to id in PantryProps
+        // users will set date and shared mealProps
+}
+
+export default RecipeItem;

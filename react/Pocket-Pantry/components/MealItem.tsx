@@ -20,7 +20,7 @@ const MealItem = (props: MealProps) => {
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => setWindowVisible(false);
 
-  {/* Functions - edit servings */}
+  {/* Functions - edit meal servings */}
   const [servings, setServings] = useState(props.mealServings.toString());
   const [tempServings, setTempServings] = useState(servings);
 
@@ -43,16 +43,8 @@ const MealItem = (props: MealProps) => {
   };
 
   {/* Functions - set ingredient arrays */}
-  const [ingredients, setIngredients] = useState(props.ingredients.toString());
-  const [ingredientUnits, setIngredientUnits] = useState(props.ingredientUnits.toString());
   const [ingredientQuantities, setIngredientQuantities] = useState(props.ingredientQuantities.toString());
   const [tempIngredientQuantities, setTempIngredientQuantities] = useState(ingredientQuantities);
-
-  {/* Functions - set cook time */}
-  const [cookTime, setCookTime] = useState(props.cookTime.toString());
-
-  {/* Functions - set recipe */}
-  const [recipe, setRecipe] = useState(props.recipeSteps.toString());
 
   {/* Functions - cancel/save user changes */}
   const handleCancel = () => {
