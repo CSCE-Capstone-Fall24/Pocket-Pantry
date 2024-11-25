@@ -5,13 +5,23 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 type RecipeProps = {
-  
+  recipeId: string;
+  name: string;
+  recipeServings: number;
+  ingredients: string[];
+  ingredientUnits: string[];
+  ingredientQuantities: number[];
+  cookTime: number;
+  recipeSteps: string;
 };
 
 const RecipeItem = (props: RecipeProps) => {
   return (
     <View style={styles.container}>
-      
+      <Text>Recipe #1</Text>
+      <TouchableOpacity>
+        <Ionicons name="pencil" size={26} color="gray"/>
+      </TouchableOpacity>
     </View>
   )
 };
@@ -19,8 +29,8 @@ const RecipeItem = (props: RecipeProps) => {
 const styles = StyleSheet.create({
   container: {
     height: 100,
-    marginTop: 12,
-    marginHorizontal: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
     borderRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -29,6 +39,7 @@ const styles = StyleSheet.create({
     shadowColor: "black",
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "white",
   },
 });

@@ -281,8 +281,8 @@ const PantryItem = (props: PantryProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 12,
-    marginHorizontal: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
     borderRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -291,11 +291,12 @@ const styles = StyleSheet.create({
     shadowColor: "black",
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "white",
   },
   itemContainer: {
-    marginVertical: 10,
-    marginLeft: 25,
+    marginVertical: 12,
+    marginLeft: 15,
   },
   rowAlignment: {
     flexDirection: "row",
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
     color: "gray",
   },
   editButton: {
-    marginHorizontal: 5,
+    marginHorizontal: 2,
     padding: 20,
   },
   blurOverlay: {
