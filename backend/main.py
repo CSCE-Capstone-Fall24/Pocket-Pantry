@@ -1,3 +1,4 @@
+# IMPORTS 
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import or_, and_, any_, not_, cast, Integer, func
 from sqlalchemy.orm import Session, joinedload
@@ -20,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+# HELPER FUNCTIONS -------------------------------------------------------------------------
 
 GRAMS_CONVERSION = {
     # Volume to grams (based on water density)
@@ -99,11 +101,12 @@ app.add_middleware(
     allow_headers=["*"],  # HTTP headers allowed (e.g., ['Content-Type', 'Authorization'])
 )
 
-
-
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+# GENERAL QUERIES --------------------------------------------------------------------------------------------------------------
 
 @app.get("/all_recipes")
 def all_recipes(db: Session = Depends(get_db)):
@@ -134,6 +137,9 @@ def all_meals(db: Session = Depends(get_db)):
 
     all_m = db.query(PlannedMeals).all()
     return all_m
+
+
+# PANTRY QUERIES ----------------------------------------------------------------------------------------
 
 @app.get("/indv_pantry")
 def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
@@ -178,110 +184,6 @@ def multi_user_pantry_items(data: UserList, db: Session = Depends(get_db)):
     
     return pantry_items
 
-
-@app.get("/indv_planned_meals")
-def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
-    user_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(PlannedMeals.user_id == user_id).all()
-
-    if not user_meals:
-        raise HTTPException(status_code=404, detail="No planned meals found for this user")
-
-    return user_meals
-
-@app.get("/planned_meals")
-def planned_meals(user_id: int, db: Session = Depends(get_db)):
-    all_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
-        or_(
-            PlannedMeals.user_id == user_id,
-            and_(
-                PlannedMeals.is_shared == True,
-                user_id == any_(PlannedMeals.shared_with)
-            )
-        )
-    ).all()
-
-    return all_meals
-
-@app.get("/meals_shared_with")
-def meals_shared_with(user_id: int, db: Session = Depends(get_db)):
-    shared_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
-        and_(
-            PlannedMeals.is_shared == True,
-            user_id == any_(PlannedMeals.shared_with)
-        )
-    ).all()
-
-    return shared_meals
-
-class PlannedMealRequest(BaseModel):
-    user_id: int
-    recipe_id: int
-    n_servings: float
-    is_shared: bool
-    shared_with: List[int]
-
-@app.post("/add_planned_meal/")
-def add_planned_meal(data: PlannedMealRequest, db: Session = Depends(get_db)):
-    new_meal = PlannedMeals(
-        user_id=data.user_id,
-        recipe_id=data.recipe_id,
-        n_servings=data.n_servings,
-        is_shared=data.is_shared,
-        shared_with=data.shared_with
-    )
-
-    db.add(new_meal)
-    db.commit()
-    db.refresh(new_meal)
-    return {"message": "Meal added successfully", "meal": new_meal}
-
-class RoommateRequest(BaseModel):
-    user_id: int
-    roommate_id: int
-
-@app.post("/add_roommate/")
-def add_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
-    user = db.query(Users).filter(Users.user_id == data.user_id).first()
-    
-    if not user: # should always be there if valid ui
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user.roommates is None:
-        user.roommates = []
-
-    if data.roommate_id in user.roommates:
-        raise HTTPException(status_code=400, detail="Roommate already added")
-
-    updated_roommates = user.roommates + [data.roommate_id]
-    user.roommates = updated_roommates
-
-    db.commit()
-    db.refresh(user)
-    return {"message": "Roommate added successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
-   
-@app.post("/remove_roommate/")
-def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
-    user = db.query(Users).filter(Users.user_id == data.user_id).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user.roommates is None:
-        return {"message": "You have no roommates", "user_id": data.user_id}
-    
-    try:
-        idx = user.roommates.index(data.roommate_id)
-        splice = user.roommates[:idx] + user.roommates[idx + 1:]
-        user.roommates = splice
-
-        db.commit()
-        db.refresh(user)
-        return {"message": "Roommate removed successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
-    
-    except ValueError:
-        return {"message": "User not found in your roommates"}
-
-        
 class ShareItemRequest(BaseModel):
     pantry_id: int
     roommate_id: int
@@ -328,53 +230,6 @@ def mark_pantry_item_unshared(data: ShareItemRequest, db: Session = Depends(get_
     except ValueError:
         return {"message": "roommate not shared with"}
     
-
-class ShareMealRequest(BaseModel):
-    meal_id: int
-    roommate_id: int
-
-@app.post("/share_meal/")
-def share_meal(data: ShareMealRequest, db: Session = Depends(get_db)):
-    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == data.meal_id).first()
-    
-    if not meal:
-        raise HTTPException(status_code=404, detail="meal not found")
-
-    if data.roommate_id in meal.shared_with:
-        raise HTTPException(status_code=400, detail="meal already shared with roommate")
-
-    updated_roommates = meal.shared_with + [data.roommate_id]
-    meal.shared_with = updated_roommates
-
-    meal.is_shared = True
-
-    db.commit()
-    db.refresh(meal)
-    return {"message": "Roommate added to meal successfully", "meal_id": data.meal_id, "updated_roommates": meal.shared_with}
-   
-@app.post("/unshare_meal/")
-def mark_pantry_item_unshared(data: ShareMealRequest, db: Session = Depends(get_db)):
-    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == data.meal_id).first()
-    
-    if not meal:
-        raise HTTPException(status_code=404, detail="meal not found")
-
-    try:
-    #     idx = user.roommates.index(data.roommate_id)
-        idx = meal.shared_with.index(data.roommate_id)
-        splice = meal.shared_with[:idx] + meal.shared_with[idx + 1:]
-        meal.shared_with = splice
-
-        if len(splice) == 0:
-            meal.is_shared = False
-
-        db.commit()
-        db.refresh(meal)
-        return {"message": "Roommate removed successfully", "meal_id": data.meal_id, "updated_roommates": meal.shared_with}
-    
-    except ValueError:
-        return {"message": "roommate not shared with"}
-    
 class PantryItemCreate(BaseModel):
     food_name: str
     quantity: float
@@ -411,99 +266,6 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
     db.refresh(pantry_item)
 
     return pantry_item
-    
-#complete quantity matching, edit structure for output of ordered recipes by closeness to creation possibility
-@app.post("/recipes_made_from_inventory/")
-async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
-    pantry_items = db.query(Pantry).filter(
-        or_(
-            Pantry.user_id.in_(data.user_list),
-            and_(
-                #Pantry.is_shared == True,
-                Pantry.shared_with.op('&&')(data.user_list)
-            )
-        )
-    ).all()
-    
-    if not pantry_items:
-        raise HTTPException(status_code=404, detail="No pantry items found for user.")
-    
-    all_r = db.query(Recipes).all()         #fetches all recipes from database
-
-    #fuzzy matching of ingredients to pantry items
-    matched_recipes_ids = []                    #return value; stores the recipes (recipe.recipe_id) that can be cooked
-
-    # Extract pantry ingredient names (normalized to lowercase for case-insensitive comparison)
-    pantry_ingredients = [p_item.food_name.lower() for p_item in pantry_items]
-
-    for recipe in all_r:  # Iterate through each recipe in the database
-        r_ingredients = [r_item.lower() for r_item in recipe.ingredients]  # Normalize recipe ingredients to lowercase
-
-        # Check if all ingredients in the recipe have a match in pantry items
-        all_match = all(
-            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
-            for r_ingredient in r_ingredients
-        )
-
-        if all_match:  # If all ingredients are matched, add the recipe ID
-            matched_recipes_ids.append(recipe.recipe_id)
-    
-    #Check held quantities are large enough to create recipe
-    can_make_recipes_ids = []
-
-    if len(matched_recipes_ids) > 0:
-        #use matched_recipes_ids to locate 
-        for id in matched_recipes_ids:
-            recipe_details = db.query(Recipes).filter(Recipes.recipe_id == id).first()
-            
-            can_make = True
-            for idx_ingredient, ingredient_name in enumerate(recipe_details.ingredients):
-                # true false list for ingredients
-                for item in pantry_items:
-
-                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
-                        if convert_to_grams(item.quantity, item.unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
-                            can_make = False
-            if can_make:
-                can_make_recipes_ids.append(id)
-
-    if len(can_make_recipes_ids) > 0:
-        return {
-            "message": "These recipes can be made with your current pantry!",
-            "recipe data": db.query(Recipes).filter(Recipes.recipe_id.in_(can_make_recipes_ids)).all()
-        }
-    else:
-        
-        all_r = db.query(Recipes).all()
-
-        ingredients_owned_all_r = []
-
-        for recipe in all_r:
-            has_ingredients = []
-
-            for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
-                possessed = False
-                for item in pantry_items:
-                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
-                        if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
-                            possessed = True
-                            has_ingredients.append(True)
-                            break
-                if possessed == False:
-                    has_ingredients.append(False)
-            ingredients_owned_all_r.append(has_ingredients)
-
-
-        for i, recp in enumerate(all_r):
-            recp.possessed_list = ingredients_owned_all_r[i]
-
-        all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
-
-        return {
-            "message": "Cannot fully craft any recipes with current inventory. Here are the best 20 recipes with the least missing ingredients.",
-            "recipe data": all_r
-        }
-#ingredients possessed or not in field 'possessed_list' as a parallel list of booleans
 
 class UpdatePantryItemRequest(BaseModel):
     id: int  # Unique ID of the pantry item to update
@@ -562,93 +324,112 @@ async def remove_pantry_item(request: RemovePantryItemRequest, db: Session = Dep
     db.commit()
 
     return {"message": "Pantry item removed successfully", "item_id": request.id}
-
-class AddFavoriteRequest(BaseModel):
-    user_id: int  # ID of the user
-    recipe_id: int  # ID of the recipe to add to favorites
-
-@app.post("/add_favorite_recipe/")
-async def add_favorite_recipe(data: AddFavoriteRequest, db: Session = Depends(get_db)):
-    user = db.query(Users).filter(Users.user_id == data.user_id).first()
     
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+# MEAL QUERIES --------------------------------------------------------------------------------------------------------------
 
-    # Check if the recipe is already in the favorites list
-    if user.favorite_recipes is None:
-        user.favorite_recipes = []
+@app.get("/indv_planned_meals")
+def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
+    user_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(PlannedMeals.user_id == user_id).all()
 
-    if data.recipe_id in user.favorite_recipes:
-        raise HTTPException(status_code=400, detail="Recipe already in favorites")
+    if not user_meals:
+        raise HTTPException(status_code=404, detail="No planned meals found for this user")
 
-    # Add the recipe to the user's favorites
-    updated_favorites = user.favorite_recipes + [data.recipe_id]
-    user.favorite_recipes = updated_favorites
+    return user_meals
 
-    # Commit the changes to the database
-    db.commit()
-    db.refresh(user)
+@app.get("/planned_meals")
+def planned_meals(user_id: int, db: Session = Depends(get_db)):
+    all_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
+        or_(
+            PlannedMeals.user_id == user_id,
+            and_(
+                PlannedMeals.is_shared == True,
+                user_id == any_(PlannedMeals.shared_with)
+            )
+        )
+    ).all()
 
-    return {"message": "Recipe added to favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
+    return all_meals
 
-class removeFavoriteRequest(BaseModel):
+@app.get("/meals_shared_with")
+def meals_shared_with(user_id: int, db: Session = Depends(get_db)):
+    shared_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
+        and_(
+            PlannedMeals.is_shared == True,
+            user_id == any_(PlannedMeals.shared_with)
+        )
+    ).all()
+
+    return shared_meals
+
+class PlannedMealRequest(BaseModel):
     user_id: int
     recipe_id: int
+    n_servings: float
+    is_shared: bool
+    shared_with: List[int]
 
-@app.post("/remove_favorite_recipe/")
-async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depends(get_db)):
-    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+@app.post("/add_planned_meal/")
+def add_planned_meal(data: PlannedMealRequest, db: Session = Depends(get_db)):
+    new_meal = PlannedMeals(
+        user_id=data.user_id,
+        recipe_id=data.recipe_id,
+        n_servings=data.n_servings,
+        is_shared=data.is_shared,
+        shared_with=data.shared_with
+    )
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    db.add(new_meal)
+    db.commit()
+    db.refresh(new_meal)
+    return {"message": "Meal added successfully", "meal": new_meal}
 
-    # Check if the recipe is not in the favorites list
-    if user.favorite_recipes is None or data.recipe_id not in user.favorite_recipes:
-        raise HTTPException(status_code=400, detail="Recipe not in favorites")
+
+class ShareMealRequest(BaseModel):
+    meal_id: int
+    roommate_id: int
+
+@app.post("/share_meal/")
+def share_meal(data: ShareMealRequest, db: Session = Depends(get_db)):
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == data.meal_id).first()
     
-    if data.recipe_id in user.favorite_recipes:
-        copy_favorites = []
-        copy_favorites = user.favorite_recipes
-        copy_favorites.remove(data.recipe_id)
-        user.favorite_recipes = copy_favorites
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
+
+    if data.roommate_id in meal.shared_with:
+        raise HTTPException(status_code=400, detail="meal already shared with roommate")
+
+    updated_roommates = meal.shared_with + [data.roommate_id]
+    meal.shared_with = updated_roommates
+
+    meal.is_shared = True
 
     db.commit()
-    db.refresh(user)
-
-    return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
-
-
-
-@app.post("/fetch_recipe_by_id/")
-async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
-    recipe_details = db.query(Recipes).filter(Recipes.recipe_id == recipe_id).first()
-
-
-    if not recipe_details:
-        raise HTTPException(status_code=404, detail="Recipe not in Recipes")
+    db.refresh(meal)
+    return {"message": "Roommate added to meal successfully", "meal_id": data.meal_id, "updated_roommates": meal.shared_with}
+   
+@app.post("/unshare_meal/")
+def mark_pantry_item_unshared(data: ShareMealRequest, db: Session = Depends(get_db)):
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == data.meal_id).first()
     
-    return recipe_details
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
 
-@app.post("/fetch_recipe_by_name/")
-async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
-    # Fetch exact match
-    recipe_details = db.query(Recipes).filter(Recipes.name == recipe_name).first()
+    try:
+    #     idx = user.roommates.index(data.roommate_id)
+        idx = meal.shared_with.index(data.roommate_id)
+        splice = meal.shared_with[:idx] + meal.shared_with[idx + 1:]
+        meal.shared_with = splice
 
-    # If an exact match is found, return it
-    if recipe_details:
-        return recipe_details
+        if len(splice) == 0:
+            meal.is_shared = False
 
-    # If no exact match, fetch all recipes
-    all_recipes = db.query(Recipes).all()
-
-    # Filter recipes using fuzzy matching
-    filtered_recipes = [
-        recipe for recipe in all_recipes
-        if fuzz.ratio(recipe.name.lower(), recipe_name.lower()) > 70
-    ]
-
-    return filtered_recipes
-
+        db.commit()
+        db.refresh(meal)
+        return {"message": "Roommate removed successfully", "meal_id": data.meal_id, "updated_roommates": meal.shared_with}
+    
+    except ValueError:
+        return {"message": "roommate not shared with"}
+    
 @app.post("/delete_planned_meal/")
 async def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)):
 
@@ -806,6 +587,57 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Your pantry inventory has been updated and meal removed."}
 
+    
+
+
+# USER AND ROOMMATE QUERIES ----------------------------------------------------------------------------------
+
+class RoommateRequest(BaseModel):
+    user_id: int
+    roommate_id: int
+
+@app.post("/add_roommate/")
+def add_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+    
+    if not user: # should always be there if valid ui
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.roommates is None:
+        user.roommates = []
+
+    if data.roommate_id in user.roommates:
+        raise HTTPException(status_code=400, detail="Roommate already added")
+
+    updated_roommates = user.roommates + [data.roommate_id]
+    user.roommates = updated_roommates
+
+    db.commit()
+    db.refresh(user)
+    return {"message": "Roommate added successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
+   
+@app.post("/remove_roommate/")
+def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.roommates is None:
+        return {"message": "You have no roommates", "user_id": data.user_id}
+    
+    try:
+        idx = user.roommates.index(data.roommate_id)
+        splice = user.roommates[:idx] + user.roommates[idx + 1:]
+        user.roommates = splice
+
+        db.commit()
+        db.refresh(user)
+        return {"message": "Roommate removed successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
+    
+    except ValueError:
+        return {"message": "User not found in your roommates"}
+    
 class UserLogin(BaseModel):
     username: str = None
     email: str = None
@@ -865,7 +697,186 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
     return {"message": "User created successfully", "user_id": new_user.user_id}
 
 
-#####################################################################################################################
+# RECIPE QUERIES ----------------------------------------------------------------------------------------------------------------------------
+@app.post("/recipes_made_from_inventory/")
+async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
+    pantry_items = db.query(Pantry).filter(
+        or_(
+            Pantry.user_id.in_(data.user_list),
+            and_(
+                #Pantry.is_shared == True,
+                Pantry.shared_with.op('&&')(data.user_list)
+            )
+        )
+    ).all()
+    
+    if not pantry_items:
+        raise HTTPException(status_code=404, detail="No pantry items found for user.")
+    
+    all_r = db.query(Recipes).all()         #fetches all recipes from database
+
+    #fuzzy matching of ingredients to pantry items
+    matched_recipes_ids = []                    #return value; stores the recipes (recipe.recipe_id) that can be cooked
+
+    # Extract pantry ingredient names (normalized to lowercase for case-insensitive comparison)
+    pantry_ingredients = [p_item.food_name.lower() for p_item in pantry_items]
+
+    for recipe in all_r:  # Iterate through each recipe in the database
+        r_ingredients = [r_item.lower() for r_item in recipe.ingredients]  # Normalize recipe ingredients to lowercase
+
+        # Check if all ingredients in the recipe have a match in pantry items
+        all_match = all(
+            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
+            for r_ingredient in r_ingredients
+        )
+
+        if all_match:  # If all ingredients are matched, add the recipe ID
+            matched_recipes_ids.append(recipe.recipe_id)
+    
+    #Check held quantities are large enough to create recipe
+    can_make_recipes_ids = []
+
+    if len(matched_recipes_ids) > 0:
+        #use matched_recipes_ids to locate 
+        for id in matched_recipes_ids:
+            recipe_details = db.query(Recipes).filter(Recipes.recipe_id == id).first()
+            
+            can_make = True
+            for idx_ingredient, ingredient_name in enumerate(recipe_details.ingredients):
+                # true false list for ingredients
+                for item in pantry_items:
+
+                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                        if convert_to_grams(item.quantity, item.unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
+                            can_make = False
+            if can_make:
+                can_make_recipes_ids.append(id)
+
+    if len(can_make_recipes_ids) > 0:
+        return {
+            "message": "These recipes can be made with your current pantry!",
+            "recipe data": db.query(Recipes).filter(Recipes.recipe_id.in_(can_make_recipes_ids)).all()
+        }
+    else:
+        
+        all_r = db.query(Recipes).all()
+
+        ingredients_owned_all_r = []
+
+        for recipe in all_r:
+            has_ingredients = []
+
+            for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
+                possessed = False
+                for item in pantry_items:
+                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                        if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
+                            possessed = True
+                            has_ingredients.append(True)
+                            break
+                if possessed == False:
+                    has_ingredients.append(False)
+            ingredients_owned_all_r.append(has_ingredients)
+
+
+        for i, recp in enumerate(all_r):
+            recp.possessed_list = ingredients_owned_all_r[i]
+
+        all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+
+        return {
+            "message": "Cannot fully craft any recipes with current inventory. Here are the best 20 recipes with the least missing ingredients.",
+            "recipe data": all_r
+        }
+#ingredients possessed or not in field 'possessed_list' as a parallel list of booleans
+
+class AddFavoriteRequest(BaseModel):
+    user_id: int  # ID of the user
+    recipe_id: int  # ID of the recipe to add to favorites
+
+@app.post("/add_favorite_recipe/")
+async def add_favorite_recipe(data: AddFavoriteRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the recipe is already in the favorites list
+    if user.favorite_recipes is None:
+        user.favorite_recipes = []
+
+    if data.recipe_id in user.favorite_recipes:
+        raise HTTPException(status_code=400, detail="Recipe already in favorites")
+
+    # Add the recipe to the user's favorites
+    updated_favorites = user.favorite_recipes + [data.recipe_id]
+    user.favorite_recipes = updated_favorites
+
+    # Commit the changes to the database
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Recipe added to favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
+
+class removeFavoriteRequest(BaseModel):
+    user_id: int
+    recipe_id: int
+
+@app.post("/remove_favorite_recipe/")
+async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the recipe is not in the favorites list
+    if user.favorite_recipes is None or data.recipe_id not in user.favorite_recipes:
+        raise HTTPException(status_code=400, detail="Recipe not in favorites")
+    
+    if data.recipe_id in user.favorite_recipes:
+        copy_favorites = []
+        copy_favorites = user.favorite_recipes
+        copy_favorites.remove(data.recipe_id)
+        user.favorite_recipes = copy_favorites
+
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
+
+@app.post("/fetch_recipe_by_id/")
+async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    recipe_details = db.query(Recipes).filter(Recipes.recipe_id == recipe_id).first()
+
+
+    if not recipe_details:
+        raise HTTPException(status_code=404, detail="Recipe not in Recipes")
+    
+    return recipe_details
+
+@app.post("/fetch_recipe_by_name/")
+async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
+    # Fetch exact match
+    recipe_details = db.query(Recipes).filter(Recipes.name == recipe_name).first()
+
+    # If an exact match is found, return it
+    if recipe_details:
+        return recipe_details
+
+    # If no exact match, fetch all recipes
+    all_recipes = db.query(Recipes).all()
+
+    # Filter recipes using fuzzy matching
+    filtered_recipes = [
+        recipe for recipe in all_recipes
+        if fuzz.ratio(recipe.name.lower(), recipe_name.lower()) > 70
+    ]
+
+    return filtered_recipes
+
+
+# SHOPPING LIST QUERIES -------------------------------------------------------------------------------------------------------------------------------------
+
 #Generate Shopping List
 @app.post("/shopping_list/")
 async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
