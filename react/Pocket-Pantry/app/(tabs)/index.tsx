@@ -162,6 +162,24 @@ export default function Meal () {
 
             <ScrollView>
               {/* Meal search results would go here */}
+              {meals.map((meal) => (
+              <View key={meal.id}>
+                <MealItem
+                  id={meal.id}
+                  name={meal.name}
+                  servings={meal.servings}
+                  date={meal.date}
+                  shared={meal.shared}
+                  roommates={meal.roommates}
+                  ingredients={meal.ingredients}
+                  ingredientUnits={meal.ingredientUnits}
+                  ingredientQuantities={meal.ingredientQuantities}
+                  cookTime={meal.cookTime}
+                  recipe={meal.recipe}
+                  deleteMeal={deleteMeal}
+                />
+              </View>
+            ))}
             </ScrollView>
           </View>
         </Modal>
