@@ -447,7 +447,7 @@ export default function Pantry () {
               categoryGroup.items.length > 0 && (
                 <View key={categoryGroup.category}>
                   <Text style={styles.categoryHeader}>
-                    {categories[categories.indexOf(categoryGroup.category)]}
+                    {categoryGroup.category.toUpperCase()}
                   </Text>
                   {categoryGroup.items.map((item) => (
                     <View key={item.id}>
