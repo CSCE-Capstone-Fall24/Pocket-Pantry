@@ -449,6 +449,46 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
 
     return pantry_item
     
+class UpdatePantryItemRequest(BaseModel):
+    pantry_id: int
+    quantity: Optional[float]
+    unit: Optional[str]
+    expiration_date: Optional[datetime]
+    shared_with: Optional[List[int]]
+
+@app.post("/update_item/")
+async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Depends(get_db)):
+    pantry_item = db.query(Pantry).filter(Pantry.pantry_id == request.pantry_id).first()
+    
+    if not pantry_item:
+        raise HTTPException(status_code=404, detail="Pantry item not found")
+
+    pantry_item.quantity = request.quantity if request.quantity is not None else pantry_item.quantity
+    pantry_item.unit = request.unit if request.unit is not None else pantry_item.unit
+    pantry_item.expiration_date = request.expiration_date if request.expiration_date is not None else pantry_item.expiration_date
+    pantry_item.shared_with = request.shared_with if request.shared_with is not None else pantry_item.shared_with
+
+    pantry_item.is_shared = bool(request.shared_with)
+
+    db.commit()
+
+    return {
+        "message": "Pantry item updated successfully",
+        "updated_item": {
+            "pantry_id": pantry_item.pantry_id,
+            "user_id": pantry_item.user_id,
+            "food_name": pantry_item.food_name,
+            "quantity": pantry_item.quantity,
+            "unit": pantry_item.unit,
+            "expiration_date": pantry_item.expiration_date,
+            "category": pantry_item.category,
+            "is_shared": pantry_item.is_shared,
+            "shared_with": pantry_item.shared_with,
+            "location": pantry_item.location,
+            "price": pantry_item.price,
+        }
+    }
+
 
 @app.post("/recipes_made_from_inventory/")
 async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
