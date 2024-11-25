@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -9,7 +9,8 @@ import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import PantryItem from "@/components/PantryItem";
 
-const TEST_USER_ID = 4;
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
+const TEST_USER_ID = 72;
 
 export default function Pantry () {
   interface Item {
@@ -20,10 +21,43 @@ export default function Pantry () {
     unit: string;
     expiration: Date;
     shared: boolean[];
-    roommates: string[];
+    roommates: string[]; // need to change structure to roommate type
     deleteItem: (id: string) => void;
   }
   const [items, setItems] = useState<Item[]>([]);
+  // const { userData, setUserData } = useUserContext(); pull once integrated
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await fetch(`${API_URL}/whole_pantry/?user_id=${TEST_USER_ID}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch items");
+        }
+        const data = await response.json();
+        console.log("GOT DATA AS")
+        console.log(data);
+
+        const transformedItems: Item[] = data.map((item: any) => ({
+          id: item.pantry_id,
+          name: item.food_name,
+          quantity: item.quantity,
+          unit: item.unit,
+          category: item.category,
+          expiration: new Date(item.expiration_date),
+          shared: item.shared_with.map(() => false),
+          roommates: item.shared_with,
+        }));
+
+        setItems(transformedItems);
+        console.log("GOT ITEMS AS\n");
+        console.log(transformedItems)
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
+    };
+
+    fetchItems();
+  }, []);
 
   type Roommate = {
     id: number; 
@@ -36,14 +70,14 @@ export default function Pantry () {
     "Bakery, Grains & Dried Goods", "Canned & Jarred Goods",
     "Frozen Foods", "Baking Essentials", "Condiments, Sauces & Dressings",
     "Herbs, Spices & Seasonings", "Oils, Fats & Vinegars",
-    "Beverages", "Snacks & Treats", "Specialty & Miscellaneous",
+    "Beverages", "Snacks & Treats", "Specialty & Miscellaneous", "Uncategorized"
   ];
   const categoriesB = [
     "PROTEINS", "FRESH PRODUCE", "DAIRY & ALTERNATIVES",
     "BAKERY, GRAINS & DRIED GOODS", "CANNED & JARRED GOODS",
     "FROZEN FOODS", "BAKING ESSENTIALS", "CONDIMENTS, SAUCES & DRESSINGS",
     "HERBS, SPICES & SEASONINGS", "OILS, FATS & VINEGARS",
-    "BEVERAGES", "SNACKS & TREATS", "SPECIALTY & MISCELLANEOUS",
+    "BEVERAGES", "SNACKS & TREATS", "SPECIALTY & MISCELLANEOUS", "UNCATEGORIZED"
   ];
   const units = [
     "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
@@ -138,9 +172,27 @@ export default function Pantry () {
   };
 
   {/* Functions - category headers */}
-  const categorizedItems = categoriesA.map((category) => ({
-    category, items: items.filter((item) => item.category === category),
-  }));
+  const categorizedItems = [
+    ...categoriesA.map((category) => ({
+      category,
+      items: items.filter(
+        (item) => item.category && item.category.toLowerCase() === category.toLowerCase()
+      ),
+    })),
+    {
+      category: "Uncategorized",
+      items: items.filter(
+        (item) =>
+          !item.category || // Check if category is null/undefined
+          !categoriesA.some(
+            (category) => item.category.toLowerCase() === category.toLowerCase()
+          )
+      ),
+    },
+  ];
+  
+
+  console.log(categorizedItems);
 
   return (
     <ScrollView>
