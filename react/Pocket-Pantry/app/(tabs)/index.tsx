@@ -5,6 +5,35 @@ import MealItem from "@/components/MealItem";
 import RecipeItem from "@/components/RecipeItem";
 
 export default function MealPlan () {
+  interface Recipe {
+    recipeId: string;
+    name: string;
+    recipeServings: number;
+    ingredients: string[];
+    ingredientUnits: string[];
+    ingredientQuantities: number[];
+    cookTime: number;
+    recipeSteps: string;
+  }
+
+  const [recipes, setRecipes] = useState<Recipe[]>([
+    { recipeId: "1", name: "Recipe1", recipeServings: 1, 
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 15, recipeSteps: "Don't burn the kitchen down"
+    },
+    { recipeId: "2", name: "Recipe2", recipeServings: 1, 
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 30, recipeSteps: "Don't burn the kitchen down"
+    },
+    { recipeId: "3", name: "Recipe3", recipeServings: 1, 
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 45, recipeSteps: "Don't burn the kitchen down"
+    },
+    { recipeId: "4", name: "Recipe4", recipeServings: 1, 
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 60, recipeSteps: "Don't burn the kitchen down"
+    }
+  ]);
 
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -62,20 +91,21 @@ export default function MealPlan () {
 
             {/* Recipe results */}
             <ScrollView showsVerticalScrollIndicator={false} style={styles.resultsContainer}>
-              <View>
-
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
-
-              </View>
+              {recipes.map((recipe) => (
+                <View key={recipe.recipeId}>
+                  <RecipeItem
+                    key={recipe.recipeId}
+                    recipeId={recipe.recipeId}
+                    name={recipe.name}
+                    recipeServings={recipe.recipeServings}
+                    ingredients={recipe.ingredients}
+                    ingredientUnits={recipe.ingredientUnits}
+                    ingredientQuantities={recipe.ingredientQuantities}
+                    cookTime={recipe.cookTime}
+                    recipeSteps={recipe.recipeSteps}
+                  />
+                </View>
+              ))}
               <View style={styles.resultsBuffer}></View>
             </ScrollView>
           </View>

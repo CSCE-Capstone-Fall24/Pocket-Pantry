@@ -9,6 +9,7 @@ type MealProps = {
 };
 
 const MealItem = (props: MealProps) => {
+
   return (
     <View style={styles.container}>
       
@@ -19,8 +20,8 @@ const MealItem = (props: MealProps) => {
 const styles = StyleSheet.create({
   container: {
     height: 100,
-    marginTop: 12,
-    marginHorizontal: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
     borderRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
