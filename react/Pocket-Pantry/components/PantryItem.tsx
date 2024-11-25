@@ -413,13 +413,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "gray",
   },
-  fieldText: {
-    fontSize: 16,
-  },
   fieldContainer: {
     marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
+  },
+  fieldText: {
+    fontSize: 16,
   },
   quantityInput: {
     marginRight: 10,
