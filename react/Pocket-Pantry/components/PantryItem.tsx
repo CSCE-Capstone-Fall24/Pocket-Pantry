@@ -209,13 +209,13 @@ const PantryItem = (props: PantryProps) => {
             </Modal>
 
             {/* Set item as shared */}
-            <ScrollView horizontal={false} style={styles.sharedScroll}>
-                <View style={styles.sharedAlignment}>
+            {props.roommates.length > 0 && (
+              <ScrollView horizontal={false} style={styles.sharedScroll}>
                   {props.roommates.map((roommate: string, index: number) => {
                     return (
                       <View key={roommate} style={styles.sharedContainer}>
-                        <Text style={styles.fieldText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
-                        <Pressable style={styles.iconSpacer} onPress={() => sharedToggle(index)}>
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                        <Pressable onPress={() => sharedToggle(index)}>
                           {tempShared[index] ? (
                             <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
                           ) : (
@@ -225,11 +225,11 @@ const PantryItem = (props: PantryProps) => {
                       </View>
                     );
                   })}
-                </View>
               </ScrollView>  
+            )}
 
             {/* Cancel/save user changes */}
-            <View style={styles.rowAlignment}>
+            <View style={styles.buttonAlignment}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); handleCancel(); }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -252,8 +252,17 @@ const PantryItem = (props: PantryProps) => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 12,
+    marginHorizontal: 12,
+    borderRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+    shadowColor: "black",
     flexDirection: "row",
     justifyContent: "space-between",
+    backgroundColor: "white",
   },
   itemContainer: {
     marginVertical: 10,
@@ -275,15 +284,15 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   blurOverlay: {
-    backgroundColor: `rgba(0, 0, 0, ${.1})`
+    backgroundColor: `rgba(0, 0, 0, ${.15})`
   },
   windowAlignment: {
     flex: 1,
     justifyContent: "center",
   },
   windowContainer: {
-    marginHorizontal: 50,
-    borderRadius: 12,
+    marginHorizontal: 35,
+    borderRadius: 8,
     padding: 35,
     alignItems: "center",
     backgroundColor: "white",
@@ -295,14 +304,14 @@ const styles = StyleSheet.create({
   },
   windowSubtitle: {
     fontWeight: 600,
-    marginBottom: 35,
+    marginBottom: 15,
     color: "gray",
   },
   fieldText: {
     fontSize: 16,
   },
   fieldContainer: {
-    marginBottom: 20,
+    marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -326,18 +335,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pickerA: {
-    paddingBottom: 30,
-    backgroundColor: "lightgray",
+    paddingBottom: 35,
+    backgroundColor: "#f0f0f0",
   },
   pickerB: {
-    paddingBottom: 30,
+    paddingBottom: 35,
     alignItems: "center",
-    backgroundColor: "lightgray",
+    backgroundColor: "#f0f0f0",
   },
   doneButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    backgroundColor: "lightgray",
+    backgroundColor: "#f0f0f0",
   },
   doneButtonText: {
     marginTop: 15,
@@ -347,26 +356,30 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   sharedScroll: {
-    marginBottom: 35,
-    maxHeight: 220,
-    width: 250,
+    marginTop: 20,
+    maxHeight: 190,
+    width: 270,
     borderWidth: 1,
     borderRadius: 8,
     borderColor: "lightgray",
-  },
-  sharedAlignment: {
-    marginTop: 22,
-    marginBottom: 10,
-    marginHorizontal: 35,
-    alignItems: "center",
+    paddingTop: 12,
+    paddingHorizontal: 12,
   },
   sharedContainer: {
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
   },
-  iconSpacer: {
-    marginLeft: 5,
+  sharedText: {
+    marginRight: 5,
+    flexShrink: 1,
+    fontSize: 16,
+  },
+  buttonAlignment: {
+    marginTop: 35,
+    flexDirection: "row",
+    alignItems: "center",
   },
   cancelButton: {
     marginRight: 35,
@@ -399,7 +412,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginTop: 35,
-  }
+  },
 });
 
-export default PantryItem
+export default PantryItem;

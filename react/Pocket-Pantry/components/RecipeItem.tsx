@@ -23,6 +23,28 @@ const RecipeItem = (props: RecipeProps) => {
             // should not be able to do 0 servings, users will just need to remove planned meal at that point
         // mealID will be assigned a random value similar to id in PantryProps
         // users will set date and shared mealProps
+    return (
+        <View style={styles.container}>
+            
+        </View>
+        )
 }
+
+const styles = StyleSheet.create({
+    container: {
+        height: 100,
+        marginTop: 12,
+        marginHorizontal: 12,
+        borderRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 5,
+        elevation: 5,
+        shadowColor: "black",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        backgroundColor: "white",
+    },
+});
 
 export default RecipeItem;
