@@ -6,62 +6,80 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import "react-native-get-random-values";
 import PantryItem from "@/components/PantryItem";
+import { useUserContext } from "@/components/contexts/UserContext";
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
-const TEST_USER_ID = 83;
+// const TEST_USER_ID = 83;
 
 export default function Pantry () {
+  type Roommate = {
+    id: number; 
+    name: string; 
+    isReciprocal: boolean;
+  };
+  
   interface Item {
     id: string;
+    user_id: string,
     name: string;
     category: string;
     quantity: number;
     unit: string;
     expiration: Date;
     shared: boolean[];
-    roommates: string[]; // need to change structure to roommate type
+    shared_with: string[]; // need to change structure to roommate type
     // deleteItem: (id: string) => void;
   }
+
   const [items, setItems] = useState<Item[]>([]);
-  // const { userData, setUserData } = useUserContext(); pull once integrated
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const response = await fetch(`${API_URL}/whole_pantry/?user_id=${TEST_USER_ID}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch items");
-        }
-        const data = await response.json();
-        console.log("GOT DATA AS")
-        console.log(data);
+  const { userData, setUserData } = useUserContext(); // pull once integrated
+  const [recipRoommates, setRecipRoommates] = useState<Roommate[]>([]);
 
-        const transformedItems: Item[] = data.map((item: any) => ({
-          id: item.pantry_id,
-          name: item.food_name,
-          quantity: item.quantity,
-          unit: item.unit,
-          category: item.category,
-          expiration: new Date(item.expiration_date),
-          shared: item.is_shared,
-          roommates: item.shared_with,
-        }));
-
-        setItems(transformedItems);
-        console.log("GOT ITEMS AS\n");
-        console.log(transformedItems)
-      } catch (error) {
-        console.error("Error fetching items:", error);
+  const fetchItems = async () => {
+    try {
+      const response = await fetch(`${API_URL}/whole_pantry/?user_id=${userData.user_id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch items");
       }
-    };
+      const data = await response.json();
+      console.log("GOT DATA AS")
+      console.log(data);
+
+      const transformedItems: Item[] = data.map((item: any) => ({
+        id: item.pantry_id,
+        user_id: item.user_id,
+        name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        category: item.category,
+        expiration: new Date(item.expiration_date),
+        shared: item.is_shared,
+        shared_with: item.shared_with.sort(),
+      }));
+      setItems(transformedItems);      
+      console.log("GOT ITEMS AS\n");
+      console.log(transformedItems)
+
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    }
+  };
+
+  useEffect(() => {
+    const rms: Roommate[] = userData.roommates
+      .filter((item: any) => item.is_reciprocated)
+      .map((item: any) => ({
+        id: item.roommate_id,
+        name: item.username,
+        isReciprocal: item.is_reciprocated,
+      })).sort((a: Roommate, b: Roommate) => a.id - b.id);
+
+    console.log('got recip rms');
+    console.log(rms);
+    setRecipRoommates(rms);
 
     fetchItems();
-  }, []);
-
-  type Roommate = {
-    id: number; 
-    name: string; 
-    isReciprocal: boolean;
-  };
+  }, [userData.reciprocatedRoommates]);
 
   const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
@@ -92,7 +110,8 @@ export default function Pantry () {
     setNewQuantity("");
     setNewUnit("pieces");
     setNewExpiration(new Date());
-    setNewShared([false, false, false, false]);
+    // setNewShared([false, false, false, false]);
+    setNewShared(new Array(recipRoommates.length).fill(false));
   };
 
   {/* Functions - new item name */}
@@ -120,12 +139,13 @@ export default function Pantry () {
   const closeExpirationPicker = () => setExpirationPickerVisible(false);
   
   {/* Functions - set new item as shared */}
-  const reciprocatedRoommates = [
-    "username1", "username2", "username3333333333", "username4",
-    "username5", "username6", "username7", "username8",
-    "username9", "username10", "username11",
-  ];
-  const [newShared, setNewShared] = useState<boolean[]>(new Array(reciprocatedRoommates.length).fill(false));
+  // const reciprocatedRoommates = [
+  //   "username1", "username2", "username3333333333", "username4",
+  //   "username5", "username6", "username7", "username8",
+  //   "username9", "username10", "username11",
+  // ];
+
+  const [newShared, setNewShared] = useState<boolean[]>(new Array(recipRoommates.length).fill(false));
   const sharedToggle = (index: number) => {
     setNewShared((prevState) => {
       const updatedState = [...prevState];
@@ -135,40 +155,22 @@ export default function Pantry () {
   };
 
   {/* Functions - add item */}
-  // const addItem = () => {
-  //   if (!(newName && newQuantity)) {
-  //     Alert.alert("Please fill out all fields.");
-  //   } else if (isNaN(Number(newQuantity)) || Number(newQuantity) <= 0) {
-  //     Alert.alert("Please enter a valid quantity.");
-  //   } else {
-  //     const newItem = {
-  //       id: uuidv4(), X
-  //       name: newName, X
-  //       category: newCategory, X
-  //       quantity: Number(newQuantity), X
-  //       unit: newUnit, X 
-  //       expiration: newExpiration, X
-  //       shared: newShared,
-  //       roommates: reciprocatedRoommates,
-  //       deleteItem: deleteItem,
-  //     };
-  //     setItems([...items, newItem]);
-  //     closeWindow();
-  //   }
-  // };
   const addItem = async () => {
     if (isNaN(Number(newQuantity))) {
       Alert.alert('Quantity must be a number.');
     } else if (newName && newQuantity && newUnit && newExpiration && newShared) {
+      // Prepare the item object to send to the backend
       const newItem = {
         food_name: newName,
         quantity: Number(newQuantity),
         unit: newUnit,
-        user_id: TEST_USER_ID, // replace
+        user_id: userData.user_id, // signed in user
         expiration_date: newExpiration.toISOString(),
         category: newCategory,
-        shared_with: [], // replace
-        is_shared: false // replace
+        shared_with: recipRoommates
+        .filter((_, index) => newShared[index]) // if user is shared, add their id
+        .map((roommate: Roommate) => roommate.id),
+        is_shared: newShared.some((b: Boolean) => b) // if any shared item is shared
       };
   
       try {
@@ -187,13 +189,14 @@ export default function Pantry () {
         const addedItem = await response.json();
         const transformedItem: Item ={
           id: addedItem.pantry_id,
+          user_id: addedItem.user_id,
           name: addedItem.food_name,
           quantity: addedItem.quantity,
           unit: addedItem.unit,
           category: addedItem.category,
           expiration: new Date(addedItem.expiration_date),
           shared: addedItem.is_shared,
-          roommates: addedItem.shared_with,
+          shared_with: addedItem.shared_with,
         };
         setItems(prevItems => [...prevItems, transformedItem]);
 
@@ -206,23 +209,18 @@ export default function Pantry () {
       alert('Please fill out all fields.');
     }
   };
+  
 
   {/* Functions - delete item */}
-  const deleteItem = async (id: string) => { // argument is pantry_id
+  const deleteItem = async (id: string, user_id: string) => { // argument is pantry_id
     alert("pantry id is " + id);
-    // setItems((prevItems) => prevItems.filter(item => item.id !== id));
-    // json
-
-    // id: int
-    // user_id: int
-
     try {
       const response = await fetch(`${API_URL}/remove_pantry_item/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: id, user_id: TEST_USER_ID }),
+        body: JSON.stringify({ id: id, user_id: user_id }),
       });
   
       if (!response.ok) {
@@ -264,6 +262,11 @@ export default function Pantry () {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Pantry</Text>
+
+        <TouchableOpacity style={styles.addButton} onPress={fetchItems}>
+          <Ionicons name="refresh" size={24} color="white" />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
           <Ionicons name="add-outline" size={40} color="white"/>
         </TouchableOpacity>
@@ -406,12 +409,12 @@ export default function Pantry () {
               </Modal>
 
               {/* Set new item as shared */}
-              {reciprocatedRoommates.length > 0 && (
+              {recipRoommates.length > 0 && (
                 <ScrollView horizontal={false} style={styles.sharedScroll}>
-                  {reciprocatedRoommates.map((roommate: string, index: number) => {
+                  {recipRoommates.map((roommate: Roommate, index: number) => {
                     return (
-                      <View key={roommate} style={styles.sharedContainer}>
-                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                      <View key={roommate.id} style={styles.sharedContainer}>
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
                         <Pressable onPress={() => sharedToggle(index)}>
                           {newShared[index] ? (
                             <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
@@ -424,6 +427,7 @@ export default function Pantry () {
                   })}
                 </ScrollView>
               )}
+
 
               {/* Cancel/save new item */}
               <View style={styles.buttonAlignment}>
@@ -450,15 +454,19 @@ export default function Pantry () {
                   {categoryGroup.items.map((item) => (
                     <View key={item.id}>
                       <PantryItem
+                        // key={item.id}
                         id={item.id}
+                        user_id={item.user_id}
                         name={item.name}
                         category={item.category}
                         quantity={item.quantity}
                         unit={item.unit}
                         expiration={item.expiration}
                         shared={item.shared}
-                        roommates={item.roommates}
+                        shared_with={item.shared_with}
                         deleteItem={deleteItem}
+                        recipRoommates={recipRoommates}
+                        refetch={fetchItems}
                       />
                     </View>
                   ))}
@@ -475,7 +483,7 @@ export default function Pantry () {
       </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
