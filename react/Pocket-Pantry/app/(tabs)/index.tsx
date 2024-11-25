@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function MealPlan () {
+  
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
@@ -30,8 +31,8 @@ export default function MealPlan () {
           onRequestClose={closeWindow}
         >
           <View style={styles.windowContainer}>
-            <View style={styles.windowHeader}>
-              
+            <View style={styles.windowHeader}> 
+
               {/* Search bar */}
               <View style={styles.searchBarContainer}>
                 <TextInput
@@ -44,16 +45,22 @@ export default function MealPlan () {
                 </View>
               </View>
 
-              {/* Close button */}
+              {/* close button */}
               <TouchableOpacity style={styles.closeButton} onPress={closeWindow}>
                 <Ionicons name="close-outline" size={32} color="white"/>
               </TouchableOpacity>
             </View>
 
+            {/* Filter results */}
+            <TouchableOpacity style={styles.filterButton}>
+              <Ionicons name="add-outline" size={20} color="gray"/>
+              <Text style={styles.filterText}>Add filter</Text>
+            </TouchableOpacity>
+
             {/* Recipe results */}
             <ScrollView>
               <View style={styles.line}></View>
-
+              
             </ScrollView>
           </View>
         </Modal>
@@ -90,15 +97,13 @@ const styles = StyleSheet.create({
   },
   windowHeader: {
     marginTop: 75,
-    marginBottom: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   searchBarContainer: {
     marginLeft: 30,
-    height: 40,
-    width: "68%",
+    width: "69%",
     borderRadius: 8,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -109,6 +114,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
     flex: 1,
     flexShrink: 1,
+    paddingVertical: 12,
     fontSize: 16,
     backgroundColor: "#f0f0f0",
   },
@@ -127,5 +133,16 @@ const styles = StyleSheet.create({
   line: {
     borderBottomWidth: 1,
     borderColor: "lightgray",
+  },
+  filterButton: {
+    marginLeft: 30,
+    marginVertical: 10,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+  filterText: {
+    fontSize: 16,
+    color: "gray",
   },
 });
