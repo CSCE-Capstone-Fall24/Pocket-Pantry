@@ -251,7 +251,7 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
         quantity=item.quantity,
         unit=item.unit,
         user_id=item.user_id,
-        added_date=item.added_date or datetime.now,
+        added_date=item.added_date or datetime.now(),
         expiration_date=item.expiration_date,
         category=item.category,
         comment=item.comment,
@@ -281,10 +281,10 @@ class UpdatePantryItemRequest(BaseModel):
     location: Optional[str] = None  
     price: Optional[float] = None  
 
-@app.put("/update_pantry_item/")
+@app.post("/update_pantry_item/")
 async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Depends(get_db)):
     # Fetch the pantry item to update
-    pantry_item = db.query(Pantry).filter(Pantry.id == request.id, Pantry.user_id == request.user_id).first()
+    pantry_item = db.query(Pantry).filter(Pantry.pantry_id == request.id, Pantry.user_id == request.user_id).first()
 
     if not pantry_item:
         raise HTTPException(status_code=404, detail="Pantry item not found or you do not have permission to update it.")
@@ -311,10 +311,10 @@ class RemovePantryItemRequest(BaseModel):
     id: int  # ID of the pantry item to remove
     user_id: int  # ID of the user requesting the removal
 
-@app.put("/remove_pantry_item/")
+@app.post("/remove_pantry_item/")
 async def remove_pantry_item(request: RemovePantryItemRequest, db: Session = Depends(get_db)):
     # Fetch the pantry item to remove
-    pantry_item = db.query(Pantry).filter(Pantry.id == request.id, Pantry.user_id == request.user_id).first()
+    pantry_item = db.query(Pantry).filter(Pantry.pantry_id == request.id, Pantry.user_id == request.user_id).first()
 
     if not pantry_item:
         raise HTTPException(status_code=404, detail="Pantry item not found or you do not have permission to remove it.")
