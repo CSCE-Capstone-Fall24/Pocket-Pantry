@@ -29,19 +29,12 @@ export default function Pantry () {
     isReciprocal: boolean;
   };
 
-  const categoriesA = [
+  const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
     "Bakery, Grains & Dried Goods", "Canned & Jarred Goods",
     "Frozen Foods", "Baking Essentials", "Condiments, Sauces & Dressings",
     "Herbs, Spices & Seasonings", "Oils, Fats & Vinegars",
     "Beverages", "Snacks & Treats", "Specialty & Miscellaneous",
-  ];
-  const categoriesB = [
-    "PROTEINS", "FRESH PRODUCE", "DAIRY & ALTERNATIVES",
-    "BAKERY, GRAINS & DRIED GOODS", "CANNED & JARRED GOODS",
-    "FROZEN FOODS", "BAKING ESSENTIALS", "CONDIMENTS, SAUCES & DRESSINGS",
-    "HERBS, SPICES & SEASONINGS", "OILS, FATS & VINEGARS",
-    "BEVERAGES", "SNACKS & TREATS", "SPECIALTY & MISCELLANEOUS",
   ];
   const units = [
     "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
@@ -136,7 +129,7 @@ export default function Pantry () {
   };
 
   {/* Functions - category headers */}
-  const categorizedItems = categoriesA.map((category) => ({
+  const categorizedItems = categories.map((category) => ({
     category, items: items.filter((item) => item.category === category),
   }));
 
@@ -200,7 +193,7 @@ export default function Pantry () {
                   <View style={styles.pickerA}>
                     {isCategoryPickerVisible && (
                       <Picker selectedValue={newCategory} onValueChange={(newCategory) => setNewCategory(newCategory)}>
-                        {categoriesA.map((category, index) => (
+                        {categories.map((category, index) => (
                           <Picker.Item key={index} label={category} value={category} />
                         ))}
                       </Picker>
@@ -324,7 +317,7 @@ export default function Pantry () {
           categoryGroup.items.length > 0 && (
             <View key={categoryGroup.category}>
               <Text style={styles.categoryHeader}>
-                {categoriesB[categoriesA.indexOf(categoryGroup.category)]}
+                {categoryGroup.category.toUpperCase()}
               </Text>
               {categoryGroup.items.map((item) => (
                 <View key={item.id}>
