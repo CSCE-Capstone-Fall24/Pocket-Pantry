@@ -20,7 +20,8 @@ export default function Meal () {
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
-    setSearch('');
+    setSearchResult('');
+    setSearchData('');
     setWindowVisible(false);
     setNewName('');
     setNewServings('');
@@ -29,7 +30,8 @@ export default function Meal () {
     setNewShared([false, false, false, false]);
   };
 
-  const [newSearch, setSearch] = useState('');
+  const [searchData, setSearchData] = useState('');
+  const [searchResult, setSearchResult] = useState('');
   const [newName, setNewName] = useState('');
   const [newServings, setNewServings] = useState('');
   const [newUnit, setNewUnit] = useState('');
@@ -51,7 +53,7 @@ export default function Meal () {
       try {
         const response = await fetch(`${API_URL}/all_recipes`);
         const data = await response.json();
-        setSearch(data);
+        setSearchData(data);
         console.log("FETCHING");
         console.log(data);
       } catch (error) {
@@ -108,12 +110,14 @@ export default function Meal () {
             style={styles.mealSearchBarInner}
             placeholder = "Search for meals"
             placeholderTextColor = "black"
-            onChangeText={(value) => setSearch(value)}
+            onChangeText={(value) => setSearchResult(value)}
           />
           <Ionicons name="search-outline" size={40} color="#ff8667"/>
         </View>
         <FlatList
-          data={newSearch}
+          data={searchData.filter((item) => 
+            item.name.toLowerCase().includes(searchResult.toLowerCase()) // Filtering based on searchResult
+          )}
           keyExtractor={(item) => item.recipe_id.toString()}
           renderItem={renderRecipes}
           ItemSeparatorComponent={() => <View style={styles.line}></View>}
