@@ -4,9 +4,9 @@ import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import { useUserContext } from "./contexts/UserContext";
 
-const TEST_USER_ID = '83';
-
+// const TEST_USER_ID = '83';
 
 type Roommate = {
   id: number; 
@@ -28,6 +28,8 @@ type PantryProps = {
 };
 
 const PantryItem = (props: PantryProps) => {
+  const { userData, setUserData } = useUserContext();
+
   const units = [
     "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
     "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
@@ -223,7 +225,7 @@ const PantryItem = (props: PantryProps) => {
 
             {/* Set item as shared */}
             {
-              TEST_USER_ID == props.user_id ? (
+              userData.user_id == props.user_id ? (
                 // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
                 props.roommates.length > 0 && (
                   <ScrollView horizontal={false} style={styles.sharedScroll}>
@@ -255,7 +257,7 @@ const PantryItem = (props: PantryProps) => {
                             <Pressable>
                                 <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
                             </Pressable>
-                            {roommate == TEST_USER_ID && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
+                            {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
                           </View>
                         );
                       })}

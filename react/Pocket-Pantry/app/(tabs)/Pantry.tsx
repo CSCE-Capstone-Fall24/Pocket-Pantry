@@ -6,9 +6,10 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import "react-native-get-random-values";
 import PantryItem from "@/components/PantryItem";
+import { useUserContext } from "@/components/contexts/UserContext";
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
-const TEST_USER_ID = 83;
+// const TEST_USER_ID = 83;
 
 export default function Pantry () {
   type Roommate = {
@@ -31,11 +32,12 @@ export default function Pantry () {
   }
 
   const [items, setItems] = useState<Item[]>([]);
-  // const { userData, setUserData } = useUserContext(); pull once integrated
+  const { userData, setUserData } = useUserContext(); // pull once integrated
+
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch(`${API_URL}/whole_pantry/?user_id=${TEST_USER_ID}`);
+        const response = await fetch(`${API_URL}/whole_pantry/?user_id=${userData.user_id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch items");
         }
@@ -148,7 +150,7 @@ export default function Pantry () {
         food_name: newName,
         quantity: Number(newQuantity),
         unit: newUnit,
-        user_id: TEST_USER_ID, // replace
+        user_id: userData.user_id, // signed in user
         expiration_date: newExpiration.toISOString(),
         category: newCategory,
         shared_with: [], // replace
@@ -202,7 +204,7 @@ export default function Pantry () {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: id, user_id: TEST_USER_ID }),
+        body: JSON.stringify({ id: id, user_id: userData.user_id }),
       });
   
       if (!response.ok) {
