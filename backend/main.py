@@ -597,9 +597,16 @@ class RoommateRequest(BaseModel):
 @app.post("/add_roommate/")
 def add_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.user_id == data.user_id).first()
-    
-    if not user: # should always be there if valid ui
+    rm = db.query(Users).filter(Users.user_id == data.roommate_id).first()
+
+    if (data.user_id == data.roommate_id):
+        raise HTTPException(status_code=404, detail="You cannot add yourself")
+
+    if not user:  # Should always be there if valid UI
         raise HTTPException(status_code=404, detail="User not found")
+
+    if not rm:
+        raise HTTPException(status_code=404, detail="This user doesn't exist! Double check their ID!")
 
     if user.roommates is None:
         user.roommates = []
@@ -612,29 +619,109 @@ def add_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(user)
-    return {"message": "Roommate added successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
+
+    roommate_data = []
+    for roommate_id in user.roommates:
+        roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
+        if not roommate:
+            continue
+
+        is_reciprocated = data.user_id in roommate.roommates
+        roommate_data.append({
+            "roommate_id": roommate.user_id,
+            "username": roommate.username,
+            "is_reciprocated": is_reciprocated,
+        })
+
+    return {
+        "message": "Roommate added successfully",
+        "user_id": data.user_id,
+        "updated_roommates": roommate_data,
+    }
    
 @app.post("/remove_roommate/")
-def remove_roomate(data: RoommateRequest, db: Session = Depends(get_db)):
+def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.user_id == data.user_id).first()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.roommates is None:
-        return {"message": "You have no roommates", "user_id": data.user_id}
+    if not user.roommates or data.roommate_id not in user.roommates:
+        return {"message": "Roommate not found in your list", "user_id": data.user_id}
     
     try:
-        idx = user.roommates.index(data.roommate_id)
-        splice = user.roommates[:idx] + user.roommates[idx + 1:]
-        user.roommates = splice
-
+        # Remove roommate from user's list
+        user.roommates = [rid for rid in user.roommates if rid != data.roommate_id]
         db.commit()
         db.refresh(user)
-        return {"message": "Roommate removed successfully", "user_id": data.user_id, "updated_roommates": user.roommates}
+
+        # Remove user_id from roommate's list
+        roommate = db.query(Users).filter(Users.user_id == data.roommate_id).first()
+        if roommate:
+            roommate.roommates = [rid for rid in roommate.roommates if rid != data.user_id]
+            db.commit()
+            db.refresh(roommate)
+
+        # Remove shared items for pantry and planned meals
+        # Remove user_id from anything roommate_id shared with them
+        db.query(Pantry).filter(
+            Pantry.shared_with.contains([data.user_id]),
+            Pantry.owner_id == data.roommate_id
+        ).update(
+            {"shared_with": Pantry.shared_with.op("||")([data.user_id])},
+            synchronize_session=False
+        )
+
+        db.query(PlannedMeals).filter(
+            PlannedMeals.shared_with.contains([data.user_id]),
+            PlannedMeals.owner_id == data.roommate_id
+        ).update(
+            {"shared_with": PlannedMeals.shared_with.op("||")([data.user_id])},
+            synchronize_session=False
+        )
+
+        # Remove roommate_id from anything user_id shared with them
+        db.query(Pantry).filter(
+            Pantry.shared_with.contains([data.roommate_id]),
+            Pantry.owner_id == data.user_id
+        ).update(
+            {"shared_with": Pantry.shared_with.op("||")([data.roommate_id])},
+            synchronize_session=False
+        )
+
+        db.query(PlannedMeals).filter(
+            PlannedMeals.shared_with.contains([data.roommate_id]),
+            PlannedMeals.owner_id == data.user_id
+        ).update(
+            {"shared_with": PlannedMeals.shared_with.op("||")([data.roommate_id])},
+            synchronize_session=False
+        )
+
+        db.commit()
+
+        # Prepare updated roommates list for response
+        roommate_data = []
+        for roommate_id in user.roommates:
+            roommate_info = db.query(Users).filter(Users.user_id == roommate_id).first()
+            if not roommate_info:
+                continue
+
+            is_reciprocated = data.user_id in roommate_info.roommates
+            roommate_data.append({
+                "roommate_id": roommate_info.user_id,
+                "username": roommate_info.username,
+                "is_reciprocated": is_reciprocated,
+            })
+
+        return {
+            "message": "Roommate removed successfully",
+            "user_id": data.user_id,
+            "updated_roommates": roommate_data,
+        }
     
-    except ValueError:
-        return {"message": "User not found in your roommates"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
     
 class UserLogin(BaseModel):
     username: str = None
@@ -656,10 +743,31 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found.")
 
     if data.password != user.hashed_confirmation_code:
-    # if not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect password.")
 
-    return {"user_id": user.user_id}
+    user_roommates = user.roommates
+    roommates_with_status = []
+    for roommate_id in user_roommates:
+        roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
+        if roommate:
+            is_reciprocated = user.user_id in roommate.roommates
+            roommates_with_status.append({
+                "roommate_id": roommate.user_id,
+                "username": roommate.username,
+                "is_reciprocated": is_reciprocated,
+            })
+
+    user_data = {
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "account_created_at": user.account_created_at,
+        "roommates": roommates_with_status,
+        "favorite_recipes": user.favorite_recipes,
+        "cooked_recipes": user.cooked_recipes,
+    }
+
+    return {"user_data": user_data}
 
 class UserCreate(BaseModel):
     username: str
@@ -692,8 +800,63 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {"message": "User created successfully", "user_id": new_user.user_id}
+    user_data = {
+        "user_id": new_user.user_id,
+        "username": new_user.username,
+        "email": new_user.email,
+        "account_created_at": new_user.account_created_at,
+        "roommates": new_user.roommates,
+        "favorite_recipes": new_user.favorite_recipes,
+        "cooked_recipes": new_user.cooked_recipes,
+    }
 
+    return {"user_data": user_data}
+
+class Reset(BaseModel):
+    user_id: int
+    old_pass: str
+    new_pass: str
+
+
+@app.get("/get_roommates/")
+def get_roommates(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    roommates = user.roommates
+    
+    roommate_data = []
+    for roommate_id in roommates:
+        roommate = db.query(Users).filter(Users.user_id == roommate_id).first()
+        if not roommate:
+            continue
+
+        is_reciprocated = user_id in roommate.roommates
+        roommate_data.append({
+            "roommate_id": roommate.user_id,
+            "username": roommate.username,
+            "is_reciprocated": is_reciprocated,
+        })
+
+    return {"roommates": roommate_data}
+
+@app.post("/reset_pass")
+def reset_pass(data: Reset, db: Session = Depends(get_db)):
+
+    user = db.query(Users).filter(Users.user_id == data.user_id).first()
+
+    if user.hashed_confirmation_code != data.old_pass:
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    # old pass is correct
+    user.hashed_confirmation_code = data.new_pass
+
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "reset password successfully"}
 
 # RECIPE QUERIES ----------------------------------------------------------------------------------------------------------------------------
 @app.post("/recipes_made_from_inventory/")
