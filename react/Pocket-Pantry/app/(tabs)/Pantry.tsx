@@ -255,8 +255,8 @@ export default function Pantry () {
     },
   ], [items]);
 
-  console.log("NEW CAT");
-  console.log(categorizedItems);
+  // console.log("NEW CAT");
+  // console.log(categorizedItems);
 
   return (
     <View style={styles.container}>
