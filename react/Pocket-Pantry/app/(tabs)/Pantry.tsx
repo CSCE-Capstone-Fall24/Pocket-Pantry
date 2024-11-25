@@ -13,7 +13,7 @@ const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 export default function Pantry () {
   type Roommate = {
-    id: number; 
+    id: string; 
     name: string; 
     isReciprocal: boolean;
   };
@@ -72,7 +72,7 @@ export default function Pantry () {
         id: item.roommate_id,
         name: item.username,
         isReciprocal: item.is_reciprocated,
-      })).sort((a: Roommate, b: Roommate) => a.id - b.id);
+      })).sort((a: Roommate, b: Roommate) => Number(a.id) - Number(b.id));
 
     console.log('got recip rms');
     console.log(rms);
