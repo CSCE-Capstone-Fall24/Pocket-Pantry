@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MealItem from "@/components/MealItem";
 import RecipeItem from "@/components/RecipeItem";
@@ -15,7 +14,7 @@ export default function MealPlan () {
   };
 
   return (
-    <SafeAreaView> 
+    <View style={styles.container}> 
       <View style={styles.header}>
         <Text style={styles.title}>Meal Plan</Text>
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
@@ -23,7 +22,7 @@ export default function MealPlan () {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* Recipe search window */}
         <Modal
@@ -99,12 +98,16 @@ export default function MealPlan () {
 
         <View style={styles.itemBuffer}></View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
+    marginTop: 50,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingBottom: 25,
@@ -193,6 +196,6 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   itemBuffer: {
-    height: 80,
+    height: 12,
   },
 });

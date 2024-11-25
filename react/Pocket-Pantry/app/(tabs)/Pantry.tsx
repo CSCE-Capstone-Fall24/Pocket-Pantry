@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -262,7 +261,7 @@ export default function Pantry () {
   // console.log(categorizedItems);
 
   return (
-    <SafeAreaView>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Pantry</Text>
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
@@ -270,7 +269,7 @@ export default function Pantry () {
         </TouchableOpacity>
       </View>
       
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       
         {/* Add item window */}
         <Modal
@@ -441,8 +440,7 @@ export default function Pantry () {
         </Modal>
 
         {/* Display items */}
-        {
-          items.length ? (
+        {items.length ? (
             categorizedItems.map((categoryGroup) => (
               categoryGroup.items.length > 0 && (
                 <View key={categoryGroup.category}>
@@ -469,15 +467,20 @@ export default function Pantry () {
             ))
           ) : (
           <View><Text style={styles.categoryHeader}>You have no pantry items</Text></View>
-        )
-      }
+          )
+        }
+        <View style={styles.itemBuffer}></View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
+    marginTop: 50,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingBottom: 25
@@ -636,6 +639,6 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   itemBuffer: {
-    height: 80,
+    height: 12,
   },
 });
