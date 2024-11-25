@@ -1,0 +1,27 @@
+Test Steps:
+    1. Create new User - Brian
+    2. Log in as set up user(email: password:) - Connor
+    3. Log in as set up user(email: password:) - Zack
+    4. Brian add Connor and Zack as roommates
+    5. Demonstrate no roommate add until add back
+    6. Connor add Brian as roommate
+    7. Zack add Brian as roommate
+    8. Connor - show Zack as saved preexisting roommates
+    9. Open and show empty pantry - Brian 
+    10. Connor share existing item with Brian
+    11. Brian show item now in pantry
+    12. Brian show empty shopping list 
+    13. Brian select meal and show ingredients
+    14. Brian add one ingredient to pantry from meal with appropriate quantity
+    15. Brian select same meal
+    16. Brian show ingredient now contained
+    14. Brian plan the meal
+    15. Brian show shopping list
+    16. Brian edit serving size of planned meal
+    17. Brian show shopping list
+    18. Zack - add Brian to existing planned meal with missing needs
+    19. Brian show shopping list
+    20. Brian shop items
+    21. 
+
+
