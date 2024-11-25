@@ -34,38 +34,38 @@ export default function Pantry () {
   const [items, setItems] = useState<Item[]>([]);
   const { userData, setUserData } = useUserContext(); // pull once integrated
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const response = await fetch(`${API_URL}/whole_pantry/?user_id=${userData.user_id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch items");
-        }
-        const data = await response.json();
-        console.log("GOT DATA AS")
-        console.log(data);
-
-        const transformedItems: Item[] = data.map((item: any) => ({
-          id: item.pantry_id,
-          user_id: item.user_id,
-          name: item.food_name,
-          quantity: item.quantity,
-          unit: item.unit,
-          category: item.category,
-          expiration: new Date(item.expiration_date),
-          shared: item.is_shared,
-          roommates: item.shared_with.sort(),
-        }));
-
-        setItems(transformedItems);
-        console.log("GOT ITEMS AS\n");
-        console.log(transformedItems)
-      } catch (error) {
-        console.error("Error fetching items:", error);
+  const fetchItems = async () => {
+    try {
+      const response = await fetch(`${API_URL}/whole_pantry/?user_id=${userData.user_id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch items");
       }
-    };
+      const data = await response.json();
+      console.log("GOT DATA AS")
+      console.log(data);
 
-    fetchItems();
+      const transformedItems: Item[] = data.map((item: any) => ({
+        id: item.pantry_id,
+        user_id: item.user_id,
+        name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        category: item.category,
+        expiration: new Date(item.expiration_date),
+        shared: item.is_shared,
+        roommates: item.shared_with.sort(),
+      }));
+
+      setItems(transformedItems);
+      console.log("GOT ITEMS AS\n");
+      console.log(transformedItems)
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    }
+  };
+
+  useEffect(() => {
+      fetchItems();
   }, []);
 
   const categories = [
@@ -196,7 +196,7 @@ export default function Pantry () {
   
 
   {/* Functions - delete item */}
-  const deleteItem = async (id: string) => { // argument is pantry_id
+  const deleteItem = async (id: string, user_id: string) => { // argument is pantry_id
     alert("pantry id is " + id);
     try {
       const response = await fetch(`${API_URL}/remove_pantry_item/`, {
@@ -204,7 +204,7 @@ export default function Pantry () {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: id, user_id: userData.user_id }),
+        body: JSON.stringify({ id: id, user_id: user_id }),
       });
   
       if (!response.ok) {
@@ -246,6 +246,11 @@ export default function Pantry () {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Pantry</Text>
+
+        <TouchableOpacity style={styles.addButton} onPress={fetchItems}>
+          <Ionicons name="refresh" size={24} color="white" />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
           <Ionicons name="add-outline" size={40} color="white"/>
         </TouchableOpacity>

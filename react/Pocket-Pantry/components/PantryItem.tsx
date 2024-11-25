@@ -24,7 +24,7 @@ type PantryProps = {
   expiration: Date;
   shared: boolean[];
   roommates: string[];
-  deleteItem: (id: string) => void;
+  deleteItem: (id: string, user_id: string) => void;
 };
 
 const PantryItem = (props: PantryProps) => {
@@ -89,7 +89,7 @@ const PantryItem = (props: PantryProps) => {
     if (isNaN(Number(tempQuantity))) {
       Alert.alert("Please enter a valid quantity.");
     } else if (tempQuantity != "" && Number(tempQuantity) <= 0) {
-      props.deleteItem(props.id);
+      props.deleteItem(props.id, props.user_id);
     } else {
       if (tempQuantity != "") {
         setQuantity(tempQuantity);
@@ -111,7 +111,7 @@ const PantryItem = (props: PantryProps) => {
     //   [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id), }],
     //   { cancelable: true }
     // );
-    props.deleteItem(props.id);
+    props.deleteItem(props.id, props.user_id);
   };
 
   return (
