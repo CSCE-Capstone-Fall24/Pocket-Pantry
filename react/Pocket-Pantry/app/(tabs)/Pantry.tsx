@@ -454,6 +454,7 @@ export default function Pantry () {
                   {categoryGroup.items.map((item) => (
                     <View key={item.id}>
                       <PantryItem
+                        // key={item.id}
                         id={item.id}
                         user_id={item.user_id}
                         name={item.name}
@@ -465,6 +466,7 @@ export default function Pantry () {
                         shared_with={item.shared_with}
                         deleteItem={deleteItem}
                         recipRoommates={recipRoommates}
+                        refetch={fetchItems}
                       />
                     </View>
                   ))}

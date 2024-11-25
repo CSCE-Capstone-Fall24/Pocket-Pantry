@@ -27,6 +27,7 @@ type PantryProps = {
   shared_with: string[];
   recipRoommates: Roommate[];
   deleteItem: (id: string, user_id: string) => void;
+  refetch: () => void;
 };
 
 const PantryItem = (props: PantryProps) => {
@@ -101,24 +102,7 @@ const PantryItem = (props: PantryProps) => {
     setTempExpiration(expiration);
     setTempShared(shared);
   }
-  // const handleSave = () => {
-  //   // make POST request to EDIT item
-  //   if (isNaN(Number(tempQuantity))) {
-  //     Alert.alert("Please enter a valid quantity.");
-  //   } else if (tempQuantity != "" && Number(tempQuantity) <= 0) {
-  //     props.deleteItem(props.id, props.user_id);
-  //   } else {
-  //     if (tempQuantity != "") {
-  //       setQuantity(tempQuantity);
-  //     } else {
-  //       setTempQuantity(quantity);
-  //     }
-  //     setUnit(tempUnit);
-  //     setExpiration(tempExpiration);
-  //     setShared(tempShared);
-  //     closeWindow();
-  //   }
-  // };
+
   const handleSave = async () => {
     if (isNaN(Number(tempQuantity))) {
       Alert.alert("Please enter a valid quantity.");
@@ -130,7 +114,9 @@ const PantryItem = (props: PantryProps) => {
         quantity: tempQuantity,
         unit: tempUnit,
         expiration_date: tempExpiration.toISOString(),
-        shared_with: tempShared.filter((shared, index) => shared).map((_, index) => props.recipRoommates[index].id.toString()),
+        shared_with: props.recipRoommates
+        .filter((_, index) => tempShared[index]) // if user is shared, add their id
+        .map((roommate: Roommate) => roommate.id)
       };
   
       try {
@@ -146,7 +132,7 @@ const PantryItem = (props: PantryProps) => {
           throw new Error('Failed to update item');
         }
 
-        alert("edited");
+        alert(props.recipRoommates.map((r) => r.id) + "\n" + tempShared + "\n" + updatedItem.shared_with);
         alert(response);
         console.log(response);
   
@@ -156,6 +142,7 @@ const PantryItem = (props: PantryProps) => {
         setShared(tempShared);
 
         // maybe update parent list?
+        // props.refetch();
   
         closeWindow();
       } catch (error) {
