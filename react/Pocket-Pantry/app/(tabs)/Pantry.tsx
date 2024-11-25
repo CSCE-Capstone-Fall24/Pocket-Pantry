@@ -6,11 +6,10 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import "react-native-get-random-values";
-import { v4 as uuidv4 } from "uuid";
 import PantryItem from "@/components/PantryItem";
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
-const TEST_USER_ID = 72;
+const TEST_USER_ID = 83;
 
 export default function Pantry () {
   interface Item {
@@ -22,7 +21,7 @@ export default function Pantry () {
     expiration: Date;
     shared: boolean[];
     roommates: string[]; // need to change structure to roommate type
-    deleteItem: (id: string) => void;
+    // deleteItem: (id: string) => void;
   }
   const [items, setItems] = useState<Item[]>([]);
   // const { userData, setUserData } = useUserContext(); pull once integrated
@@ -44,7 +43,7 @@ export default function Pantry () {
           unit: item.unit,
           category: item.category,
           expiration: new Date(item.expiration_date),
-          shared: item.shared_with.map(() => false),
+          shared: item.is_shared,
           roommates: item.shared_with,
         }));
 
@@ -144,31 +143,106 @@ export default function Pantry () {
   };
 
   {/* Functions - add item */}
-  const addItem = () => {
-    if (!(newName && newQuantity)) {
-      Alert.alert("Please fill out all fields.");
-    } else if (isNaN(Number(newQuantity)) || Number(newQuantity) <= 0) {
-      Alert.alert("Please enter a valid quantity.");
-    } else {
+  // const addItem = () => {
+  //   if (!(newName && newQuantity)) {
+  //     Alert.alert("Please fill out all fields.");
+  //   } else if (isNaN(Number(newQuantity)) || Number(newQuantity) <= 0) {
+  //     Alert.alert("Please enter a valid quantity.");
+  //   } else {
+  //     const newItem = {
+  //       id: uuidv4(), X
+  //       name: newName, X
+  //       category: newCategory, X
+  //       quantity: Number(newQuantity), X
+  //       unit: newUnit, X 
+  //       expiration: newExpiration, X
+  //       shared: newShared,
+  //       roommates: reciprocatedRoommates,
+  //       deleteItem: deleteItem,
+  //     };
+  //     setItems([...items, newItem]);
+  //     closeWindow();
+  //   }
+  // };
+  const addItem = async () => {
+    if (isNaN(Number(newQuantity))) {
+      Alert.alert('Quantity must be a number.');
+    } else if (newName && newQuantity && newUnit && newExpiration && newShared) {
       const newItem = {
-        id: uuidv4(),
-        name: newName,
-        category: newCategory,
+        food_name: newName,
         quantity: Number(newQuantity),
         unit: newUnit,
-        expiration: newExpiration,
-        shared: newShared,
-        roommates: reciprocatedRoommates,
-        deleteItem: deleteItem,
+        user_id: TEST_USER_ID, // replace
+        expiration_date: newExpiration.toISOString(),
+        category: newCategory,
+        shared_with: [], // replace
+        is_shared: false // replace
       };
-      setItems([...items, newItem]);
-      closeWindow();
+  
+      try {
+        const response = await fetch(`${API_URL}/add_item/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newItem),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to add item to pantry');
+        }
+  
+        const addedItem = await response.json();
+        const transformedItem: Item ={
+          id: addedItem.pantry_id,
+          name: addedItem.food_name,
+          quantity: addedItem.quantity,
+          unit: addedItem.unit,
+          category: addedItem.category,
+          expiration: new Date(addedItem.expiration_date),
+          shared: addedItem.is_shared,
+          roommates: addedItem.shared_with,
+        };
+        setItems(prevItems => [...prevItems, transformedItem]);
+
+        closeWindow();
+      } catch (error) {
+        console.error('Error adding item:', error);
+        alert('Error, Failed to add item.');
+      }
+    } else {
+      alert('Please fill out all fields.');
     }
   };
 
   {/* Functions - delete item */}
-  const deleteItem = (id: string) => {
-    setItems((prevItems) => prevItems.filter(item => item.id !== id));
+  const deleteItem = async (id: string) => { // argument is pantry_id
+    alert("pantry id is " + id);
+    // setItems((prevItems) => prevItems.filter(item => item.id !== id));
+    // json
+
+    // id: int
+    // user_id: int
+
+    try {
+      const response = await fetch(`${API_URL}/remove_pantry_item/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: id, user_id: TEST_USER_ID }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to remove item from pantry');
+      }
+  
+      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+      alert('Item successfully removed!');
+    } catch (error) {
+      console.error('Error removing item:', error);
+      alert('Error: Failed to remove item.');
+    }    
   };
 
   {/* Functions - category headers */}
@@ -192,7 +266,7 @@ export default function Pantry () {
   ];
   
 
-  console.log(categorizedItems);
+  // console.log(categorizedItems);
 
   return (
     <ScrollView>
@@ -374,31 +448,37 @@ export default function Pantry () {
         </Modal>
 
         {/* Display items */}
-        {categorizedItems.map((categoryGroup) => (
-          categoryGroup.items.length > 0 && (
-            <View key={categoryGroup.category}>
-              <Text style={styles.category}>
-                {categoriesB[categoriesA.indexOf(categoryGroup.category)]}
-              </Text>
-              {categoryGroup.items.map((item) => (
-                <View key={item.id}>
-                  <View style={styles.line}></View>
-                  <PantryItem
-                    id={item.id}
-                    name={item.name}
-                    category={item.category}
-                    quantity={item.quantity}
-                    unit={item.unit}
-                    expiration={item.expiration}
-                    shared={item.shared}
-                    roommates={item.roommates}
-                    deleteItem={deleteItem}
-                  />
+        {
+          items.length ? (
+            categorizedItems.map((categoryGroup) => (
+              categoryGroup.items.length > 0 && (
+                <View key={categoryGroup.category}>
+                  <Text style={styles.category}>
+                    {categoriesB[categoriesA.indexOf(categoryGroup.category)]}
+                  </Text>
+                  {categoryGroup.items.map((item) => (
+                    <View key={item.id}>
+                      <View style={styles.line}></View>
+                      <PantryItem
+                        id={item.id}
+                        name={item.name}
+                        category={item.category}
+                        quantity={item.quantity}
+                        unit={item.unit}
+                        expiration={item.expiration}
+                        shared={item.shared}
+                        roommates={item.roommates}
+                        deleteItem={deleteItem}
+                      />
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
-          )
-        ))}
+              )
+            ))
+          ) : (
+          <View><Text style={styles.category}>You have no pantry items</Text></View>
+        )
+      }
       </SafeAreaView>
     </ScrollView>
   );

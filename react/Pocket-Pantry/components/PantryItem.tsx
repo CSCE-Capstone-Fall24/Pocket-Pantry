@@ -91,12 +91,13 @@ const PantryItem = (props: PantryProps) => {
 
   {/* Functions - confirm choice to delete item */}
   const confirmDelete = () => {
-    Alert.alert(
-      "Delete item?",
-      ``,
-      [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id), }],
-      { cancelable: true }
-    );
+    // Alert.alert(
+    //   "Delete item?",
+    //   ``,
+    //   [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id), }],
+    //   { cancelable: true }
+    // );
+    props.deleteItem(props.id);
   };
 
   return (
