@@ -1,23 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import { useUserContext } from "./contexts/UserContext";
+
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
+// const TEST_USER_ID = '83';
+
+type Roommate = {
+  id: number; 
+  name: string; 
+  isReciprocal: boolean;
+};
 
 type PantryProps = {
   id: string;
+  user_id: string;
   name: string;
   category: string;
   quantity: number;
   unit: string;
   expiration: Date;
   shared: boolean[];
-  roommates: string[];
-  deleteItem: (id: string) => void;
+  shared_with: string[];
+  recipRoommates: Roommate[];
+  deleteItem: (id: string, user_id: string) => void;
+  refetch: () => void;
 };
 
 const PantryItem = (props: PantryProps) => {
+  const { userData, setUserData } = useUserContext();
+
   const units = [
     "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
     "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
@@ -54,8 +69,24 @@ const PantryItem = (props: PantryProps) => {
   const [tempExpiration, setTempExpiration] = useState(expiration);
 
   {/* Functions - set item as shared */}
-  const [shared, setShared] = useState(props.shared);
-  const [tempShared, setTempShared] = useState(shared);
+  const [shared, setShared] = useState<boolean[]>([]);
+  const [tempShared, setTempShared] = useState<boolean[]>([]);
+
+  // Initialize shared and tempShared when component mounts or props change
+  useEffect(() => {
+    const initialShared = props.recipRoommates.map((roommate: Roommate) => {
+      return props.shared_with.includes(roommate.id); // ignore rn, data is fetched as string but it should be a number according to type script
+    });
+    
+    // console.log(props.shared_with.includes(props.recipRoommates[0].id.toString()));
+    console.log(props.recipRoommates);
+    console.log(props.shared_with);
+
+    setShared(initialShared);
+    setTempShared(initialShared);
+    console.log(initialShared);
+  }, [props.recipRoommates, props.shared_with]);
+
   const sharedToggle = (index: number) => {
     setTempShared((prevState) => {
       const updatedState = [...prevState];
@@ -71,32 +102,65 @@ const PantryItem = (props: PantryProps) => {
     setTempExpiration(expiration);
     setTempShared(shared);
   }
-  const handleSave = () => {
+
+  const handleSave = async () => {
     if (isNaN(Number(tempQuantity))) {
       Alert.alert("Please enter a valid quantity.");
     } else if (tempQuantity != "" && Number(tempQuantity) <= 0) {
-      props.deleteItem(props.id);
+      props.deleteItem(props.id, props.user_id);
     } else {
-      if (tempQuantity != "") {
+      const updatedItem = {
+        pantry_id: props.id,
+        quantity: tempQuantity,
+        unit: tempUnit,
+        expiration_date: tempExpiration.toISOString(),
+        shared_with: props.recipRoommates
+        .filter((_, index) => tempShared[index]) // if user is shared, add their id
+        .map((roommate: Roommate) => roommate.id)
+      };
+  
+      try {
+        const response = await fetch(`${API_URL}/update_item/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedItem),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to update item');
+        }
+
+        alert(props.recipRoommates.map((r) => r.id) + "\n" + tempShared + "\n" + updatedItem.shared_with);
+        alert(response);
+        console.log(response);
+  
         setQuantity(tempQuantity);
-      } else {
-        setTempQuantity(quantity);
+        setUnit(tempUnit);
+        setExpiration(tempExpiration);
+        setShared(tempShared);
+
+        // maybe update parent list?
+        // props.refetch();
+  
+        closeWindow();
+      } catch (error) {
+        alert('An error occurred while saving the item.');
       }
-      setUnit(tempUnit);
-      setExpiration(tempExpiration);
-      setShared(tempShared);
-      closeWindow();
     }
   };
+  
 
   {/* Functions - confirm choice to delete item */}
   const confirmDelete = () => {
-    Alert.alert(
-      "Delete item?",
-      ``,
-      [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id), }],
-      { cancelable: true }
-    );
+    // Alert.alert(
+    //   "Delete item?",
+    //   ``,
+    //   [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id), }],
+    //   { cancelable: true }
+    // );
+    props.deleteItem(props.id, props.user_id);
   };
 
   return (
@@ -104,15 +168,23 @@ const PantryItem = (props: PantryProps) => {
 
       {/* Displayed item information */}
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-      <View style={styles.itemContainer}>
-        <View style={styles.rowAlignment}>
-          <Text style={styles.itemName}>{props.name} </Text>
-          {props.roommates.map((roommate: string, index: number) => {
-            return shared[index] ? (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>) : null;
-          })}
+        <View style={styles.itemContainer}>
+          <View style={styles.rowAlignment}>
+            <Text style={styles.itemName}>{props.name} </Text>
+            {
+              userData.user_id == props.user_id ? (
+                props.recipRoommates.map((roommate: Roommate, index: number) => {
+                  return (shared[index] && <Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
+                })
+              ) : (
+                props.shared_with.map((roommate: string, index: number) => {
+                  return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
+                })
+              )
+            }
+          </View>
+          <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
         </View>
-        <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
-      </View>
       </ScrollView>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
@@ -209,24 +281,57 @@ const PantryItem = (props: PantryProps) => {
             </Modal>
 
             {/* Set item as shared */}
-            {props.roommates.length > 0 && (
-              <ScrollView horizontal={false} style={styles.sharedScroll}>
-                  {props.roommates.map((roommate: string, index: number) => {
+            {
+              userData.user_id == props.user_id ? (
+                // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
+                // props.shared_with.length > 0 && (
+                  <ScrollView horizontal={false} style={styles.sharedScroll}>
+                      {props.recipRoommates.map((roommate: Roommate, index: number) => {
+                        return (
+                          <View key={roommate.id} style={styles.sharedContainer}>
+                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
+                            <Pressable onPress={() => sharedToggle(index)}>
+                                <Ionicons 
+                                  name={tempShared[index] ? "checkmark-circle" : "ellipse-outline"}
+                                  size={32} 
+                                  color={sharedColors[index]}/>
+                            </Pressable>
+                          </View>
+                        );
+                      })}
+                  </ScrollView>
+                // )
+              ) : (
+                // USER VIEWING IS NOT OWNER
+                // SHOW OWNER
+                <ScrollView horizontal={false} style={styles.sharedScroll}>
+                  <View key={999} style={styles.sharedContainer}>
+                    <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                      Item Owner: {props.recipRoommates.find((rm: Roommate) => rm.id.toString() == props.user_id)?.name || 'Unknown'}
+                    </Text>
+                    {/* <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {((props.recipRoommates: Roommate).find((rm: Roommate) => rm.id === props.user_id)).name}</Text> */}
+                  </View>
+                  {/* // SHOW SHARED WITH
+                  // MARK YOU IN SHARED WITH */}
+                  {props.shared_with.map((roommate: string, index: number) => {
+                    const found = props.recipRoommates.find((rm: Roommate) => rm.id == roommate);
+                    const roommateName = found ? found.name : `Unknown (${roommate})`;
+                    
                     return (
                       <View key={roommate} style={styles.sharedContainer}>
-                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
-                        <Pressable onPress={() => sharedToggle(index)}>
-                          {tempShared[index] ? (
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                          Shared with {userData.user_id != roommate ? roommateName : roommate}
+                          </Text>
+                        <Pressable>
                             <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
-                          ) : (
-                            <Ionicons name="ellipse-outline" size={32} color={sharedColors[index]}/>
-                          )}
                         </Pressable>
+                        {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
                       </View>
                     );
                   })}
-              </ScrollView>  
-            )}
+                </ScrollView>
+              )
+            }
 
             {/* Cancel/save user changes */}
             <View style={styles.buttonAlignment}>
@@ -252,8 +357,8 @@ const PantryItem = (props: PantryProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 12,
-    marginHorizontal: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
     borderRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -262,11 +367,12 @@ const styles = StyleSheet.create({
     shadowColor: "black",
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "white",
   },
   itemContainer: {
-    marginVertical: 10,
-    marginLeft: 25,
+    marginVertical: 12,
+    marginLeft: 15,
   },
   rowAlignment: {
     flexDirection: "row",
@@ -280,7 +386,7 @@ const styles = StyleSheet.create({
     color: "gray",
   },
   editButton: {
-    marginHorizontal: 5,
+    marginHorizontal: 2,
     padding: 20,
   },
   blurOverlay: {
@@ -307,13 +413,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "gray",
   },
-  fieldText: {
-    fontSize: 16,
-  },
   fieldContainer: {
     marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
+  },
+  fieldText: {
+    fontSize: 16,
   },
   quantityInput: {
     marginRight: 10,

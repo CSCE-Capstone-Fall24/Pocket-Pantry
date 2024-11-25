@@ -53,8 +53,7 @@ def scrape_ingredients(id):
         if response.status_code == 200:
             # page = BeautifulSoup(response.content, 'html.parser')
 
-            serving_size = -1              
-
+            serving_size = -1
             serving_size_section = soup.find_all('div', class_='facts__item')
             
             # for i in serving_size_section:
@@ -137,9 +136,9 @@ def scrape_ingredients(id):
                     units.append(unit)
             except Exception as e:
                 print(f"error {e}")
-                return [], [], []
+                return [], [], [], -1
             
-        return ingredients, quantities, units, serving_sizes
+        return ingredients, quantities, units, serving_size
 
 # scrape_ingredients(137739)
 
@@ -159,7 +158,7 @@ for id in df["id"]:
     units.append(unit)
     serving_sizes.append(serv)
 
-    sleep(1)
+    sleep(.5)
 
     # c += 1
     # if c == 3:
@@ -168,6 +167,7 @@ for id in df["id"]:
 df = df.assign(ingredients_scraped=ingreds)
 df = df.assign(quantities_scraped=quantities)
 df = df.assign(units_scraped=units)
+df = df.assign(serving_size=serving_sizes)
 
 df.to_csv("scraped_data_w_serving_sizes.csv", encoding='utf-8', index=False)
 # with open("test.txt", "w") as f:

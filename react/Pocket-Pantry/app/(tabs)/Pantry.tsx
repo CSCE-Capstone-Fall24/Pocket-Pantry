@@ -1,47 +1,92 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import "react-native-get-random-values";
-import { v4 as uuidv4 } from "uuid";
 import PantryItem from "@/components/PantryItem";
+import { useUserContext } from "@/components/contexts/UserContext";
+
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
+// const TEST_USER_ID = 83;
 
 export default function Pantry () {
+  type Roommate = {
+    id: number; 
+    name: string; 
+    isReciprocal: boolean;
+  };
+  
   interface Item {
     id: string;
+    user_id: string,
     name: string;
     category: string;
     quantity: number;
     unit: string;
     expiration: Date;
     shared: boolean[];
-    roommates: string[];
-    deleteItem: (id: string) => void;
+    shared_with: string[]; // need to change structure to roommate type
+    // deleteItem: (id: string) => void;
   }
-  const [items, setItems] = useState<Item[]>([]);
 
-  type Roommate = {
-    id: number; 
-    name: string; 
-    isReciprocal: boolean;
+  const [items, setItems] = useState<Item[]>([]);
+  const { userData, setUserData } = useUserContext(); // pull once integrated
+  const [recipRoommates, setRecipRoommates] = useState<Roommate[]>([]);
+
+  const fetchItems = async () => {
+    try {
+      const response = await fetch(`${API_URL}/whole_pantry/?user_id=${userData.user_id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch items");
+      }
+      const data = await response.json();
+      console.log("GOT DATA AS")
+      console.log(data);
+
+      const transformedItems: Item[] = data.map((item: any) => ({
+        id: item.pantry_id,
+        user_id: item.user_id,
+        name: item.food_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        category: item.category,
+        expiration: new Date(item.expiration_date),
+        shared: item.is_shared,
+        shared_with: item.shared_with.sort(),
+      }));
+      setItems(transformedItems);      
+      console.log("GOT ITEMS AS\n");
+      console.log(transformedItems)
+
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    }
   };
 
-  const categoriesA = [
+  useEffect(() => {
+    const rms: Roommate[] = userData.roommates
+      .filter((item: any) => item.is_reciprocated)
+      .map((item: any) => ({
+        id: item.roommate_id,
+        name: item.username,
+        isReciprocal: item.is_reciprocated,
+      })).sort((a: Roommate, b: Roommate) => a.id - b.id);
+
+    console.log('got recip rms');
+    console.log(rms);
+    setRecipRoommates(rms);
+
+    fetchItems();
+  }, [userData.reciprocatedRoommates]);
+
+  const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
     "Bakery, Grains & Dried Goods", "Canned & Jarred Goods",
     "Frozen Foods", "Baking Essentials", "Condiments, Sauces & Dressings",
     "Herbs, Spices & Seasonings", "Oils, Fats & Vinegars",
-    "Beverages", "Snacks & Treats", "Specialty & Miscellaneous",
-  ];
-  const categoriesB = [
-    "PROTEINS", "FRESH PRODUCE", "DAIRY & ALTERNATIVES",
-    "BAKERY, GRAINS & DRIED GOODS", "CANNED & JARRED GOODS",
-    "FROZEN FOODS", "BAKING ESSENTIALS", "CONDIMENTS, SAUCES & DRESSINGS",
-    "HERBS, SPICES & SEASONINGS", "OILS, FATS & VINEGARS",
-    "BEVERAGES", "SNACKS & TREATS", "SPECIALTY & MISCELLANEOUS",
+    "Beverages", "Snacks & Treats", "Specialty & Miscellaneous", "Uncategorized"
   ];
   const units = [
     "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
@@ -65,7 +110,8 @@ export default function Pantry () {
     setNewQuantity("");
     setNewUnit("pieces");
     setNewExpiration(new Date());
-    setNewShared([false, false, false, false]);
+    // setNewShared([false, false, false, false]);
+    setNewShared(new Array(recipRoommates.length).fill(false));
   };
 
   {/* Functions - new item name */}
@@ -93,12 +139,13 @@ export default function Pantry () {
   const closeExpirationPicker = () => setExpirationPickerVisible(false);
   
   {/* Functions - set new item as shared */}
-  const reciprocatedRoommates = [
-    "username1", "username2", "username3333333333", "username4",
-    "username5", "username6", "username7", "username8",
-    "username9", "username10", "username11",
-  ];
-  const [newShared, setNewShared] = useState<boolean[]>(new Array(reciprocatedRoommates.length).fill(false));
+  // const reciprocatedRoommates = [
+  //   "username1", "username2", "username3333333333", "username4",
+  //   "username5", "username6", "username7", "username8",
+  //   "username9", "username10", "username11",
+  // ];
+
+  const [newShared, setNewShared] = useState<boolean[]>(new Array(recipRoommates.length).fill(false));
   const sharedToggle = (index: number) => {
     setNewShared((prevState) => {
       const updatedState = [...prevState];
@@ -108,48 +155,124 @@ export default function Pantry () {
   };
 
   {/* Functions - add item */}
-  const addItem = () => {
-    if (!(newName && newQuantity)) {
-      Alert.alert("Please fill out all fields.");
-    } else if (isNaN(Number(newQuantity)) || Number(newQuantity) <= 0) {
-      Alert.alert("Please enter a valid quantity.");
-    } else {
+  const addItem = async () => {
+    if (isNaN(Number(newQuantity))) {
+      Alert.alert('Quantity must be a number.');
+    } else if (newName && newQuantity && newUnit && newExpiration && newShared) {
+      // Prepare the item object to send to the backend
       const newItem = {
-        id: uuidv4(),
-        name: newName,
-        category: newCategory,
+        food_name: newName,
         quantity: Number(newQuantity),
         unit: newUnit,
-        expiration: newExpiration,
-        shared: newShared,
-        roommates: reciprocatedRoommates,
-        deleteItem: deleteItem,
+        user_id: userData.user_id, // signed in user
+        expiration_date: newExpiration.toISOString(),
+        category: newCategory,
+        shared_with: recipRoommates
+        .filter((_, index) => newShared[index]) // if user is shared, add their id
+        .map((roommate: Roommate) => roommate.id),
+        is_shared: newShared.some((b: Boolean) => b) // if any shared item is shared
       };
-      setItems([...items, newItem]);
-      closeWindow();
+  
+      try {
+        const response = await fetch(`${API_URL}/add_item/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newItem),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to add item to pantry');
+        }
+  
+        const addedItem = await response.json();
+        const transformedItem: Item ={
+          id: addedItem.pantry_id,
+          user_id: addedItem.user_id,
+          name: addedItem.food_name,
+          quantity: addedItem.quantity,
+          unit: addedItem.unit,
+          category: addedItem.category,
+          expiration: new Date(addedItem.expiration_date),
+          shared: addedItem.is_shared,
+          shared_with: addedItem.shared_with,
+        };
+        setItems(prevItems => [...prevItems, transformedItem]);
+
+        closeWindow();
+      } catch (error) {
+        console.error('Error adding item:', error);
+        alert('Error, Failed to add item.');
+      }
+    } else {
+      alert('Please fill out all fields.');
     }
   };
+  
 
   {/* Functions - delete item */}
-  const deleteItem = (id: string) => {
-    setItems((prevItems) => prevItems.filter(item => item.id !== id));
+  const deleteItem = async (id: string, user_id: string) => { // argument is pantry_id
+    alert("pantry id is " + id);
+    try {
+      const response = await fetch(`${API_URL}/remove_pantry_item/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: id, user_id: user_id }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to remove item from pantry');
+      }
+  
+      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+      alert('Item successfully removed!');
+    } catch (error) {
+      console.error('Error removing item:', error);
+      alert('Error: Failed to remove item.');
+    }    
   };
 
   {/* Functions - category headers */}
-  const categorizedItems = categoriesA.map((category) => ({
-    category, items: items.filter((item) => item.category === category),
-  }));
+  const categorizedItems = [
+    ...categories.map((category) => ({
+      category,
+      items: items.filter(
+        (item) => item.category && item.category.toLowerCase() === category.toLowerCase()
+      ),
+    })),
+    {
+      category: "Uncategorized",
+      items: items.filter(
+        (item) =>
+          !item.category || // Check if category is null/undefined
+          !categories.some(
+            (category) => item.category.toLowerCase() === category.toLowerCase()
+          )
+      ),
+    },
+  ];
+  
+
+  // console.log(categorizedItems);
 
   return (
-    <SafeAreaView>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Pantry</Text>
+
+        <TouchableOpacity style={styles.addButton} onPress={fetchItems}>
+          <Ionicons name="refresh" size={24} color="white" />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
           <Ionicons name="add-outline" size={40} color="white"/>
         </TouchableOpacity>
       </View>
       
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       
         {/* Add item window */}
         <Modal
@@ -200,7 +323,7 @@ export default function Pantry () {
                   <View style={styles.pickerA}>
                     {isCategoryPickerVisible && (
                       <Picker selectedValue={newCategory} onValueChange={(newCategory) => setNewCategory(newCategory)}>
-                        {categoriesA.map((category, index) => (
+                        {categories.map((category, index) => (
                           <Picker.Item key={index} label={category} value={category} />
                         ))}
                       </Picker>
@@ -286,12 +409,12 @@ export default function Pantry () {
               </Modal>
 
               {/* Set new item as shared */}
-              {reciprocatedRoommates.length > 0 && (
+              {recipRoommates.length > 0 && (
                 <ScrollView horizontal={false} style={styles.sharedScroll}>
-                  {reciprocatedRoommates.map((roommate: string, index: number) => {
+                  {recipRoommates.map((roommate: Roommate, index: number) => {
                     return (
-                      <View key={roommate} style={styles.sharedContainer}>
-                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                      <View key={roommate.id} style={styles.sharedContainer}>
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
                         <Pressable onPress={() => sharedToggle(index)}>
                           {newShared[index] ? (
                             <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
@@ -304,6 +427,7 @@ export default function Pantry () {
                   })}
                 </ScrollView>
               )}
+
 
               {/* Cancel/save new item */}
               <View style={styles.buttonAlignment}>
@@ -320,38 +444,53 @@ export default function Pantry () {
         </Modal>
 
         {/* Display items */}
-        {categorizedItems.map((categoryGroup) => (
-          categoryGroup.items.length > 0 && (
-            <View key={categoryGroup.category}>
-              <Text style={styles.categoryHeader}>
-                {categoriesB[categoriesA.indexOf(categoryGroup.category)]}
-              </Text>
-              {categoryGroup.items.map((item) => (
-                <View key={item.id}>
-                  <PantryItem
-                    id={item.id}
-                    name={item.name}
-                    category={item.category}
-                    quantity={item.quantity}
-                    unit={item.unit}
-                    expiration={item.expiration}
-                    shared={item.shared}
-                    roommates={item.roommates}
-                    deleteItem={deleteItem}
-                  />
+        {items.length ? (
+            categorizedItems.map((categoryGroup) => (
+              categoryGroup.items.length > 0 && (
+                <View key={categoryGroup.category}>
+                  <Text style={styles.categoryHeader}>
+                    {categoryGroup.category.toUpperCase()}
+                  </Text>
+                  {categoryGroup.items.map((item) => (
+                    <View key={item.id}>
+                      <PantryItem
+                        // key={item.id}
+                        id={item.id}
+                        user_id={item.user_id}
+                        name={item.name}
+                        category={item.category}
+                        quantity={item.quantity}
+                        unit={item.unit}
+                        expiration={item.expiration}
+                        shared={item.shared}
+                        shared_with={item.shared_with}
+                        deleteItem={deleteItem}
+                        recipRoommates={recipRoommates}
+                        refetch={fetchItems}
+                      />
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
+              )
+            ))
+          ) : (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Pantry is empty :(</Text>
+          </View>
           )
-        ))}
+        }
         <View style={styles.itemBuffer}></View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
+    marginTop: 50,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingBottom: 25
@@ -509,7 +648,16 @@ const styles = StyleSheet.create({
     color: "gray",
     fontWeight: 600,
   },
+  empty: {
+    marginTop: 280,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: 600,
+    color: "gray",
+  },
   itemBuffer: {
-    height: 80,
+    height: 12,
   },
 });
