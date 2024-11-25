@@ -286,27 +286,27 @@ export default function Pantry () {
               </Modal>
 
               {/* Set new item as shared */}
-              <ScrollView horizontal={false} style={styles.sharedScroll}>
-                <View style={styles.sharedAlignment}>
-                    {reciprocatedRoommates.map((roommate: string, index: number) => {
-                      return (
-                        <View key={roommate} style={styles.sharedContainer}>
-                          <Text style={styles.fieldText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
-                          <Pressable style={styles.iconSpacer} onPress={() => sharedToggle(index)}>
-                            {newShared[index] ? (
-                              <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
-                            ) : (
-                              <Ionicons name="ellipse-outline" size={32} color={sharedColors[index%11]}/>
-                            )}
-                          </Pressable>
-                        </View>
-                      );
-                    })}
-                </View>
-              </ScrollView>
+              {reciprocatedRoommates.length > 0 && (
+                <ScrollView horizontal={false} style={styles.sharedScroll}>
+                  {reciprocatedRoommates.map((roommate: string, index: number) => {
+                    return (
+                      <View key={roommate} style={styles.sharedContainer}>
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                        <Pressable onPress={() => sharedToggle(index)}>
+                          {newShared[index] ? (
+                            <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
+                          ) : (
+                            <Ionicons name="ellipse-outline" size={32} color={sharedColors[index%11]}/>
+                          )}
+                        </Pressable>
+                      </View>  
+                    );
+                  })}
+                </ScrollView>
+              )}
 
               {/* Cancel/save new item */}
-              <View style={styles.rowAlignment}>
+              <View style={styles.buttonAlignment}>
                 <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); }}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -372,15 +372,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#ff8667",
   },
   blurOverlay: {
-    backgroundColor: `rgba(0, 0, 0, ${.1})`
+    backgroundColor: `rgba(0, 0, 0, ${.15})`
   },
   windowAlignment: {
     flex: 1,
     justifyContent: "center",
   },
   windowContainer: {
-    marginHorizontal: 50,
-    borderRadius: 12,
+    marginHorizontal: 35,
+    borderRadius: 8,
     padding: 35,
     alignItems: "center",
     backgroundColor: "white",
@@ -388,10 +388,10 @@ const styles = StyleSheet.create({
   windowTitle: {
     fontSize: 24,
     fontWeight: 600,
-    marginBottom: 30,
+    marginBottom: 10,
   },
   fieldContainer: {
-    marginBottom: 20,
+    marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -427,18 +427,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pickerA: {
-    paddingBottom: 30,
-    backgroundColor: "lightgray",
+    paddingBottom: 35,
+    backgroundColor: "#f0f0f0",
   },
   pickerB: {
-    paddingBottom: 30,
+    paddingBottom: 35,
     alignItems: "center",
-    backgroundColor: "lightgray",
+    backgroundColor: "#f0f0f0",
   },
   doneButtonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    backgroundColor: "lightgray",
+    backgroundColor: "#f0f0f0",
   },
   doneButtonText: {
     marginTop: 15,
@@ -448,28 +448,28 @@ const styles = StyleSheet.create({
     fontWeight: 600,
   },
   sharedScroll: {
-    marginBottom: 35,
-    maxHeight: 220,
-    width: 250,
+    marginTop: 20,
+    maxHeight: 210,
+    width: 270,
     borderWidth: 1,
     borderRadius: 8,
     borderColor: "lightgray",
-  },
-  sharedAlignment: {
-    marginTop: 22,
-    marginBottom: 10,
-    marginHorizontal: 35,
-    alignItems: "center",
+    paddingTop: 12,
+    paddingHorizontal: 12,
   },
   sharedContainer: {
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
   },
-  iconSpacer: {
-    marginLeft: 5,
+  sharedText: {
+    marginRight: 5,
+    flexShrink: 1,
+    fontSize: 16,
   },
-  rowAlignment: {
+  buttonAlignment: {
+    marginTop: 35,
     flexDirection: "row",
     alignItems: "center",
   },

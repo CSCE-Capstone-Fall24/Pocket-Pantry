@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function MealPlan () {
-
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
@@ -33,6 +32,7 @@ export default function MealPlan () {
           <View style={styles.windowContainer}>
             <View style={styles.windowHeader}>
               
+              {/* Search bar */}
               <View style={styles.searchBarContainer}>
                 <TextInput
                   style={styles.searchBar}
@@ -44,12 +44,15 @@ export default function MealPlan () {
                 </View>
               </View>
 
+              {/* Close button */}
               <TouchableOpacity style={styles.closeButton} onPress={closeWindow}>
                 <Ionicons name="close-outline" size={32} color="white"/>
               </TouchableOpacity>
             </View>
 
+            {/* Recipe results */}
             <ScrollView>
+              <View style={styles.line}></View>
 
             </ScrollView>
           </View>
@@ -87,6 +90,7 @@ const styles = StyleSheet.create({
   },
   windowHeader: {
     marginTop: 75,
+    marginBottom: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -95,7 +99,7 @@ const styles = StyleSheet.create({
     marginLeft: 30,
     height: 40,
     width: "68%",
-    borderRadius: 20,
+    borderRadius: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -119,5 +123,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "gray",
+  },
+  line: {
+    borderBottomWidth: 1,
+    borderColor: "lightgray",
   },
 });
