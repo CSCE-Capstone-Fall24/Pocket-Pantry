@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -126,7 +126,9 @@ const PantryItem = (props: PantryProps) => {
         visible={isWindowVisible}
         onRequestClose={closeWindow}
       >
-        <BlurView style={StyleSheet.absoluteFill} intensity={20}/>
+        <View style={[StyleSheet.absoluteFill, styles.blurOverlay]}>
+          <BlurView style={StyleSheet.absoluteFill} intensity={30}/>
+        </View>
         <View style={styles.windowAlignment}>
           <View style={styles.windowContainer}>
             <Text style={styles.windowTitle} numberOfLines={1} ellipsizeMode="tail">{props.name}</Text>
@@ -262,7 +264,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   itemName: {
-    flexShrink: 1,
     marginBottom: 5,
     fontSize: 20,
   },
@@ -273,13 +274,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     padding: 20,
   },
+  blurOverlay: {
+    backgroundColor: `rgba(0, 0, 0, ${.1})`
+  },
   windowAlignment: {
     flex: 1,
     justifyContent: "center",
   },
   windowContainer: {
     marginHorizontal: 50,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 35,
     alignItems: "center",
     backgroundColor: "white",
@@ -314,7 +318,7 @@ const styles = StyleSheet.create({
   pickerInput: {
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: "lightgray",
+    borderColor: "#f0f0f0",
     padding: 10,
     backgroundColor: "#f0f0f0",
   },

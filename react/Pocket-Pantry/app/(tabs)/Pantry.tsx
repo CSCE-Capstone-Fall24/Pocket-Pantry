@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -158,7 +158,9 @@ export default function Pantry () {
           visible={isWindowVisible}
           onRequestClose={closeWindow}
         >
-          <BlurView style={StyleSheet.absoluteFill} intensity={20}/>
+          <View style={[StyleSheet.absoluteFill, styles.blurOverlay]}>
+            <BlurView style={StyleSheet.absoluteFill} intensity={30}/>
+          </View>
           <View style={styles.windowAlignment}>
             <View style={styles.windowContainer}>
               <Text style={styles.windowTitle}>Add item</Text>
@@ -354,7 +356,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   title: {
-    marginTop: 25,
+    marginTop: 30,
     marginLeft: 25,
     fontSize: 32,
     fontWeight: 700,
@@ -362,12 +364,15 @@ const styles = StyleSheet.create({
   addButton: {
     marginTop: 25,
     marginRight: 25,
-    width: 50,
     height: 50,
+    width: 50,
     borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#ff8667",
+  },
+  blurOverlay: {
+    backgroundColor: `rgba(0, 0, 0, ${.1})`
   },
   windowAlignment: {
     flex: 1,
@@ -375,7 +380,7 @@ const styles = StyleSheet.create({
   },
   windowContainer: {
     marginHorizontal: 50,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 35,
     alignItems: "center",
     backgroundColor: "white",
@@ -414,7 +419,7 @@ const styles = StyleSheet.create({
     maxWidth: 170,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: "lightgray",
+    borderColor: "#f0f0f0",
     padding: 10,
     backgroundColor: "#f0f0f0",
   },
