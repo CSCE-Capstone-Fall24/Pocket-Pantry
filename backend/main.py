@@ -412,25 +412,24 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
 
     return pantry_item
     
-
+#complete quantity matching, edit structure for output of ordered recipes by closeness to creation possibility
 @app.post("/recipes_made_from_inventory/")
-async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
-    pantry_items = db.query(Pantry).filter(     #contains all items shared/or not without duplicates from users
+async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_db)):
+    pantry_items = db.query(Pantry).filter(
         or_(
-            Pantry.user_id.in_(data.user_list),
+            Pantry.user_id == user_id,
             and_(
-                Pantry.is_shared == True,
-                Pantry.shared_with.op('&&')(data.user_list)
+                #Pantry.is_shared == True,
+                user_id == any_(Pantry.shared_with)
             )
         )
     ).all()
     
     if not pantry_items:
-        raise HTTPException(status_code=404, detail="No pantry items found for given criteria.")
+        raise HTTPException(status_code=404, detail="No pantry items found for user.")
     
     all_r = db.query(Recipes).all()         #fetches all recipes from database
 
-    #********************************Not inclusive of quantity matching
     #fuzzy matching of ingredients to pantry items
     matched_recipes_ids = []                    #return value; stores the recipes (recipe.recipe_id) that can be cooked
 
@@ -448,9 +447,65 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
 
         if all_match:  # If all ingredients are matched, add the recipe ID
             matched_recipes_ids.append(recipe.recipe_id)
+    
+    #Check held quantities are large enough to create recipe
+    can_make_recipes_ids = []
 
-    return matched_recipes_ids
+    if len(matched_recipes_ids) > 0:
+        #use matched_recipes_ids to locate 
+        for id in matched_recipes_ids:
+            recipe_details = db.query(Recipes).filter(Recipes.recipe_id == id).first()
+            
+            can_make = True
+            for idx_ingredient, ingredient_name in enumerate(recipe_details.ingredients):
+                # true false list for ingredients
+                for item in pantry_items:
 
+                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                        if convert_to_grams(item.quantity, item.unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
+                            can_make = False
+            if can_make:
+                can_make_recipes_ids.append(id)
+
+    if len(can_make_recipes_ids) > 0:
+        return {
+            "message": "These recipes can be made with your current pantry!",
+            "recipe data": db.query(Recipes).filter(Recipes.recipe_id.in_(can_make_recipes_ids)).all()
+        }
+    else:
+        
+        all_r = db.query(Recipes).all()
+
+        ingredients_owned_all_r = []
+
+        for recipe in all_r:
+            has_ingredients = []
+
+            for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
+                possessed = False
+                for item in pantry_items:
+                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                        if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
+                            possessed = True
+                            has_ingredients.append(True)
+                            break
+                if possessed == False:
+                    has_ingredients.append(False)
+            ingredients_owned_all_r.append(has_ingredients)
+
+
+        for i, recp in enumerate(all_r):
+            recp.possessed_list = ingredients_owned_all_r[i]
+
+        all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+
+        return {
+            "message": "Cannot fully craft any recipes with current inventory. Here are the best 20 recipes with the least missing ingredients.",
+            "recipe data": all_r
+        }
+#ingredients possessed or not in field 'possessed_list' as a parallel list of booleans
+
+#commit "reworked, improved, fixes for recipes_made from inventory"
 
 @app.post("/recipes_ordered_by_match/")
 async def recipes_ordered_by_match(data: UserList, db: Session = Depends(get_db)):
@@ -486,6 +541,9 @@ async def recipes_ordered_by_match(data: UserList, db: Session = Depends(get_db)
 
         # Append recipe ID and match count to the list
         recipe_matches.append((recipe.recipe_id, match_count))
+
+    # Check held quantities are large enough to create recipe
+
 
     # Sort recipes by match count in descending order
     recipe_matches.sort(key=lambda x: x[1], reverse=True)
@@ -552,8 +610,6 @@ async def remove_pantry_item(request: RemovePantryItemRequest, db: Session = Dep
 
     return {"message": "Pantry item removed successfully", "item_id": request.id}
 
-
-
 class AddFavoriteRequest(BaseModel):
     user_id: int  # ID of the user
     recipe_id: int  # ID of the recipe to add to favorites
@@ -609,9 +665,11 @@ async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depe
     return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
 
 
+
 @app.post("/fetch_recipe_by_id/")
 async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
     recipe_details = db.query(Recipes).filter(Recipes.recipe_id == recipe_id).first()
+
 
     if not recipe_details:
         raise HTTPException(status_code=404, detail="Recipe not in Recipes")
@@ -620,12 +678,23 @@ async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
 
 @app.post("/fetch_recipe_by_name/")
 async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
+    # Fetch exact match
     recipe_details = db.query(Recipes).filter(Recipes.name == recipe_name).first()
 
-    if not recipe_details:
-        raise HTTPException(status_code=404, detail="Not a recipe name")
-    
-    return recipe_details
+    # If an exact match is found, return it
+    if recipe_details:
+        return recipe_details
+
+    # If no exact match, fetch all recipes
+    all_recipes = db.query(Recipes).all()
+
+    # Filter recipes using fuzzy matching
+    filtered_recipes = [
+        recipe for recipe in all_recipes
+        if fuzz.ratio(recipe.name.lower(), recipe_name.lower()) > 70
+    ]
+
+    return filtered_recipes
 
 @app.post("/delete_planned_meal/")
 async def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)):
@@ -782,9 +851,63 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Your pantry inventory has been updated and meal removed."}
 
+class UserLogin(BaseModel):
+    username: str = None
+    email: str = None
+    password: str
 
-#add quantity considerations for recipe searching
-#complete logic for shopping list generation
+@app.post("/login")
+def login(data: UserLogin, db: Session = Depends(get_db)):
+    if not data.username and not data.email:
+        raise HTTPException(status_code=400, detail="Username or email is required.")
+
+    query = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    )
+
+    user = query.first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if data.password != user.hashed_confirmation_code:
+    # if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    return {"user_id": user.user_id}
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+@app.post("/signup")
+def signup(data: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(Users).filter(
+        (Users.username == data.username) | (Users.email == data.email)
+    ).first()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username or email already exists.")
+    
+    # hashed_password = hash_password(data.password)
+    hashed_password = data.password
+    
+    new_user = Users(
+        username=data.username,
+        email=data.email,
+        hashed_confirmation_code=hashed_password,
+        account_created_at=datetime.now(),
+        roommates=[],
+        favorite_recipes=[],
+        cooked_recipes=[]
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User created successfully", "user_id": new_user.user_id}
 
 
 #####################################################################################################################
@@ -1027,64 +1150,3 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
     #return_matrix [x][2] - column 2 is the of list of quantities for the ingredients
     #return_matrix [x][3] - column 3 is the list of units for the ingredients
     return shopping_list
-
-
-
-class UserLogin(BaseModel):
-    username: str = None
-    email: str = None
-    password: str
-
-@app.post("/login")
-def login(data: UserLogin, db: Session = Depends(get_db)):
-    if not data.username and not data.email:
-        raise HTTPException(status_code=400, detail="Username or email is required.")
-
-    query = db.query(Users).filter(
-        (Users.username == data.username) | (Users.email == data.email)
-    )
-
-    user = query.first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
-
-    if data.password != user.hashed_confirmation_code:
-    # if not verify_password(data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Incorrect password.")
-
-    return {"user_id": user.user_id}
-
-class UserCreate(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-@app.post("/signup")
-def signup(data: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(Users).filter(
-        (Users.username == data.username) | (Users.email == data.email)
-    ).first()
-
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Username or email already exists.")
-    
-    # hashed_password = hash_password(data.password)
-    hashed_password = data.password
-    
-    new_user = Users(
-        username=data.username,
-        email=data.email,
-        hashed_confirmation_code=hashed_password,
-        account_created_at=datetime.now(),
-        roommates=[],
-        favorite_recipes=[],
-        cooked_recipes=[]
-    )
-    
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    return {"message": "User created successfully", "user_id": new_user.user_id}
-
