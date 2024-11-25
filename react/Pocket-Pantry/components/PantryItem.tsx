@@ -116,7 +116,7 @@ const PantryItem = (props: PantryProps) => {
         expiration_date: tempExpiration.toISOString(),
         shared_with: userData.user_id == props.user_id ? (props.recipRoommates // if user is owner set to shared list, else dont touch
         .filter((_, index) => tempShared[index]) // if user is shared, add their id
-        .map((roommate: Roommate) => roommate.id)) : []
+        .map((roommate: Roommate) => roommate.id)) : props.shared_with
       };
   
       try {
