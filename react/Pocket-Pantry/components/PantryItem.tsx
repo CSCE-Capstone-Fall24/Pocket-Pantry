@@ -5,8 +5,11 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 
+const TEST_USER_ID = '83';
+
 type PantryProps = {
   id: string;
+  user_id: string;
   name: string;
   category: string;
   quantity: number;
@@ -210,24 +213,35 @@ const PantryItem = (props: PantryProps) => {
             </Modal>
 
             {/* Set item as shared */}
-            {props.roommates.length > 0 && (
-              <ScrollView horizontal={false} style={styles.sharedScroll}>
-                  {props.roommates.map((roommate: string, index: number) => {
-                    return (
-                      <View key={roommate} style={styles.sharedContainer}>
-                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
-                        <Pressable onPress={() => sharedToggle(index)}>
-                          {tempShared[index] ? (
-                            <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
-                          ) : (
-                            <Ionicons name="ellipse-outline" size={32} color={sharedColors[index]}/>
-                          )}
-                        </Pressable>
-                      </View>
-                    );
-                  })}
-              </ScrollView>  
-            )}
+            {
+              TEST_USER_ID == props.user_id ? (
+                // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
+                props.roommates.length > 0 && (
+                  <ScrollView horizontal={false} style={styles.sharedScroll}>
+                      {props.roommates.map((roommate: string, index: number) => {
+                        return (
+                          <View key={roommate} style={styles.sharedContainer}>
+                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                            <Pressable onPress={() => sharedToggle(index)}>
+                              {tempShared[index] ? (
+                                <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                              ) : (
+                                <Ionicons name="ellipse-outline" size={32} color={sharedColors[index]}/>
+                              )}
+                            </Pressable>
+                          </View>
+                        );
+                      })}
+                  </ScrollView>
+                )
+              ) : (
+                // USER VIEWING IS NOT OWNER
+                // SHOW OWNER
+                // SHOW SHARED WITH
+                // MARK YOU IN SHARED WITH
+                <Text>penis</Text>
+              )
+            }
 
             {/* Cancel/save user changes */}
             <View style={styles.buttonAlignment}>

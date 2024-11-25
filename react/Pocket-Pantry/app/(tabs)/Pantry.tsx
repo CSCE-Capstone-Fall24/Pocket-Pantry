@@ -14,6 +14,7 @@ const TEST_USER_ID = 83;
 export default function Pantry () {
   interface Item {
     id: string;
+    user_id: string,
     name: string;
     category: string;
     quantity: number;
@@ -38,6 +39,7 @@ export default function Pantry () {
 
         const transformedItems: Item[] = data.map((item: any) => ({
           id: item.pantry_id,
+          user_id: item.user_id,
           name: item.food_name,
           quantity: item.quantity,
           unit: item.unit,
@@ -136,27 +138,6 @@ export default function Pantry () {
   };
 
   {/* Functions - add item */}
-  // const addItem = () => {
-  //   if (!(newName && newQuantity)) {
-  //     Alert.alert("Please fill out all fields.");
-  //   } else if (isNaN(Number(newQuantity)) || Number(newQuantity) <= 0) {
-  //     Alert.alert("Please enter a valid quantity.");
-  //   } else {
-  //     const newItem = {
-  //       id: uuidv4(), X
-  //       name: newName, X
-  //       category: newCategory, X
-  //       quantity: Number(newQuantity), X
-  //       unit: newUnit, X 
-  //       expiration: newExpiration, X
-  //       shared: newShared,
-  //       roommates: reciprocatedRoommates,
-  //       deleteItem: deleteItem,
-  //     };
-  //     setItems([...items, newItem]);
-  //     closeWindow();
-  //   }
-  // };
   const addItem = async () => {
     if (isNaN(Number(newQuantity))) {
       Alert.alert('Quantity must be a number.');
@@ -188,6 +169,7 @@ export default function Pantry () {
         const addedItem = await response.json();
         const transformedItem: Item ={
           id: addedItem.pantry_id,
+          user_id: addedItem.user_id,
           name: addedItem.food_name,
           quantity: addedItem.quantity,
           unit: addedItem.unit,
@@ -453,6 +435,7 @@ export default function Pantry () {
                     <View key={item.id}>
                       <PantryItem
                         id={item.id}
+                        user_id={item.user_id}
                         name={item.name}
                         category={item.category}
                         quantity={item.quantity}
