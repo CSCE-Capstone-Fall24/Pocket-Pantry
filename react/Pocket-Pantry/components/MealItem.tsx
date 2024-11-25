@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 
-type MealProps = {
+type MealProps = { // We'll need to update this to include a RecipeItem
   id: string;
   name: string;
   servings: number;
