@@ -141,6 +141,47 @@ def all_meals(db: Session = Depends(get_db)):
 
 # PANTRY QUERIES ----------------------------------------------------------------------------------------
 
+class UpdatePantryItemRequest(BaseModel):
+    pantry_id: int
+    quantity: Optional[float]
+    unit: Optional[str]
+    expiration_date: Optional[datetime]
+    shared_with: Optional[List[int]]
+
+@app.post("/update_item/")
+async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Depends(get_db)):
+    pantry_item = db.query(Pantry).filter(Pantry.pantry_id == request.pantry_id).first()
+    
+    if not pantry_item:
+        raise HTTPException(status_code=404, detail="Pantry item not found")
+
+    pantry_item.quantity = request.quantity if request.quantity is not None else pantry_item.quantity
+    pantry_item.unit = request.unit if request.unit is not None else pantry_item.unit
+    pantry_item.expiration_date = request.expiration_date if request.expiration_date is not None else pantry_item.expiration_date
+    pantry_item.shared_with = request.shared_with if request.shared_with is not None else pantry_item.shared_with
+
+    pantry_item.is_shared = bool(request.shared_with)
+
+    db.commit()
+
+    return {
+        "message": "Pantry item updated successfully",
+        "updated_item": {
+            "pantry_id": pantry_item.pantry_id,
+            "user_id": pantry_item.user_id,
+            "food_name": pantry_item.food_name,
+            "quantity": pantry_item.quantity,
+            "unit": pantry_item.unit,
+            "expiration_date": pantry_item.expiration_date,
+            "category": pantry_item.category,
+            "is_shared": pantry_item.is_shared,
+            "shared_with": pantry_item.shared_with,
+            "location": pantry_item.location,
+            "price": pantry_item.price,
+        }
+    }
+
+
 @app.get("/indv_pantry")
 def get_user_pantry(user_id: int, db: Session = Depends(get_db)):
     user_pantry = db.query(Pantry).filter(Pantry.user_id == user_id).all()
@@ -215,6 +256,7 @@ def mark_pantry_item_unshared(data: ShareItemRequest, db: Session = Depends(get_
         raise HTTPException(status_code=404, detail="item not found")
 
     try:
+    #     idx = user.roommates.index(data.roommate_id)
         idx = item.shared_with.index(data.roommate_id)
         splice = item.shared_with[:idx] + item.shared_with[idx + 1:]
         item.shared_with = splice
@@ -269,7 +311,6 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
 class UpdatePantryItemRequest(BaseModel):
     id: int  # Unique ID of the pantry item to update
     food_name: Optional[str] = None  
-    quantity: Optional[float] = None
     unit: Optional[str] = None  
     user_id: int  
     added_date: Optional[datetime] = None  
@@ -304,7 +345,7 @@ async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Dep
 
     db.commit()
 
-    return {"message": "Pantry item updated successfully", "item_id": pantry_item.pantry_id}
+    return {"message": "Pantry item updated successfully", "item_id": pantry_item.id}
 
 
 class RemovePantryItemRequest(BaseModel):
@@ -324,25 +365,6 @@ async def remove_pantry_item(request: RemovePantryItemRequest, db: Session = Dep
     db.commit()
 
     return {"message": "Pantry item removed successfully", "item_id": request.id}
-
-class share:
-    item_id: int
-    share_list: List[int]
-
-@app.post("/set_item_shared_with/")
-async def set_item_shared_with(request: share, db: Session = Depends(get_db)):
-    item = db.query(Pantry).filter(Pantry.pantry_id == share.item_id).first()
-
-    
-    item.is_shared = bool(request.share_list)
-
-    item.shared_with = request.share_list
-
-    db.commit()
-    db.refresh(item)
-
-    return item
-
     
 # MEAL QUERIES --------------------------------------------------------------------------------------------------------------
 
@@ -434,6 +456,7 @@ def mark_pantry_item_unshared(data: ShareMealRequest, db: Session = Depends(get_
         raise HTTPException(status_code=404, detail="meal not found")
 
     try:
+    #     idx = user.roommates.index(data.roommate_id)
         idx = meal.shared_with.index(data.roommate_id)
         splice = meal.shared_with[:idx] + meal.shared_with[idx + 1:]
         meal.shared_with = splice
@@ -684,7 +707,7 @@ def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
         # Remove user_id from anything roommate_id shared with them
         db.query(Pantry).filter(
             Pantry.shared_with.contains([data.user_id]),
-            Pantry.user_id == data.roommate_id
+            Pantry.owner_id == data.roommate_id
         ).update(
             {"shared_with": Pantry.shared_with.op("||")([data.user_id])},
             synchronize_session=False
@@ -692,7 +715,7 @@ def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
 
         db.query(PlannedMeals).filter(
             PlannedMeals.shared_with.contains([data.user_id]),
-            PlannedMeals.user_id == data.roommate_id
+            PlannedMeals.owner_id == data.roommate_id
         ).update(
             {"shared_with": PlannedMeals.shared_with.op("||")([data.user_id])},
             synchronize_session=False
@@ -701,7 +724,7 @@ def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
         # Remove roommate_id from anything user_id shared with them
         db.query(Pantry).filter(
             Pantry.shared_with.contains([data.roommate_id]),
-            Pantry.user_id == data.user_id
+            Pantry.owner_id == data.user_id
         ).update(
             {"shared_with": Pantry.shared_with.op("||")([data.roommate_id])},
             synchronize_session=False
@@ -709,7 +732,7 @@ def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
 
         db.query(PlannedMeals).filter(
             PlannedMeals.shared_with.contains([data.roommate_id]),
-            PlannedMeals.user_id == data.user_id
+            PlannedMeals.owner_id == data.user_id
         ).update(
             {"shared_with": PlannedMeals.shared_with.op("||")([data.roommate_id])},
             synchronize_session=False
@@ -801,6 +824,7 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Username or email already exists.")
     
+    # hashed_password = hash_password(data.password)
     hashed_password = data.password
     
     new_user = Users(
@@ -962,6 +986,8 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
 
         all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
 
+        all_r = all_r[:20] #keeps only the top 20 options
+
         return {
             "message": "Cannot fully craft any recipes with current inventory. Here are the best 20 recipes with the least missing ingredients.",
             "recipe data": all_r
@@ -1047,7 +1073,7 @@ async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
     # Filter recipes using fuzzy matching
     filtered_recipes = [
         recipe for recipe in all_recipes
-        if fuzz.ratio(recipe_name.lower(), recipe_name.lower()) > 70
+        if fuzz.ratio(recipe.name.lower(), recipe_name.lower()) > 70
     ]
 
     return filtered_recipes
@@ -1305,14 +1331,14 @@ class shoppingItem(BaseModel):
    
 @app.post("/item_shopped/")
 async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
-    pantry_items = db.query(Pantry).filter(Pantry.user_id == data.user_id).all()
+    pantry_items = db.query(Pantry).filter(Pantry.user_id == shoppingItem.user_id).all()
 
     exists = False
     best_match_score = 0
     edit_item= None
 
     for item in pantry_items:
-        fuzz_score = fuzz.ratio(item.food_name.lower(), data.food_name.lower())
+        fuzz_score = fuzz.ratio(item.food_name.lower(), shoppingItem.food_name.lower())
         if fuzz_score > 70 and fuzz_score > best_match_score:
             best_match_score = fuzz_score
             exists = True
@@ -1320,13 +1346,13 @@ async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
 
     if not exists:
         pantry_item = Pantry(
-            food_name = data.food_name,
-            quantity = data.quantity,
-            unit = data.unit,
-            user_id = data.user_id,
+            food_name = shoppingItem.food_name,
+            quantity = shoppingItem.quantity,
+            unit = shoppingItem.unit,
+            user_id = shoppingItem.user_id,
             added_date = datetime.now(),
-            expiration_date = data.expiration_date if data.expiration_date else None,
-            category = data.category if data.category else None,
+            expiration_date = shoppingItem.expiration_date if shoppingItem.expiration_date else None,
+            category = shoppingItem.category if shoppingItem.category else None,
             comment = None,
             is_shared = False,
             shared_with = [],
@@ -1339,18 +1365,14 @@ async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
 
         return pantry_item
     else:
-        edit_item.quantity = convert_from_grams(convert_to_grams(edit_item.quantity, edit_item.unit) + convert_to_grams(data.quantity, data.unit), data.unit)
-        edit_item.unit = data.unit
-        edit_item.food_name = data.food_name
+        edit_item.quantity = convert_from_grams(convert_to_grams(edit_item.quantity, edit_item.unit) + convert_to_grams(shoppingItem.quantity, shoppingItem.unit), shoppingItem.unit)
+        edit_item.unit = shoppingItem.unit
+        edit_item.food_name = shoppingItem.food_name
         edit_item.added_date = datetime.now()
-        edit_item.expiration_date = data.expiration_date if data.expiration_date else edit_item.expiration_date
-        edit_item.category = data.category if data.category else edit_item.category
+        edit_item.expiration_date = shoppingItem.expiration_date if shoppingItem.expiration_date else edit_item.expiration_date
+        edit_item.category = shoppingItem.category if shoppingItem.category else edit_item.category
 
         db.commit()
         db.refresh(edit_item)
 
         return edit_item
-
-
-
-            
