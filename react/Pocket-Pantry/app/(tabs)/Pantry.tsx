@@ -466,7 +466,9 @@ export default function Pantry () {
               )
             ))
           ) : (
-          <View><Text style={styles.categoryHeader}>You have no pantry items</Text></View>
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>Pantry is empty :(</Text>
+          </View>
           )
         }
         <View style={styles.itemBuffer}></View>
@@ -637,6 +639,15 @@ const styles = StyleSheet.create({
     marginLeft: 25,
     color: "gray",
     fontWeight: 600,
+  },
+  empty: {
+    marginTop: 280,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: 600,
+    color: "gray",
   },
   itemBuffer: {
     height: 12,
