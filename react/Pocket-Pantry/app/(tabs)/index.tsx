@@ -115,9 +115,11 @@ export default function Meal () {
           <Ionicons name="search-outline" size={40} color="#ff8667"/>
         </View>
         <FlatList
-          data={searchData.filter((item) => 
-            item.name.toLowerCase().includes(searchResult.toLowerCase()) // Filtering based on searchResult
-          )}
+          data={searchResult 
+            ? searchData.filter((item) => 
+                item.name.toLowerCase().includes(searchResult.toLowerCase()) // Filtering based on searchResult
+              )
+            : []}
           keyExtractor={(item) => item.recipe_id.toString()}
           renderItem={renderRecipes}
           ItemSeparatorComponent={() => <View style={styles.line}></View>}
