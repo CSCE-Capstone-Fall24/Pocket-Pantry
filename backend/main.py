@@ -267,44 +267,44 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
     return pantry_item
 
 class UpdatePantryItemRequest(BaseModel):
-    id: int  # Unique ID of the pantry item to update
-    food_name: Optional[str] = None  
-    quantity: Optional[float] = None
-    unit: Optional[str] = None  
-    user_id: int  
-    added_date: Optional[datetime] = None  
-    expiration_date: Optional[datetime] = None 
-    category: Optional[str] = None  
-    comment: Optional[str] = None  
-    is_shared: Optional[bool] = None  
-    shared_with: Optional[List[int]] = Field(default_factory=list)  
-    location: Optional[str] = None  
-    price: Optional[float] = None  
+    pantry_id: int
+    quantity: Optional[float]
+    unit: Optional[str]
+    expiration_date: Optional[datetime]
+    shared_with: Optional[List[int]]
 
-@app.post("/update_pantry_item/")
+@app.post("/update_item/")
 async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Depends(get_db)):
-    # Fetch the pantry item to update
-    pantry_item = db.query(Pantry).filter(Pantry.pantry_id == request.id, Pantry.user_id == request.user_id).first()
-
+    pantry_item = db.query(Pantry).filter(Pantry.pantry_id == request.pantry_id).first()
+    
     if not pantry_item:
-        raise HTTPException(status_code=404, detail="Pantry item not found or you do not have permission to update it.")
+        raise HTTPException(status_code=404, detail="Pantry item not found")
 
-    # Update pantry item fields if provided in the request
-    pantry_item.food_name = request.food_name if request.food_name else pantry_item.food_name
     pantry_item.quantity = request.quantity if request.quantity is not None else pantry_item.quantity
-    pantry_item.unit = request.unit if request.unit else pantry_item.unit
-    pantry_item.added_date = request.added_date if request.added_date else pantry_item.added_date
-    pantry_item.expiration_date = request.expiration_date if request.expiration_date else pantry_item.expiration_date
-    pantry_item.category = request.category if request.category else pantry_item.category
-    pantry_item.comment = request.comment if request.comment else pantry_item.comment
-    pantry_item.is_shared = request.is_shared if request.is_shared is not None else pantry_item.is_shared
-    pantry_item.shared_with = request.shared_with if request.shared_with else pantry_item.shared_with
-    pantry_item.location = request.location if request.location else pantry_item.location
-    pantry_item.price = request.price if request.price is not None else pantry_item.price
+    pantry_item.unit = request.unit if request.unit is not None else pantry_item.unit
+    pantry_item.expiration_date = request.expiration_date if request.expiration_date is not None else pantry_item.expiration_date
+    pantry_item.shared_with = request.shared_with if request.shared_with is not None else pantry_item.shared_with
+
+    pantry_item.is_shared = bool(request.shared_with)
 
     db.commit()
 
-    return {"message": "Pantry item updated successfully", "item_id": pantry_item.pantry_id}
+    return {
+        "message": "Pantry item updated successfully",
+        "updated_item": {
+            "pantry_id": pantry_item.pantry_id,
+            "user_id": pantry_item.user_id,
+            "food_name": pantry_item.food_name,
+            "quantity": pantry_item.quantity,
+            "unit": pantry_item.unit,
+            "expiration_date": pantry_item.expiration_date,
+            "category": pantry_item.category,
+            "is_shared": pantry_item.is_shared,
+            "shared_with": pantry_item.shared_with,
+            "location": pantry_item.location,
+            "price": pantry_item.price,
+        }
+    }
 
 
 class RemovePantryItemRequest(BaseModel):
@@ -333,9 +333,7 @@ class share:
 async def set_item_shared_with(request: share, db: Session = Depends(get_db)):
     item = db.query(Pantry).filter(Pantry.pantry_id == share.item_id).first()
 
-    
     item.is_shared = bool(request.share_list)
-
     item.shared_with = request.share_list
 
     db.commit()
@@ -525,7 +523,7 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
 
         # Loop over pantry items
         for pantry_item in pantry_items:
-            ratio = fuzz.ratio(meal_ingredient.lower(), pantry_item.food_name.lower())
+            ratio = fuzz.WRatio(meal_ingredient.lower(), pantry_item.food_name.lower())
 
             if ratio > best_ratio:  # New best match
                 best_ratio = ratio
@@ -904,7 +902,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
 
         # Check if all ingredients in the recipe have a match in pantry items
         all_match = all(
-            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
+            any(fuzz.WRatio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
             for r_ingredient in r_ingredients
         )
 
@@ -924,7 +922,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
                 # true false list for ingredients
                 for item in pantry_items:
 
-                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 70:
                         if convert_to_grams(item.quantity, item.unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
                             can_make = False
             if can_make:
@@ -947,7 +945,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
                 possessed = False
                 for item in pantry_items:
-                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 70:
                         if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
                             possessed = True
                             has_ingredients.append(True)
@@ -1047,7 +1045,7 @@ async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
     # Filter recipes using fuzzy matching
     filtered_recipes = [
         recipe for recipe in all_recipes
-        if fuzz.ratio(recipe_name.lower(), recipe_name.lower()) > 70
+        if fuzz.WRatio(recipe_name.lower(), recipe_name.lower()) > 70
     ]
 
     return filtered_recipes
@@ -1220,7 +1218,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
 
                         for idx_inv, item in enumerate(pantry[1]):
                             # Calculate the similarity ratio
-                            ratio = fuzz.ratio(ingredient.lower(), item.lower())
+                            ratio = fuzz.WRatio(ingredient.lower(), item.lower())
 
                             # Update the highest score and best match index if ratio > 70
                             if ratio > 70 and ratio > highest_score and meal[3][idx_inv] > 0 and pantry[1][idx_inv] > 0:
@@ -1312,7 +1310,7 @@ async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
     edit_item= None
 
     for item in pantry_items:
-        fuzz_score = fuzz.ratio(item.food_name.lower(), data.food_name.lower())
+        fuzz_score = fuzz.WRatio(item.food_name.lower(), data.food_name.lower())
         if fuzz_score > 70 and fuzz_score > best_match_score:
             best_match_score = fuzz_score
             exists = True
@@ -1350,7 +1348,3 @@ async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
         db.refresh(edit_item)
 
         return edit_item
-
-
-
-            
