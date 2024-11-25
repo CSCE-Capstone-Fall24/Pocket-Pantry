@@ -587,6 +587,8 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Your pantry inventory has been updated and meal removed."}
 
+    
+
 
 # USER AND ROOMMATE QUERIES ----------------------------------------------------------------------------------
 
@@ -781,8 +783,6 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             recp.possessed_list = ingredients_owned_all_r[i]
 
         all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
-
-        all_r = all_r[:20] #keeps only the top 20 options
 
         return {
             "message": "Cannot fully craft any recipes with current inventory. Here are the best 20 recipes with the least missing ingredients.",
@@ -1116,63 +1116,3 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
     #return_matrix [x][2] - column 2 is the of list of quantities for the ingredients
     #return_matrix [x][3] - column 3 is the list of units for the ingredients
     return shopping_list
-
-class shoppingItem(BaseModel):
-    food_name: str
-    quantity: float
-    unit: str
-    user_id: int
-    expiration_date: Optional[datetime] = None
-    category: Optional[str] = None
-   
-@app.post("/item_shopped/")
-async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
-    pantry_items = db.query(Pantry).filter(Pantry.user_id == shoppingItem.user_id).all()
-
-    exists = False
-    best_match_score = 0
-    edit_item= None
-
-    for item in pantry_items:
-        fuzz_score = fuzz.ratio(item.food_name.lower(), shoppingItem.food_name.lower())
-        if fuzz_score > 70 and fuzz_score > best_match_score:
-            best_match_score = fuzz_score
-            exists = True
-            edit_item = db.query(Pantry).filter(Pantry.pantry_id == item.pantry_id).first()
-
-    if not exists:
-        pantry_item = Pantry(
-            food_name = shoppingItem.food_name,
-            quantity = shoppingItem.quantity,
-            unit = shoppingItem.unit,
-            user_id = shoppingItem.user_id,
-            added_date = datetime.now(),
-            expiration_date = shoppingItem.expiration_date if shoppingItem.expiration_date else None,
-            category = shoppingItem.category if shoppingItem.category else None,
-            comment = None,
-            is_shared = False,
-            shared_with = [],
-            location = None,
-            price = None
-        )
-
-        db.add(pantry_item)
-        db.commit()
-
-        return pantry_item
-    else:
-        edit_item.quantity = convert_from_grams(convert_to_grams(edit_item.quantity, edit_item.unit) + convert_to_grams(shoppingItem.quantity, shoppingItem.unit), shoppingItem.unit)
-        edit_item.unit = shoppingItem.unit
-        edit_item.food_name = shoppingItem.food_name
-        edit_item.added_date = datetime.now()
-        edit_item.expiration_date = shoppingItem.expiration_date if shoppingItem.expiration_date else edit_item.expiration_date
-        edit_item.category = shoppingItem.category if shoppingItem.category else edit_item.category
-
-        db.commit()
-        db.refresh(edit_item)
-
-        return edit_item
-
-
-
-            
