@@ -17,7 +17,12 @@ export default function MealPlan () {
   return (
     <SafeAreaView> 
       <View style={styles.header}>
-        <Text style={styles.title}>Meal Plan</Text>
+        <Text style={styles.title}>
+          Meal Plan
+        </Text>
+        <Text style={styles.tempSubtitle}>
+          (Frontend Branch) {/* This will need to be removed */}
+        </Text>
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
           <Ionicons name="add-outline" size={40} color="white"/>
         </TouchableOpacity>
@@ -65,6 +70,7 @@ export default function MealPlan () {
             <ScrollView showsVerticalScrollIndicator={false} style={styles.resultsContainer}>
               <View>
 
+                {/* <RecipeItem/>
                 <RecipeItem/>
                 <RecipeItem/>
                 <RecipeItem/>
@@ -73,8 +79,7 @@ export default function MealPlan () {
                 <RecipeItem/>
                 <RecipeItem/>
                 <RecipeItem/>
-                <RecipeItem/>
-                <RecipeItem/>
+                <RecipeItem/> */}
 
               </View>
               <View style={styles.resultsBuffer}></View>
@@ -84,18 +89,18 @@ export default function MealPlan () {
 
         {/* Display planned meals */}
         <Text style={styles.dateHeader}>WEDNESDAY 11/27/2024</Text>
+        {/* <MealItem/>
         <MealItem/>
         <MealItem/>
         <MealItem/>
-        <MealItem/>
-        <MealItem/>
+        <MealItem/> */}
 
         <Text style={styles.dateHeader}>SATURDAY 11/30/2024</Text>
+        {/* <MealItem/>
         <MealItem/>
         <MealItem/>
         <MealItem/>
-        <MealItem/>
-        <MealItem/>
+        <MealItem/> */}
 
         <View style={styles.itemBuffer}></View>
       </ScrollView>
@@ -114,6 +119,13 @@ const styles = StyleSheet.create({
     marginLeft: 25,
     fontSize: 32,
     fontWeight: 700,
+  },
+  tempSubtitle: { // This will need to be removed
+    marginTop: 30,
+    marginBottom: 10,
+    marginLeft: 25,
+    color: 'gray',
+    fontWeight: 600,
   },
   addButton: {
     marginTop: 25,
