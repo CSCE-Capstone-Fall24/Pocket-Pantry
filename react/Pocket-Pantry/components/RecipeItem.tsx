@@ -24,14 +24,16 @@ const RecipeItem = (props: RecipeProps) => {
         // mealID will be assigned a random value similar to id in PantryProps
         // users will set date and shared mealProps
     return (
-        <View style={styles.container}>
-            
+        <View style={styles.recipeContainer}>
+            <Text style={styles.recipeText}>
+                Test Text
+            </Text>
         </View>
-        )
+    )
 }
 
 const styles = StyleSheet.create({
-    container: {
+    recipeContainer: {
         height: 100,
         marginTop: 12,
         marginHorizontal: 12,
@@ -44,6 +46,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         backgroundColor: "white",
+    },
+    recipeText: {
+        // put shit in here
     },
 });
 
