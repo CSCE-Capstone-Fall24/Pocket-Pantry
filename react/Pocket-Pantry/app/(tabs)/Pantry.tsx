@@ -141,16 +141,16 @@ export default function Pantry () {
   }));
 
   return (
-    <ScrollView>
-      <SafeAreaView>
-
-        <View style={styles.header}>
-          <Text style={styles.title}>Pantry</Text>
-          <TouchableOpacity style={styles.addButton} onPress={openWindow}>
-            <Ionicons name="add-outline" size={40} color="white"/>
-          </TouchableOpacity>
-        </View>
-
+    <SafeAreaView>
+      <View style={styles.header}>
+        <Text style={styles.title}>Pantry</Text>
+        <TouchableOpacity style={styles.addButton} onPress={openWindow}>
+          <Ionicons name="add-outline" size={40} color="white"/>
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView showsVerticalScrollIndicator={false}>
+      
         {/* Add item window */}
         <Modal
           transparent={true}
@@ -323,12 +323,11 @@ export default function Pantry () {
         {categorizedItems.map((categoryGroup) => (
           categoryGroup.items.length > 0 && (
             <View key={categoryGroup.category}>
-              <Text style={styles.category}>
+              <Text style={styles.categoryHeader}>
                 {categoriesB[categoriesA.indexOf(categoryGroup.category)]}
               </Text>
               {categoryGroup.items.map((item) => (
                 <View key={item.id}>
-                  <View style={styles.line}></View>
                   <PantryItem
                     id={item.id}
                     name={item.name}
@@ -345,8 +344,9 @@ export default function Pantry () {
             </View>
           )
         ))}
-      </SafeAreaView>
-    </ScrollView>
+        <View style={styles.itemBuffer}></View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -354,6 +354,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingBottom: 25
   },
   title: {
     marginTop: 30,
@@ -449,7 +450,7 @@ const styles = StyleSheet.create({
   },
   sharedScroll: {
     marginTop: 20,
-    maxHeight: 210,
+    maxHeight: 190,
     width: 270,
     borderWidth: 1,
     borderRadius: 8,
@@ -502,15 +503,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  category: {
+  categoryHeader: {
     marginTop: 40,
-    marginBottom: 10,
     marginLeft: 25,
     color: "gray",
     fontWeight: 600,
   },
-  line: {
-    borderBottomWidth: 1,
-    borderColor: "lightgray",
+  itemBuffer: {
+    height: 80,
   },
 });

@@ -252,8 +252,17 @@ const PantryItem = (props: PantryProps) => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 12,
+    marginHorizontal: 12,
+    borderRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+    shadowColor: "black",
     flexDirection: "row",
     justifyContent: "space-between",
+    backgroundColor: "white",
   },
   itemContainer: {
     marginVertical: 10,
@@ -348,7 +357,7 @@ const styles = StyleSheet.create({
   },
   sharedScroll: {
     marginTop: 20,
-    maxHeight: 210,
+    maxHeight: 190,
     width: 270,
     borderWidth: 1,
     borderRadius: 8,
@@ -403,7 +412,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginTop: 35,
-  }
+  },
 });
 
-export default PantryItem
+export default PantryItem;
