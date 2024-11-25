@@ -14,7 +14,3 @@ export type RecipeProps = { // view http://47.218.196.222:8000/planned_meals?use
     cookTime: number; // cook time is in minutes
     recipeSteps: string; // this is cook_steps
 };
-
-const RecipeItem = (props: RecipeProps) => {}
-
-export default RecipeItem;
