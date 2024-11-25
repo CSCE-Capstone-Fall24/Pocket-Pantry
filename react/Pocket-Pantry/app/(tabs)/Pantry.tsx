@@ -27,7 +27,7 @@ export default function Pantry () {
     unit: string;
     expiration: Date;
     shared: boolean[];
-    roommates: string[]; // need to change structure to roommate type
+    shared_with: string[]; // need to change structure to roommate type
     // deleteItem: (id: string) => void;
   }
 
@@ -53,7 +53,7 @@ export default function Pantry () {
         category: item.category,
         expiration: new Date(item.expiration_date),
         shared: item.is_shared,
-        roommates: item.shared_with.sort(),
+        shared_with: item.shared_with.sort(),
       }));
 
       setItems(transformedItems);
@@ -180,7 +180,7 @@ export default function Pantry () {
           category: addedItem.category,
           expiration: new Date(addedItem.expiration_date),
           shared: addedItem.is_shared,
-          roommates: addedItem.shared_with,
+          shared_with: addedItem.shared_with,
         };
         setItems(prevItems => [...prevItems, transformedItem]);
 
@@ -446,7 +446,7 @@ export default function Pantry () {
                         unit={item.unit}
                         expiration={item.expiration}
                         shared={item.shared}
-                        roommates={item.roommates}
+                        shared_with={item.shared_with}
                         deleteItem={deleteItem}
                       />
                     </View>

@@ -23,7 +23,7 @@ type PantryProps = {
   unit: string;
   expiration: Date;
   shared: boolean[];
-  roommates: string[];
+  shared_with: string[];
   deleteItem: (id: string, user_id: string) => void;
 };
 
@@ -122,7 +122,7 @@ const PantryItem = (props: PantryProps) => {
         <View style={styles.itemContainer}>
           <View style={styles.rowAlignment}>
             <Text style={styles.itemName}>{props.name} </Text>
-            {props.roommates.map((roommate: string, index: number) => {
+            {props.shared_with.map((roommate: string, index: number) => {
               return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
             })}
           </View>
@@ -227,9 +227,9 @@ const PantryItem = (props: PantryProps) => {
             {
               userData.user_id == props.user_id ? (
                 // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
-                props.roommates.length > 0 && (
+                props.shared_with.length > 0 && (
                   <ScrollView horizontal={false} style={styles.sharedScroll}>
-                      {props.roommates.map((roommate: string, index: number) => {
+                      {props.shared_with.map((roommate: string, index: number) => {
                         return (
                           <View key={roommate} style={styles.sharedContainer}>
                             <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
@@ -250,7 +250,7 @@ const PantryItem = (props: PantryProps) => {
                   </View>
                   {/* // SHOW SHARED WITH
                   // MARK YOU IN SHARED WITH */}
-                  {props.roommates.map((roommate: string, index: number) => {
+                  {props.shared_with.map((roommate: string, index: number) => {
                         return (
                           <View key={roommate} style={styles.sharedContainer}>
                             <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
