@@ -167,7 +167,7 @@ def multi_user_pantry_items(data: UserList, db: Session = Depends(get_db)):
         or_(
             Pantry.user_id.in_(data.user_list),
             and_(
-                Pantry.is_shared == True,
+                #Pantry.is_shared == True,
                 Pantry.shared_with.op('&&')(data.user_list)
             )
         )
@@ -414,13 +414,13 @@ async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db))
     
 #complete quantity matching, edit structure for output of ordered recipes by closeness to creation possibility
 @app.post("/recipes_made_from_inventory/")
-async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_db)):
+async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
     pantry_items = db.query(Pantry).filter(
         or_(
-            Pantry.user_id == user_id,
+            Pantry.user_id.in_(data.user_list),
             and_(
                 #Pantry.is_shared == True,
-                user_id == any_(Pantry.shared_with)
+                Pantry.shared_with.op('&&')(data.user_list)
             )
         )
     ).all()
@@ -504,53 +504,6 @@ async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_d
             "recipe data": all_r
         }
 #ingredients possessed or not in field 'possessed_list' as a parallel list of booleans
-
-#commit "reworked, improved, fixes for recipes_made from inventory"
-
-@app.post("/recipes_ordered_by_match/")
-async def recipes_ordered_by_match(data: UserList, db: Session = Depends(get_db)):
-    pantry_items = db.query(Pantry).filter(  # Fetch all pantry items (shared or not) for the user(s)
-        or_(
-            Pantry.user_id.in_(data.user_list),
-            and_(
-                Pantry.is_shared == True,
-                Pantry.shared_with.op('&&')(data.user_list)
-            )
-        )
-    ).all()
-
-    if not pantry_items:
-        raise HTTPException(status_code=404, detail="No pantry items found for given criteria.")
-
-    all_r = db.query(Recipes).all()  # Fetch all recipes from the database
-
-    # Extract pantry ingredient names (normalized to lowercase for case-insensitive comparison)
-    pantry_ingredients = [p_item.food_name.lower() for p_item in pantry_items]
-
-    # List to store recipes and their match counts
-    recipe_matches = []
-
-    for recipe in all_r:  # Iterate through each recipe in the database
-        r_ingredients = [r_item.lower() for r_item in recipe.ingredients]  # Normalize recipe ingredients to lowercase
-
-        # Calculate the number of ingredients matched from the pantry
-        match_count = sum(
-            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
-            for r_ingredient in r_ingredients
-        )
-
-        # Append recipe ID and match count to the list
-        recipe_matches.append((recipe.recipe_id, match_count))
-
-    # Check held quantities are large enough to create recipe
-
-
-    # Sort recipes by match count in descending order
-    recipe_matches.sort(key=lambda x: x[1], reverse=True)
-
-    # Return the sorted list of recipe IDs
-    return [recipe_id for recipe_id, _ in recipe_matches]
-
 
 class UpdatePantryItemRequest(BaseModel):
     id: int  # Unique ID of the pantry item to update
@@ -744,13 +697,15 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Recipe not in Recipes")
 
     #deep copies the quantities of the planned meal
-    quantities_scaled_and_converted = copy.deepcopy(cookedMealDetails.ingredient_quantities)
+    quantities_scaled_and_converted = []
+    quantities_scaled_and_converted = cookedMealDetails.ingredient_quantities
     #scale the quantities based on servings planned with servings for 
     quantities_scaled_and_converted = [item * (cookedMeal.n_servings/cookedMealDetails.serving_size) for item in quantities_scaled_and_converted]
     
     #convert units to grams
     #fetch ingredient units for the cooked meal
-    units_cooked_ingredients = cookedMealDetails.ingredient_units[::]
+    units_cooked_ingredients = []
+    units_cooked_ingredients = cookedMealDetails.ingredient_units
 
     #convert to grams for quantity adjustment
     for i in range(len(units_cooked_ingredients)):
