@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   },
   searchBarContainer: {
     marginLeft: 30,
-    width: "69%",
+    width: "69%", // nice
     borderRadius: 8,
     flexDirection: "row",
     justifyContent: "space-between",
