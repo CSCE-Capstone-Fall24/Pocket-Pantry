@@ -525,7 +525,7 @@ async def mark_meal_cooked(meal_id: int, db: Session = Depends(get_db)):
 
         # Loop over pantry items
         for pantry_item in pantry_items:
-            ratio = fuzz.ratio(meal_ingredient.lower(), pantry_item.food_name.lower())
+            ratio = fuzz.WRatio(meal_ingredient.lower(), pantry_item.food_name.lower())
 
             if ratio > best_ratio:  # New best match
                 best_ratio = ratio
@@ -904,7 +904,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
 
         # Check if all ingredients in the recipe have a match in pantry items
         all_match = all(
-            any(fuzz.ratio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
+            any(fuzz.WRatio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
             for r_ingredient in r_ingredients
         )
 
@@ -924,7 +924,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
                 # true false list for ingredients
                 for item in pantry_items:
 
-                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 70:
                         if convert_to_grams(item.quantity, item.unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
                             can_make = False
             if can_make:
@@ -947,7 +947,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
                 possessed = False
                 for item in pantry_items:
-                    if fuzz.ratio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 70:
                         if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
                             possessed = True
                             has_ingredients.append(True)
@@ -1047,7 +1047,7 @@ async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
     # Filter recipes using fuzzy matching
     filtered_recipes = [
         recipe for recipe in all_recipes
-        if fuzz.ratio(recipe_name.lower(), recipe_name.lower()) > 70
+        if fuzz.WRatio(recipe_name.lower(), recipe_name.lower()) > 70
     ]
 
     return filtered_recipes
@@ -1220,7 +1220,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
 
                         for idx_inv, item in enumerate(pantry[1]):
                             # Calculate the similarity ratio
-                            ratio = fuzz.ratio(ingredient.lower(), item.lower())
+                            ratio = fuzz.WRatio(ingredient.lower(), item.lower())
 
                             # Update the highest score and best match index if ratio > 70
                             if ratio > 70 and ratio > highest_score and meal[3][idx_inv] > 0 and pantry[1][idx_inv] > 0:
@@ -1312,7 +1312,7 @@ async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
     edit_item= None
 
     for item in pantry_items:
-        fuzz_score = fuzz.ratio(item.food_name.lower(), data.food_name.lower())
+        fuzz_score = fuzz.WRatio(item.food_name.lower(), data.food_name.lower())
         if fuzz_score > 70 and fuzz_score > best_match_score:
             best_match_score = fuzz_score
             exists = True
