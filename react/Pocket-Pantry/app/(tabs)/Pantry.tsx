@@ -11,6 +11,12 @@ const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 const TEST_USER_ID = 83;
 
 export default function Pantry () {
+  type Roommate = {
+    id: number; 
+    name: string; 
+    isReciprocal: boolean;
+  };
+  
   interface Item {
     id: string;
     user_id: string,
@@ -23,6 +29,7 @@ export default function Pantry () {
     roommates: string[]; // need to change structure to roommate type
     // deleteItem: (id: string) => void;
   }
+
   const [items, setItems] = useState<Item[]>([]);
   // const { userData, setUserData } = useUserContext(); pull once integrated
   useEffect(() => {
@@ -59,12 +66,6 @@ export default function Pantry () {
     fetchItems();
   }, []);
 
-  type Roommate = {
-    id: number; 
-    name: string; 
-    isReciprocal: boolean;
-  };
-
   const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
     "Bakery, Grains & Dried Goods", "Canned & Jarred Goods",
@@ -94,7 +95,8 @@ export default function Pantry () {
     setNewQuantity("");
     setNewUnit("pieces");
     setNewExpiration(new Date());
-    setNewShared([false, false, false, false]);
+    // setNewShared([false, false, false, false]);
+    setNewShared(new Array(reciprocatedRoommates.length).fill(false));
   };
 
   {/* Functions - new item name */}
@@ -141,6 +143,7 @@ export default function Pantry () {
     if (isNaN(Number(newQuantity))) {
       Alert.alert('Quantity must be a number.');
     } else if (newName && newQuantity && newUnit && newExpiration && newShared) {
+      // Prepare the item object to send to the backend
       const newItem = {
         food_name: newName,
         quantity: Number(newQuantity),
@@ -188,16 +191,11 @@ export default function Pantry () {
       alert('Please fill out all fields.');
     }
   };
+  
 
   {/* Functions - delete item */}
   const deleteItem = async (id: string) => { // argument is pantry_id
     alert("pantry id is " + id);
-    // setItems((prevItems) => prevItems.filter(item => item.id !== id));
-    // json
-
-    // id: int
-    // user_id: int
-
     try {
       const response = await fetch(`${API_URL}/remove_pantry_item/`, {
         method: 'POST',
@@ -407,6 +405,7 @@ export default function Pantry () {
                 </ScrollView>
               )}
 
+
               {/* Cancel/save new item */}
               <View style={styles.buttonAlignment}>
                 <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); }}>
@@ -458,7 +457,7 @@ export default function Pantry () {
       </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {

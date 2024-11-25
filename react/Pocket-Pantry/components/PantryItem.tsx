@@ -7,6 +7,13 @@ import { Picker } from "@react-native-picker/picker";
 
 const TEST_USER_ID = '83';
 
+
+type Roommate = {
+  id: number; 
+  name: string; 
+  isReciprocal: boolean;
+};
+
 type PantryProps = {
   id: string;
   user_id: string;
@@ -110,15 +117,15 @@ const PantryItem = (props: PantryProps) => {
 
       {/* Displayed item information */}
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-      <View style={styles.itemContainer}>
-        <View style={styles.rowAlignment}>
-          <Text style={styles.itemName}>{props.name} </Text>
-          {props.roommates.map((roommate: string, index: number) => {
-            return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
-          })}
+        <View style={styles.itemContainer}>
+          <View style={styles.rowAlignment}>
+            <Text style={styles.itemName}>{props.name} </Text>
+            {props.roommates.map((roommate: string, index: number) => {
+              return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
+            })}
+          </View>
+          <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
         </View>
-        <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
-      </View>
       </ScrollView>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
