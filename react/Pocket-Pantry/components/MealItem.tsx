@@ -3,23 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, 
 import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { RecipeProps } from '@/components/RecipeItem';
 
-type MealProps = {
-  // add a Recipe item
-    name: string; // to be removed; already in RecipeItem
-    recipeServings: number; // to be removed; already in RecipeItem
-    ingredients: string[]; // to be removed; already in RecipeItem
-    ingredientUnits: string[]; // to be removed; already in RecipeItem
-    ingredientQuantities: number[]; // to be removed; already in RecipeItem
-    cookTime: number; // to be removed; already in RecipeItem
-    recipeSteps: string; // to be removed; already in RecipeItem
-  mealId: string;
-  mealServings: number; // this will be set to recipeServings by default, but can be changed by the user
-  date: Date;
-  shared: boolean[];
-  roommates: string[];
-  deleteMeal: (id: string) => void;
-};
+type MealProps = RecipeProps & {
+  mealId: string
+  mealServings: number // default to recipeServings, user can change
+  date: Date
+  shared: boolean[]
+  roommates: string[]
+  deleteMeal: (id: string) => void
+}
 
 const MealItem = (props: MealProps) => {
   {/* Functions - view window */}
