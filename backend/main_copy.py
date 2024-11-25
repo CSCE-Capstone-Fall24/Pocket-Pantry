@@ -244,7 +244,7 @@ class PantryItemCreate(BaseModel):
     location: Optional[str] = None
     price: Optional[float] = None
 
-@app.get("/add_item/")
+@app.post("/add_item/")
 async def add_pantry_item(item: PantryItemCreate, db: Session = Depends(get_db)):
     pantry_item = Pantry(
         food_name=item.food_name,
