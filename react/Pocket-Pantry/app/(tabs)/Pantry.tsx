@@ -45,7 +45,7 @@ export default function Pantry () {
           category: item.category,
           expiration: new Date(item.expiration_date),
           shared: item.is_shared,
-          roommates: item.shared_with,
+          roommates: item.shared_with.sort(),
         }));
 
         setItems(transformedItems);

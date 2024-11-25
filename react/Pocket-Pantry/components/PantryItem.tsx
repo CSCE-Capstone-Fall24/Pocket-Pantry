@@ -59,6 +59,7 @@ const PantryItem = (props: PantryProps) => {
   {/* Functions - set item as shared */}
   const [shared, setShared] = useState(props.shared);
   const [tempShared, setTempShared] = useState(shared);
+  // const [newShared, setNewShared] = useState<boolean[]>(new Array(reciprocatedRoommates.length).fill(false));
   const sharedToggle = (index: number) => {
     setTempShared((prevState) => {
       const updatedState = [...prevState];
@@ -75,6 +76,7 @@ const PantryItem = (props: PantryProps) => {
     setTempShared(shared);
   }
   const handleSave = () => {
+    // make POST request to EDIT item
     if (isNaN(Number(tempQuantity))) {
       Alert.alert("Please enter a valid quantity.");
     } else if (tempQuantity != "" && Number(tempQuantity) <= 0) {
@@ -112,7 +114,7 @@ const PantryItem = (props: PantryProps) => {
         <View style={styles.rowAlignment}>
           <Text style={styles.itemName}>{props.name} </Text>
           {props.roommates.map((roommate: string, index: number) => {
-            return shared[index] ? (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>) : null;
+            return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
           })}
         </View>
         <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
@@ -223,11 +225,7 @@ const PantryItem = (props: PantryProps) => {
                           <View key={roommate} style={styles.sharedContainer}>
                             <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
                             <Pressable onPress={() => sharedToggle(index)}>
-                              {tempShared[index] ? (
                                 <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
-                              ) : (
-                                <Ionicons name="ellipse-outline" size={32} color={sharedColors[index]}/>
-                              )}
                             </Pressable>
                           </View>
                         );
@@ -237,9 +235,25 @@ const PantryItem = (props: PantryProps) => {
               ) : (
                 // USER VIEWING IS NOT OWNER
                 // SHOW OWNER
-                // SHOW SHARED WITH
-                // MARK YOU IN SHARED WITH
-                <Text>penis</Text>
+                <ScrollView horizontal={false} style={styles.sharedScroll}>
+                  <View key={999} style={styles.sharedContainer}>
+                    <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {props.user_id}</Text>
+                  </View>
+                  {/* // SHOW SHARED WITH
+                  // MARK YOU IN SHARED WITH */}
+                  {props.roommates.map((roommate: string, index: number) => {
+                        return (
+                          <View key={roommate} style={styles.sharedContainer}>
+                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                            <Pressable>
+                                <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                            </Pressable>
+                            {roommate == TEST_USER_ID && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
+                          </View>
+                        );
+                      })}
+                </ScrollView>
+
               )
             }
 
