@@ -128,16 +128,6 @@ export default function Meal () {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.mealSearchBarOuter}>
-          <TextInput
-            style={styles.mealSearchBarInner}
-            placeholder = "Search for meals" // This should maybe be gray to distinguish it from actual text inputs
-            placeholderTextColor = "black"
-            onChangeText={(value) => setSearch(value)}
-          />
-          <Ionicons name="search-outline" size={40} color="#ff8667"/>
-        </View>
-
         {/* Add meal window */}
         <Modal
           transparent={true}
@@ -151,19 +141,20 @@ export default function Meal () {
           />
           <View style={styles.windowAlignment}>
             <View style={styles.windowContainer}>
-              <Text style={styles.windowTitle}>Add item</Text>
+              <Text style={styles.windowTitle}>Add Meal</Text>
               
-              {/* Input name */}
-              <View style={styles.fieldContainer}>
-                <Text style={styles.fieldText}>Name:  </Text>
+              {/* Search Bar */}
+              <View style={styles.mealSearchBarOuter}>
                 <TextInput
-                  style={styles.nameInput}
-                  value={newName}
-                  onChangeText={(value) => setNewName(value)}
+                  style={styles.mealSearchBarInner}
+                  placeholder = "Search for meals" // This should maybe be gray to distinguish it from actual text inputs
+                  placeholderTextColor = "black"
+                  onChangeText={(value) => setSearch(value)}
                 />
+                <Ionicons name="search-outline" size={40} color="#ff8667"/>
               </View>
 
-              {/* Input servings */}
+              {/* --Input-servings-- User should select meal and THEN input serving */}
               <View style={styles.fieldContainer}>
                 <Text style={styles.fieldText}>Servings:  </Text>
                 <TextInput

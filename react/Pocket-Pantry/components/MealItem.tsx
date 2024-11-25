@@ -233,6 +233,16 @@ const MealItem = (props: MealProps) => {
             </View>   
 
             {/* List Ingredients */}
+          <View style={styles.ingredientsContainer}>
+            <Text style={styles.fieldText}>Ingredients:</Text>
+            {props.ingredients.map((ingredient, index) => (
+              <View key={index} style={styles.ingredientItem}>
+                <Text style={styles.ingredientText}>
+                  {props.ingredientQuantities[index]} {props.ingredientUnits[index]} {ingredient}
+                </Text>
+              </View>
+            ))}
+          </View>
 
             {/* Cook Time */}
 
@@ -404,7 +414,20 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginTop: 35,
-  }
+  },
+  ingredientsContainer: {
+    marginTop: 10,
+    marginBottom: 20,
+    paddingLeft: 10,
+  },
+  ingredientItem: {
+    marginVertical: 5,
+    paddingLeft: 15,
+  },
+  ingredientText: {
+    fontSize: 16,
+    color: 'gray',
+  },  
 });
 
 export default MealItem;
