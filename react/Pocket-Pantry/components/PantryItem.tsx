@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -24,6 +24,7 @@ type PantryProps = {
   expiration: Date;
   shared: boolean[];
   shared_with: string[];
+  recipRoommates: Roommate[];
   deleteItem: (id: string, user_id: string) => void;
 };
 
@@ -66,9 +67,24 @@ const PantryItem = (props: PantryProps) => {
   const [tempExpiration, setTempExpiration] = useState(expiration);
 
   {/* Functions - set item as shared */}
-  const [shared, setShared] = useState(props.shared);
-  const [tempShared, setTempShared] = useState(shared);
-  // const [newShared, setNewShared] = useState<boolean[]>(new Array(reciprocatedRoommates.length).fill(false));
+  const [shared, setShared] = useState<boolean[]>([]);
+  const [tempShared, setTempShared] = useState<boolean[]>([]);
+
+  // Initialize shared and tempShared when component mounts or props change
+  useEffect(() => {
+    const initialShared = props.recipRoommates.map((roommate: Roommate) => {
+      return props.shared_with.includes(roommate.id); // ignore rn, data is fetched as string but it should be a number according to type script
+    });
+    
+    // console.log(props.shared_with.includes(props.recipRoommates[0].id.toString()));
+    console.log(props.recipRoommates);
+    console.log(props.shared_with);
+
+    setShared(initialShared);
+    setTempShared(initialShared);
+    console.log(initialShared);
+  }, [props.recipRoommates, props.shared_with]);
+
   const sharedToggle = (index: number) => {
     setTempShared((prevState) => {
       const updatedState = [...prevState];
@@ -122,9 +138,17 @@ const PantryItem = (props: PantryProps) => {
         <View style={styles.itemContainer}>
           <View style={styles.rowAlignment}>
             <Text style={styles.itemName}>{props.name} </Text>
-            {props.shared_with.map((roommate: string, index: number) => {
-              return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
-            })}
+            {
+              userData.user_id == props.user_id ? (
+                props.recipRoommates.map((roommate: Roommate, index: number) => {
+                  return (shared[index] && <Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
+                })
+              ) : (
+                props.shared_with.map((roommate: string, index: number) => {
+                  return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
+                })
+              )
+            }
           </View>
           <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
         </View>
@@ -229,12 +253,15 @@ const PantryItem = (props: PantryProps) => {
                 // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
                 props.shared_with.length > 0 && (
                   <ScrollView horizontal={false} style={styles.sharedScroll}>
-                      {props.shared_with.map((roommate: string, index: number) => {
+                      {props.recipRoommates.map((roommate: Roommate, index: number) => {
                         return (
-                          <View key={roommate} style={styles.sharedContainer}>
-                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                          <View key={roommate.id} style={styles.sharedContainer}>
+                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
                             <Pressable onPress={() => sharedToggle(index)}>
-                                <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                                <Ionicons 
+                                  name={tempShared[index] ? "checkmark-circle" : "ellipse-outline"}
+                                  size={32} 
+                                  color={sharedColors[index]}/>
                             </Pressable>
                           </View>
                         );
@@ -246,23 +273,30 @@ const PantryItem = (props: PantryProps) => {
                 // SHOW OWNER
                 <ScrollView horizontal={false} style={styles.sharedScroll}>
                   <View key={999} style={styles.sharedContainer}>
-                    <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {props.user_id}</Text>
+                    <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                      Item Owner: {props.recipRoommates.find((rm: Roommate) => rm.id.toString() == props.user_id)?.name || 'Unknown'}
+                    </Text>
+                    {/* <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {((props.recipRoommates: Roommate).find((rm: Roommate) => rm.id === props.user_id)).name}</Text> */}
                   </View>
                   {/* // SHOW SHARED WITH
                   // MARK YOU IN SHARED WITH */}
                   {props.shared_with.map((roommate: string, index: number) => {
-                        return (
-                          <View key={roommate} style={styles.sharedContainer}>
-                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
-                            <Pressable>
-                                <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
-                            </Pressable>
-                            {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
-                          </View>
-                        );
-                      })}
+                    const found = props.recipRoommates.find((rm: Roommate) => rm.id == roommate);
+                    const roommateName = found ? found.name : `Unknown (${roommate})`;
+                    
+                    return (
+                      <View key={roommate} style={styles.sharedContainer}>
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                          Shared with {userData.user_id != roommate ? roommateName : roommate}
+                          </Text>
+                        <Pressable>
+                            <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                        </Pressable>
+                        {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
+                      </View>
+                    );
+                  })}
                 </ScrollView>
-
               )
             }
 

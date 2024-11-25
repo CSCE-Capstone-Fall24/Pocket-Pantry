@@ -33,6 +33,7 @@ export default function Pantry () {
 
   const [items, setItems] = useState<Item[]>([]);
   const { userData, setUserData } = useUserContext(); // pull once integrated
+  const [recipRoommates, setRecipRoommates] = useState<Roommate[]>([]);
 
   const fetchItems = async () => {
     try {
@@ -55,18 +56,30 @@ export default function Pantry () {
         shared: item.is_shared,
         shared_with: item.shared_with.sort(),
       }));
-
-      setItems(transformedItems);
+      setItems(transformedItems);      
       console.log("GOT ITEMS AS\n");
       console.log(transformedItems)
+
     } catch (error) {
       console.error("Error fetching items:", error);
     }
   };
 
   useEffect(() => {
-      fetchItems();
-  }, []);
+    const rms: Roommate[] = userData.roommates
+      .filter((item: any) => item.is_reciprocated)
+      .map((item: any) => ({
+        id: item.roommate_id,
+        name: item.username,
+        isReciprocal: item.is_reciprocated,
+      })).sort((a: Roommate, b: Roommate) => a.id - b.id);
+
+    console.log('got recip rms');
+    console.log(rms);
+    setRecipRoommates(rms);
+
+    fetchItems();
+  }, [userData.reciprocatedRoommates]);
 
   const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
@@ -98,7 +111,7 @@ export default function Pantry () {
     setNewUnit("pieces");
     setNewExpiration(new Date());
     // setNewShared([false, false, false, false]);
-    setNewShared(new Array(reciprocatedRoommates.length).fill(false));
+    setNewShared(new Array(recipRoommates.length).fill(false));
   };
 
   {/* Functions - new item name */}
@@ -126,12 +139,13 @@ export default function Pantry () {
   const closeExpirationPicker = () => setExpirationPickerVisible(false);
   
   {/* Functions - set new item as shared */}
-  const reciprocatedRoommates = [
-    "username1", "username2", "username3333333333", "username4",
-    "username5", "username6", "username7", "username8",
-    "username9", "username10", "username11",
-  ];
-  const [newShared, setNewShared] = useState<boolean[]>(new Array(reciprocatedRoommates.length).fill(false));
+  // const reciprocatedRoommates = [
+  //   "username1", "username2", "username3333333333", "username4",
+  //   "username5", "username6", "username7", "username8",
+  //   "username9", "username10", "username11",
+  // ];
+
+  const [newShared, setNewShared] = useState<boolean[]>(new Array(recipRoommates.length).fill(false));
   const sharedToggle = (index: number) => {
     setNewShared((prevState) => {
       const updatedState = [...prevState];
@@ -153,8 +167,10 @@ export default function Pantry () {
         user_id: userData.user_id, // signed in user
         expiration_date: newExpiration.toISOString(),
         category: newCategory,
-        shared_with: [], // replace
-        is_shared: false // replace
+        shared_with: recipRoommates
+        .filter((_, index) => newShared[index]) // if user is shared, add their id
+        .map((roommate: Roommate) => roommate.id),
+        is_shared: newShared.some((b: Boolean) => b) // if any shared item is shared
       };
   
       try {
@@ -393,12 +409,12 @@ export default function Pantry () {
               </Modal>
 
               {/* Set new item as shared */}
-              {reciprocatedRoommates.length > 0 && (
+              {recipRoommates.length > 0 && (
                 <ScrollView horizontal={false} style={styles.sharedScroll}>
-                  {reciprocatedRoommates.map((roommate: string, index: number) => {
+                  {recipRoommates.map((roommate: Roommate, index: number) => {
                     return (
-                      <View key={roommate} style={styles.sharedContainer}>
-                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate}</Text>
+                      <View key={roommate.id} style={styles.sharedContainer}>
+                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
                         <Pressable onPress={() => sharedToggle(index)}>
                           {newShared[index] ? (
                             <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
@@ -448,6 +464,7 @@ export default function Pantry () {
                         shared={item.shared}
                         shared_with={item.shared_with}
                         deleteItem={deleteItem}
+                        recipRoommates={recipRoommates}
                       />
                     </View>
                   ))}
