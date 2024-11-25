@@ -8,44 +8,48 @@ import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import MealItem from '@/components/MealItem';
 
-// export default function Meal () {
-//   interface Meal {
-//     id: string;
-//     name: string;
-//     servings: number;
-//     date: Date;
-//     shared: boolean[];
-//     roommates: string[];
-//     ingredients: string[];
-//     ingredientUnits: string[];
-//     ingredientQuantities: number[];
-//     cookTime: number;
-//     recipe: string;
-//     deleteMeal?: (id: string) => void; // Optional property
-//   }
+export default function Meal () {
+  interface Meal {
+    id: string;
+    name: string;
+    servings: number;
+    date: Date;
+    shared: boolean[];
+    roommates: string[];
+    ingredients: string[];
+    ingredientUnits: string[];
+    ingredientQuantities: number[];
+    cookTime: number;
+    recipe: string;
+    deleteMeal: (id: string) => void
+  }
 
-//   // Hardcoded meals (for initial data)
-//   const [meals, setMeals] = useState<Meal[]>([
-//     { id: "1", name: "Meal1", servings: 1, date: new Date(),
-//       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
-//       ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-//       cookTime: 15, recipe: "There is no recipe, figure it out yourself" },
-//     { id: "2", name: "Meal2", servings: 2, date: new Date(),
-//       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
-//       ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-//       cookTime: 15, recipe: "There is no recipe, figure it out yourself" },
-//     { id: "3", name: "Meal3", servings: 3, date: new Date(),
-//       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
-//       ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-//       cookTime: 15, recipe: "There is no recipe, figure it out yourself" },
-//     { id: "4", name: "Meal4", servings: 4, date: new Date(),
-//       shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
-//       ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-//       cookTime: 15, recipe: "There is no recipe, figure it out yourself" }
-//   ]);
+  const deleteMeal = (id: string) => {
+    setMeals((prevMeals) => prevMeals.filter((meal) => meal.id !== id));
+  };
 
-//   // Planned meals state
-//   const [plannedMeals, setPlannedMeals] = useState<Meal[]>([]);
+  // Hardcoded meals (change to Recipe)
+  const [meals, setMeals] = useState<Meal[]>([
+    { id: "1", name: "Meal1", servings: 1, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 15, recipe: "There is no recipe, figure it out yourself", deleteMeal },
+    { id: "2", name: "Meal2", servings: 2, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 15, recipe: "There is no recipe, figure it out yourself", deleteMeal },
+    { id: "3", name: "Meal3", servings: 3, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 15, recipe: "There is no recipe, figure it out yourself", deleteMeal },
+    { id: "4", name: "Meal4", servings: 4, date: new Date(),
+      shared: [false, false, false, false], roommates: ["Roommie 1", "Roommie 2", "Roommie 3", "Roommie 4"],
+      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
+      cookTime: 15, recipe: "There is no recipe, figure it out yourself", deleteMeal }
+  ]);
+
+  // Planned meals state
+  const [plannedMeals, setPlannedMeals] = useState<Meal[]>([]);
 
 //   {/* Functions - search meal window */}
 //   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -283,7 +287,7 @@ import MealItem from '@/components/MealItem';
 //   },
 // });
 
-export default function MealPlan () {
+// export default function MealPlan () {
   
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -307,6 +311,28 @@ export default function MealPlan () {
             <Ionicons name="add-outline" size={40} color="white"/>
           </TouchableOpacity>
         </View>
+
+        {/* Display planned meals */}
+        {plannedMeals.map((meal) => (
+          <View key={meal.id}>
+            <MealItem
+              recipeId={meal.id}
+              mealId={meal.id}
+              name={meal.name}
+              recipeServings={meal.servings}
+              mealServings={meal.servings}
+              date={meal.date}
+              shared={meal.shared}
+              roommates={meal.roommates}
+              ingredients={meal.ingredients}
+              ingredientUnits={meal.ingredientUnits}
+              ingredientQuantities={meal.ingredientQuantities}
+              cookTime={meal.cookTime}
+              recipeSteps={meal.recipe}
+              deleteMeal={meal.deleteMeal}
+            />
+          </View>
+        ))}
 
         {/* Recipe search window */}
         <Modal
