@@ -4,19 +4,19 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker'
 
-type MealProps = { // We'll need to update this to include a RecipeItem
-  id: string;
-  name: string;
-  servings: number;
+type MealProps = {
+  // add a Recipe item
+    name: string; // to be removed; already in RecipeItem
+    servings: number; // to be removed; already in RecipeItem
+    ingredients: string[]; // to be removed; already in RecipeItem
+    ingredientUnits: string[]; // to be removed; already in RecipeItem
+    ingredientQuantities: number[]; // to be removed; already in RecipeItem
+    cookTime: number; // to be removed; already in RecipeItem
+    recipeSteps: string; // to be removed; already in RecipeItem
+  mealId: string;
   date: Date;
   shared: boolean[];
   roommates: string[];
-  ingredients: string[];
-  ingredientUnits: string[];
-  ingredientQuantities: number[];
-  cookTime: number; // cook time is in minutes
-  recipe: string; // this is cook_steps
-  // view http://47.218.196.222:8000/planned_meals?user_id=4 for more info
   deleteMeal: (id: string) => void;
 };
 
@@ -58,7 +58,7 @@ const MealItem = (props: MealProps) => {
   const [cookTime, setCookTime] = useState(props.cookTime.toString());
 
   {/* Functions - set recipe */}
-  const [recipe, setRecipe] = useState(props.recipe.toString());
+  const [recipe, setRecipe] = useState(props.recipeSteps.toString());
 
   {/* Functions - cancel/save user changes */}
   const handleCancel = () => {
@@ -71,7 +71,7 @@ const MealItem = (props: MealProps) => {
     if (isNaN(Number(tempServings))) {
       Alert.alert('Please enter a valid number of servings.');
     } else if (tempServings != '' && Number(tempServings) <= 0) {
-      props.deleteMeal(props.id);
+      props.deleteMeal(props.mealId);
     } else {
       setIngredientQuantities(
         String(Number(tempIngredientQuantities) * (Number(tempServings)/Number(servings)))
@@ -98,7 +98,7 @@ const MealItem = (props: MealProps) => {
       },
       {
         text: 'OK',
-        onPress: () => props.deleteMeal(props.id),
+        onPress: () => props.deleteMeal(props.mealId),
       }],
       { cancelable: true }
     );
