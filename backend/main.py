@@ -50,12 +50,12 @@ GRAMS_CONVERSION = {
     # Miscellaneous (approximate based on common usage)
     "clove": 5, "cloves": 5,  
     "slice": 30, "slices": 30,  
-    "stick": 113, "sticks": 113, 
+    "stick": 120, "sticks": 120, 
     "can": 400, "cans": 400,  
     "bottle": 500, "bottles": 500,  
     "pack": 500, "packs": 500, "pkt": 500, "packet": 500, "packets": 500,
     "bunch": 150, "bunches": 150,  
-    "piece": 100, "pieces": 100, "pc": 100,  
+    "piece": 100, "pieces": 100, "pc": 100, "count": 100,  
     "leaf": 1, "leaves": 1,  
     "sprig": 1, "sprigs": 1  
 }
@@ -288,6 +288,7 @@ async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Dep
     pantry_item.is_shared = bool(request.shared_with)
 
     db.commit()
+    db.refresh(pantry_item)
 
     return {
         "message": "Pantry item updated successfully",
@@ -344,7 +345,9 @@ async def set_item_shared_with(request: Share, db: Session = Depends(get_db)):
     
 # MEAL QUERIES --------------------------------------------------------------------------------------------------------------
 
-@app.get("/indv_planned_meals")
+
+#fix meal queries to check confirm user_id of user making request is the owner of the meal before edits are pushed through
+@app.get("/indv_planned_meals/")
 def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
     user_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(PlannedMeals.user_id == user_id).all()
 
@@ -353,7 +356,7 @@ def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
 
     return user_meals
 
-@app.get("/planned_meals")
+@app.get("/planned_meals/")
 def planned_meals(user_id: int, db: Session = Depends(get_db)):
     all_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
         or_(
@@ -367,7 +370,7 @@ def planned_meals(user_id: int, db: Session = Depends(get_db)):
 
     return all_meals
 
-@app.get("/meals_shared_with")
+@app.get("/meals_shared_with/")
 def meals_shared_with(user_id: int, db: Session = Depends(get_db)):
     shared_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
         and_(
@@ -400,7 +403,42 @@ def add_planned_meal(data: PlannedMealRequest, db: Session = Depends(get_db)):
     db.refresh(new_meal)
     return {"message": "Meal added successfully", "meal": new_meal}
 
+class UpdateMealRequest(BaseModel):
+    user_id: int
+    meal_id: int
+    planned_servings: int
+    shared_with: List[int]
 
+@app.post("/update_meal/")
+def update_meal(request: UpdateMealRequest, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == request.meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="Pantry item not found")
+
+    if meal.user_id != request.user_id:
+        return {
+            "message": "This meal is shared with you. You do not have edit permissions."
+        }
+    else:
+        meal.n_servings = request.planned_servings if request.planned_servings is not None else meal.n_servings
+        meal.is_shared = True if request.shared_with is not None else False
+        meal.shared_with = request.shared_with if request.shared_with is not None else []
+
+        db.commit()
+        db.refresh(meal)
+
+        return{
+            "message": "Planned meal updated successfully.",
+            "user_id": meal.user_id,
+            "meal_id": meal.meal_id,
+            "n_servings": meal.n_servings,
+            "is_shared": meal.is_shared,
+            "shared_with": meal.shared_with
+        }
+     
+"""
 class ShareMealRequest(BaseModel):
     meal_id: int
     roommate_id: int
@@ -446,18 +484,84 @@ def mark_pantry_item_unshared(data: ShareMealRequest, db: Session = Depends(get_
     except ValueError:
         return {"message": "roommate not shared with"}
     
-@app.post("/delete_planned_meal/")
-async def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)):
+class ServingsChangeRequest(BaseModel):
+    meal_id: int
+    planned_servings: int
 
-    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == meal_id).first()
+@app.post("/edit_shared_meal_servings/")
+async def edit_shared_meal_servings(Request: ServingsChangeRequest, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == Request.meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
+    
+    meal.n_servings = Request.planned_servings
+
+    db.commit()
+    db.refresh(meal)
+
+    return {
+        "message": "Servings for your planned meal have been adjusted", 
+        "meal_name": db.query(Recipes).filter(Recipes.recipe_id == meal.recipe_id).first().name
+    }
+
+class MealShareListRequest(BaseModel):
+    meal_id: int
+    share_with: List[int]
+
+@app.post("/update_meal_roommates/")
+async def update_meal_roommates(Request: MealShareListRequest, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == Request.meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
+    
+    if len(Request.share_with) == 0:
+        meal.is_shared == False
+    else:
+        meal.is_shared == True
+
+    meal.shared_with = Request.share_with
+
+    db.commit()
+    db.refresh(meal)
+
+    return {
+        "message": "Shared roommates on meal has been updated"
+    }
+"""
+
+class DeleteMealRequest(BaseModel):
+    user_id: int
+    meal_id: int
+    
+@app.post("/delete_planned_meal/")
+async def delete_planned_meal(request: DeleteMealRequest, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == request.meal_id).first()
 
     if not meal:
         raise HTTPException(status_code=404, detail="Planned Meal not found")
     
-    db.delete(meal)
-    db.commit()
+    if meal.user_id == request.user_id:
+        db.delete(meal)
+        db.commit()
 
-    return {"message": "Your meal has been removed and meal plan has been updated."}
+        return {"message": "Your meal has been removed. Meal plan has been updated."}
+    else:
+        for idx, id in enumerate(meal.shared_with):
+            if id == request.user_id:
+                del meal.shared_with[idx]
+
+        if len(meal.shared_with) == 0:
+            meal.is_shared = False
+
+        db.commit()
+        db.refresh(meal)
+
+        return {"meassage": "You have been successfully removed from the meal. Meal plan has been updated."}
 
 #adjust item quantities after cooking meals
 @app.post("/mark_meal_cooked/")
@@ -859,7 +963,7 @@ def reset_pass(data: Reset, db: Session = Depends(get_db)):
     return {"message": "reset password successfully"}
 
 # RECIPE QUERIES ----------------------------------------------------------------------------------------------------------------------------
-@app.post("/recipes_made_from_inventory/")
+@app.get("/recipes_made_from_inventory/")
 async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
     pantry_items = db.query(Pantry).filter(
         or_(
@@ -872,8 +976,36 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
     ).all()
     
     if not pantry_items:
-        raise HTTPException(status_code=404, detail="No pantry items found for user.")
+        raise HTTPException(status_code=404, detail="No pantry items found for users.")
     
+    all_r = db.query(Recipes).all()
+
+    ingredients_owned_all_r = []
+
+    for recipe in all_r:
+        has_ingredients = []
+
+        for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
+            possessed = False
+            for item in pantry_items:
+                if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 88:
+                    if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
+                        possessed = True
+                        has_ingredients.append(True)
+                        break
+            if possessed == False:
+                has_ingredients.append(False)
+        ingredients_owned_all_r.append(has_ingredients)
+
+
+    for i, recp in enumerate(all_r):
+        recp.possessed_list = ingredients_owned_all_r[i]
+
+    all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+
+    return all_r
+
+    """
     all_r = db.query(Recipes).all()         #fetches all recipes from database
 
     #fuzzy matching of ingredients to pantry items
@@ -887,7 +1019,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
 
         # Check if all ingredients in the recipe have a match in pantry items
         all_match = all(
-            any(fuzz.WRatio(r_ingredient, p_item) > 70 for p_item in pantry_ingredients)
+            any(fuzz.WRatio(r_ingredient, p_item) > 88 for p_item in pantry_ingredients)
             for r_ingredient in r_ingredients
         )
 
@@ -905,11 +1037,15 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             can_make = True
             for idx_ingredient, ingredient_name in enumerate(recipe_details.ingredients):
                 # true false list for ingredients
-                for item in pantry_items:
-
-                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 70:
-                        if convert_to_grams(item.quantity, item.unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
-                            can_make = False
+                best_match = 0
+                best_match_idx = -1
+                for idx_item, item in enumerate(pantry_items):
+                    fuzz_score = fuzz.WRatio(item.food_name.lower(), ingredient_name.lower())
+                    if fuzz_score > 88 and fuzz_score > best_match:
+                        best_match = fuzz_score
+                        best_match_idx = idx_item
+                if best_match_idx !=-1 and convert_to_grams(pantry_items[best_match_idx].quantity, pantry_items[best_match_idx].unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
+                    can_make = False
             if can_make:
                 can_make_recipes_ids.append(id)
 
@@ -930,7 +1066,7 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
                 possessed = False
                 for item in pantry_items:
-                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 70:
+                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 88:
                         if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
                             possessed = True
                             has_ingredients.append(True)
@@ -946,9 +1082,10 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
         all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
 
         return {
-            "message": "Cannot fully craft any recipes with current inventory. Here are the best 20 recipes with the least missing ingredients.",
+            "message": "Cannot fully craft any recipes with current inventory. Here are the recipes in order of the least missing ingredients.",
             "recipe data": all_r
         }
+    """
 #ingredients possessed or not in field 'possessed_list' as a parallel list of booleans
 
 class AddFavoriteRequest(BaseModel):
@@ -1030,7 +1167,7 @@ async def fetch_recipe(recipe_name: str, db: Session = Depends(get_db)):
     # Filter recipes using fuzzy matching
     filtered_recipes = [
         recipe for recipe in all_recipes
-        if fuzz.WRatio(recipe_name.lower(), recipe_name.lower()) > 70
+        if fuzz.WRatio(recipe_name.lower(), recipe_name.lower()) > 88
     ]
 
     return filtered_recipes
@@ -1205,8 +1342,8 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
                             # Calculate the similarity ratio
                             ratio = fuzz.WRatio(ingredient.lower(), item.lower())
 
-                            # Update the highest score and best match index if ratio > 70
-                            if ratio > 70 and ratio > highest_score and meal[3][idx_inv] > 0 and pantry[1][idx_inv] > 0:
+                            # Update the highest score and best match index if ratio > 88
+                            if ratio > 88 and ratio > highest_score and meal[3][idx_inv] > 0 and pantry[1][idx_inv] > 0:
                                 highest_score = ratio
                                 best_match_index = idx_inv
 
@@ -1296,7 +1433,7 @@ async def item_shopped(data: shoppingItem, db: Session = Depends(get_db)):
 
     for item in pantry_items:
         fuzz_score = fuzz.WRatio(item.food_name.lower(), data.food_name.lower())
-        if fuzz_score > 70 and fuzz_score > best_match_score:
+        if fuzz_score > 88 and fuzz_score > best_match_score:
             best_match_score = fuzz_score
             exists = True
             edit_item = db.query(Pantry).filter(Pantry.pantry_id == item.pantry_id).first()
