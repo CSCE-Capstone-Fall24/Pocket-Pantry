@@ -36,7 +36,7 @@ const RecipeItem = (props: RecipeProps) => {
   const { userData, setUserData } = useUserContext(); // pull once integrated
 
   {/* Functions - view recipe window */}
-  const [isWindowVisible, setWindowVisible] = useState(false);
+  const [isWindowVisible, setWindowVisible] = useState(props.editing);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
     setWindowVisible(false);

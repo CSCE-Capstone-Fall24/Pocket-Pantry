@@ -1,6 +1,7 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import RecipeItem from "./RecipeItem";
 
 type Roommate = {
   id: string; 
@@ -21,29 +22,60 @@ type MealProps = {
 };
 
 const MealItem = (props: MealProps) => {
-  const { recipe_id, n_servings, is_shared, shared_with, expiration } = props;
+  const { recipe_id, n_servings, is_shared, shared_with, expiration, recipe, recip_rms } = props;
+
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
 
   return (
-    <TouchableOpacity style={styles.container} onPress={() => console.log("Meal pressed:", recipe_id)}> {/* ON PRESS OPEN MODAL OF RECIPE ITEM WITH EDIT=TRUE */}
-      <View style={styles.textContainer}>
-        {/* Meal Info */}
-        <Text style={styles.recipeName}>{props.recipe.name}</Text>
-        <Text style={styles.details}>Servings: {n_servings}</Text>
-        <Text style={styles.details}>Expiration: {expiration.toLocaleDateString()}</Text>
+    <>
+      <TouchableOpacity style={styles.container} onPress={openModal}> {/* ON PRESS OPEN MODAL OF RECIPE ITEM WITH EDIT=TRUE */}
+        <View style={styles.textContainer}>
+          {/* Meal Info */}
+          <Text style={styles.recipeName}>{props.recipe.name}</Text>
+          <Text style={styles.details}>Servings: {n_servings}</Text>
+          <Text style={styles.details}>Expiration: {expiration.toLocaleDateString()}</Text>
 
-        {/* Sharing Info */}
-        {is_shared && (
-          <Text style={styles.shared}>
-            Shared with {shared_with.length} {shared_with.length === 1 ? "person" : "people"}
-          </Text>
-        )}
-      </View>
+          {/* Sharing Info */}
+          {is_shared && (
+            <Text style={styles.shared}>
+              Shared with {shared_with.length} {shared_with.length === 1 ? "person" : "people"}
+            </Text>
+          )}
+        </View>
 
-      {/* Icon */}
-      <View style={styles.iconContainer}>
-        <Ionicons name="fast-food-outline" size={32} color="gray" />
+        {/* Icon */}
+        <View style={styles.iconContainer}>
+          <Ionicons name="fast-food-outline" size={32} color="gray" />
+        </View>
+      </TouchableOpacity>
+
+      <Modal visible={isModalVisible} transparent={true} animationType="slide" onRequestClose={closeModal}>
+      <View style={styles.modalBackground}>
+        <View style={styles.modalContent}>
+          <RecipeItem
+            id={recipe.id}
+            name={recipe.name}
+            description={recipe.description}
+            servings={n_servings}
+            nutrition={recipe.nutrition}
+            cook_time={recipe.cook_time}
+            cook_steps={recipe.cook_steps}
+            ingredients={recipe.ingredients}
+            ingredient_quantities={recipe.ingredient_quantities}
+            ingredient_units={recipe.ingredient_units}
+            editing={true}
+            closeSearchWindow={() => null} // Assuming RecipeItem supports closing modal
+            recip_roommates={recip_rms}
+            user_id={Number(props.user_id)}
+            shared_with={props.shared_with}
+          />
+        </View>
       </View>
-    </TouchableOpacity>
+      </Modal>
+    </>
   );
 };
 
