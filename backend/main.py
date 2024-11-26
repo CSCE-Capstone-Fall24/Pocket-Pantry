@@ -50,12 +50,12 @@ GRAMS_CONVERSION = {
     # Miscellaneous (approximate based on common usage)
     "clove": 5, "cloves": 5,  
     "slice": 30, "slices": 30,  
-    "stick": 113, "sticks": 113, 
+    "stick": 120, "sticks": 120, 
     "can": 400, "cans": 400,  
     "bottle": 500, "bottles": 500,  
     "pack": 500, "packs": 500, "pkt": 500, "packet": 500, "packets": 500,
     "bunch": 150, "bunches": 150,  
-    "piece": 100, "pieces": 100, "pc": 100,  
+    "piece": 100, "pieces": 100, "pc": 100, "count": 100,  
     "leaf": 1, "leaves": 1,  
     "sprig": 1, "sprigs": 1  
 }
@@ -874,7 +874,7 @@ def reset_pass(data: Reset, db: Session = Depends(get_db)):
     return {"message": "reset password successfully"}
 
 # RECIPE QUERIES ----------------------------------------------------------------------------------------------------------------------------
-@app.post("/recipes_made_from_inventory/")
+@app.get("/recipes_made_from_inventory/")
 async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
     pantry_items = db.query(Pantry).filter(
         or_(
