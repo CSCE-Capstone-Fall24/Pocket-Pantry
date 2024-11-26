@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   userContainer: {
     marginTop: 25,
     marginHorizontal: 25,
-    height: 52,
+    height: 84,
     borderRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     shadowColor: "black",
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "column",
+    alignItems: "flex-start",
     backgroundColor: "white", 
   },
   userText: {
