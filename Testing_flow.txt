@@ -113,13 +113,44 @@ Testing Recipes With Info:
         ingredients_scraped: []
 
 Queries to update pantry for testing:
-    UPDATE pantry
-    SET shared_with = ARRAY[1]  -- Sharing with Brian (user_id 1)
-    WHERE pantry_id = 1 AND user_id = 2;
-    SELECT * FROM pantry WHERE user_id = 1;
-    INSERT INTO pantry (user_id, food_name, quantity, unit, added_date) 
-    VALUES (1, 'Vegetable Oil', 3, 'tbsp', NOW());
-    SELECT * FROM pantry WHERE user_id = 1 AND food_name = 'Vegetable Oil';
-    UPDATE pantry
-    SET quantity = quantity + 3  -- Increase the quantity by 3 tbsp
-    WHERE user_id = 1 AND food_name = 'Vegetable Oil';
+INSERT INTO pantry (food_name, quantity, unit) VALUES 
+('Pie Crusts', 3, 'pieces'),
+('Green Apples', 7, 'pieces'),
+('Granulated Sugar', 1, 'cups'),
+('Brown Sugar', 1, 'cups'),
+('All-Purpose Flour', 6, 'tbsp'),
+('Ground Cinnamon', 1, 'tsp'),
+('Ground Nutmeg', 1, 'tsp'),
+('Lemon Juice', 1, 'tbsp'),
+('Large Egg', 2, 'pieces'),
+('Sanding Sugar', 6, 'tbsp'),
+('Butter', 3, 'cups'),
+('Vanilla Extract', 2.5, 'tsp'),
+('All Purpose Flour', 2.5, 'cups'),
+('Cornstarch', 8, 'tsp'),
+('Baking Soda', 1, 'tsp'),
+('Salt', 1, 'cup'),
+('Semi-Sweet Chocolate Chips', 2, 'cups'),
+('Dry Spaghetti Noodles', 1, 'lbs'),
+('Olive Oil', 3, 'tbsp'),
+('Tomato Paste', 3, 'tbsp'),
+('Dried Oregano', 6, 'pinch'),
+('Parmesan Cheese', 2, 'pinches'),
+('Skinless Boneless Chicken Breast Halves', 12, 'oz'),
+('Medium Lemon', 2, 'pieces'),
+('Green Onions', 5, 'cups'),
+('Fresh Parsley Chopped', 2, 'sprigs'),
+('Bread Cubes', 12, 'cups'),
+('Dried Sage', 8, 'tsp'),
+('Poultry Seasoning', 5, 'tsp'),
+('Dried Thyme', 1, 'tsp'),
+('Chopped Onion', 2, 'cups'),
+('Chopped Celery', 2, 'cups'),
+('Sliced Mushrooms', 12, 'oz'),
+('Beef Stir Fry Sauce', 12, 'fl oz'),
+('Dried Marjoram', 1, 'tsp'),
+('Chicken Broth', 9, 'cups'),
+('Vegetable Oil', 9, 'tbsp'),
+('Flank Steak', 9, 'lbs'),
+('Lo Mein Noodles', 4, 'lbs'),
+('Frozen Stir Fry Vegetables', 4, 'ounces');
