@@ -42,10 +42,11 @@ const RecipeItem = (props: RecipeProps) => {
     setQuantities(props.ingredient_quantities);
     setDate(new Date());
 
-    
+    if (props.editing) {
       setTimeout(() => {
         props.close_guy();
       }, 500);
+    }
   };
 
   {/* Functions - add recipe to favorites */}
