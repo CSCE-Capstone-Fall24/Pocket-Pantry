@@ -3,4 +3,4 @@ datasets/
 backend/.env
 scraper/*.txt
 scraper/*.html
-react/.env
+react/Pocket-Pantry/.env
