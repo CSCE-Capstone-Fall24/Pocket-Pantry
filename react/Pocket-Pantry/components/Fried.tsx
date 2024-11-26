@@ -10,7 +10,7 @@ type Roommate = {
   isReciprocal: boolean;
 };
 
-type RecipeProps = {
+type friedProps = {
   id: number;
   name: string;
   description: string;
@@ -30,7 +30,7 @@ type RecipeProps = {
   close_guy: () => void;
 };
 
-const RecipeItem = (props: RecipeProps) => {
+const Fried = (props: friedProps) => {
   const nutrition = ["Calories", "Fat", "Sugar", "Sodium", "Protein", "Saturated Fat", "Carbohydrates"];
 
   {/* Functions - view recipe window */}
@@ -106,21 +106,7 @@ const RecipeItem = (props: RecipeProps) => {
   }, [props.editing]);
 
   return (
-    <TouchableOpacity onPress={openWindow}>
-      <View style={styles.container}>
-
-        {/* Recipe card information */}
-        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{props.name}</Text>
-
-        {/* View recipe window */}
-        <Modal
-          isVisible={isZeWindowVisible}
-          onBackdropPress={closeWindow}
-          animationIn="slideInRight"
-          animationOut="slideOutRight"
-          style={styles.window}
-          backdropOpacity={0.0}
-        >
+    
           <ScrollView style={styles.recipeContainer}>
           
             {/* Back button/bookmark */}
@@ -259,9 +245,6 @@ const RecipeItem = (props: RecipeProps) => {
 
             <View style={styles.scrollerSpacer}></View>
           </ScrollView>
-        </Modal>
-      </View>
-    </TouchableOpacity>
   )
 };
 
@@ -404,4 +387,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RecipeItem;
+export default Fried;
