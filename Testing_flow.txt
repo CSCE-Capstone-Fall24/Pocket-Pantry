@@ -1,7 +1,10 @@
 Test Steps:
     1. Create new User - Brian
     2. Log in as set up user(email: connor@email.com password: connor) - Connor
+        UserID: 86
     3. Log in as set up user(email: zack@email.com password: zack) - Zack
+        UserID: 87
+    3.5 Brian creates an account (sorry, I already used brian@email.com)
     4. Brian add Connor and Zack as roommates
     5. Demonstrate no roommate add until add back
     6. Connor add Brian as roommate
