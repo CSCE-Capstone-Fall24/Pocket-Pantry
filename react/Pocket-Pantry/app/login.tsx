@@ -77,17 +77,17 @@ export default function LoginScreen({ setIsAuthenticated, setUserData }) {
   
       if (response.ok) {
         Alert.alert('Success', 'Signed up successfully! Logging you in...');
-        alert("good?");
+        // alert("good?");
         setIsAuthenticated(true);
         setUserData(data.user_data);
-        alert("Signed up successfully");
+        // alert("Signed up successfully");
       } else {
-        Alert.alert('Error', data.detail || 'Something went wrong. Please try again.');
+        // Alert.alert('Error', data.detail || 'Something went wrong. Please try again.');
         alert('Error' + data.detail || 'Something went wrong. Please try again.');
       }
     } catch (error) {
       Alert.alert('Error', 'Network error. Please try again.');
-      alert("network errror");
+      // alert("network errror");
     } finally {
       setLoadingSignup(false);
     }
