@@ -64,13 +64,15 @@ export default function Shopping() {
   // Function to handle submit action
   const handleSubmit = () => {
     setTestLists((prevLists) =>
-      prevLists.map((list) => ({
-        ...list,
-        shoppingItems: list.shoppingItems.filter((item) => !item.checked),
-      }))
+      prevLists
+        .map((list) => ({
+          ...list,
+          shoppingItems: list.shoppingItems.filter((item) => !item.checked), // Remove checked items
+        }))
+        .filter((list) => list.shoppingItems.length > 0) // Remove empty lists
     );
-
-    Alert.alert('Submitted', 'Checked items have been removed from your shopping list.');
+  
+    Alert.alert('Submitted', 'Checked items have been removed from your shopping lists.');
   };
 
   return (
