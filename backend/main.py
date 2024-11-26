@@ -408,6 +408,7 @@ class UpdateMealRequest(BaseModel):
     meal_id: int
     planned_servings: int
     shared_with: List[int]
+    expiration_date: datetime
 
 @app.post("/update_meal/")
 def update_meal(request: UpdateMealRequest, db: Session = Depends(get_db)):
@@ -425,6 +426,7 @@ def update_meal(request: UpdateMealRequest, db: Session = Depends(get_db)):
         meal.n_servings = request.planned_servings if request.planned_servings is not None else meal.n_servings
         meal.is_shared = True if request.shared_with is not None else False
         meal.shared_with = request.shared_with if request.shared_with is not None else []
+        meal.expiration_date = request.expiration_date if request.expiration_date is not None else meal.expiration_date
 
         db.commit()
         db.refresh(meal)
@@ -437,7 +439,6 @@ def update_meal(request: UpdateMealRequest, db: Session = Depends(get_db)):
             "is_shared": meal.is_shared,
             "shared_with": meal.shared_with
         }
-     
 
 class DeleteMealRequest(BaseModel):
     user_id: int
