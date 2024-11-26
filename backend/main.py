@@ -396,7 +396,7 @@ def add_planned_meal(data: PlannedMealRequest, db: Session = Depends(get_db)):
         recipe_id=data.recipe_id,
         n_servings=data.n_servings,
         is_shared=data.is_shared,
-        shared_with=data.shared_with
+        shared_with=data.shared_with,
         expiration_date=data.expiration_date
     )
 
