@@ -47,7 +47,7 @@ class PlannedMeals(Base):
     n_servings = Column(Numeric)
     is_shared = Column(Boolean)
     shared_with = Column(ARRAY(Integer))
-    expiration_date = Column(ARRAY(TIMESTAMP))
+    expiration_date = Column(TIMESTAMP)
 
     recipe = relationship("Recipes", backref="planned_meals")
 
