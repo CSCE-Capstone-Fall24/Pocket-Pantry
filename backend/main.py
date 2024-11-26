@@ -872,8 +872,36 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
     ).all()
     
     if not pantry_items:
-        raise HTTPException(status_code=404, detail="No pantry items found for user.")
+        raise HTTPException(status_code=404, detail="No pantry items found for users.")
     
+    all_r = db.query(Recipes).all()
+
+    ingredients_owned_all_r = []
+
+    for recipe in all_r:
+        has_ingredients = []
+
+        for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
+            possessed = False
+            for item in pantry_items:
+                if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 88:
+                    if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
+                        possessed = True
+                        has_ingredients.append(True)
+                        break
+            if possessed == False:
+                has_ingredients.append(False)
+        ingredients_owned_all_r.append(has_ingredients)
+
+
+    for i, recp in enumerate(all_r):
+        recp.possessed_list = ingredients_owned_all_r[i]
+
+    all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+
+    return all_r
+
+    """
     all_r = db.query(Recipes).all()         #fetches all recipes from database
 
     #fuzzy matching of ingredients to pantry items
@@ -905,11 +933,15 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
             can_make = True
             for idx_ingredient, ingredient_name in enumerate(recipe_details.ingredients):
                 # true false list for ingredients
-                for item in pantry_items:
-
-                    if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 88:
-                        if convert_to_grams(item.quantity, item.unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
-                            can_make = False
+                best_match = 0
+                best_match_idx = -1
+                for idx_item, item in enumerate(pantry_items):
+                    fuzz_score = fuzz.WRatio(item.food_name.lower(), ingredient_name.lower())
+                    if fuzz_score > 88 and fuzz_score > best_match:
+                        best_match = fuzz_score
+                        best_match_idx = idx_item
+                if best_match_idx !=-1 and convert_to_grams(pantry_items[best_match_idx].quantity, pantry_items[best_match_idx].unit) < convert_to_grams(recipe_details.ingredient_quantities[idx_ingredient], recipe_details.ingredient_units[idx_ingredient]):
+                    can_make = False
             if can_make:
                 can_make_recipes_ids.append(id)
 
@@ -946,9 +978,10 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
         all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
 
         return {
-            "message": "Cannot fully craft any recipes with current inventory. Here are the best 20 recipes with the least missing ingredients.",
+            "message": "Cannot fully craft any recipes with current inventory. Here are the recipes in order of the least missing ingredients.",
             "recipe data": all_r
         }
+    """
 #ingredients possessed or not in field 'possessed_list' as a parallel list of booleans
 
 class AddFavoriteRequest(BaseModel):
