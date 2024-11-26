@@ -139,8 +139,8 @@ const PantryItem = (props: PantryProps) => {
           throw new Error('Failed to update item');
         }
 
-        alert(props.recipRoommates.map((r) => r.id) + "\n" + tempShared + "\n" + updatedItem.shared_with);
-        alert(response);
+        // alert(props.recipRoommates.map((r) => r.id) + "\n" + tempShared + "\n" + updatedItem.shared_with);
+        // alert(response);
         console.log(response);
   
         setQuantity(tempQuantity);
@@ -161,16 +161,17 @@ const PantryItem = (props: PantryProps) => {
 
   {/* Functions - confirm choice to delete item */}
   const confirmDelete = () => {
-    // Alert.alert(
-    //   "Delete item?",
-    //   ``,
-    //   [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id), }],
-    //   { cancelable: true }
-    // );
-    props.deleteItem(props.id, props.user_id);
+    Alert.alert(
+      "Delete item?",
+      ``,
+      [{ text: "Cancel", style: "cancel", }, { text: "OK", onPress: () => props.deleteItem(props.id, props.user_id), }],
+      { cancelable: true }
+    );
+    // props.deleteItem(props.id, props.user_id);
   };
 
   return (
+    <TouchableOpacity onPress={openWindow}>
     <View style={styles.container}>
 
       {/* Displayed item information */}
@@ -195,6 +196,7 @@ const PantryItem = (props: PantryProps) => {
       </ScrollView>
 
       <TouchableOpacity style={styles.editButton} onPress={openWindow}>
+      {/* <TouchableOpacity style={styles.editButton}> */}
         <Ionicons name="pencil" size={26} color="gray"/>
       </TouchableOpacity>
 
@@ -359,6 +361,7 @@ const PantryItem = (props: PantryProps) => {
         </View>
       </Modal>
     </View>
+    </TouchableOpacity>
   )
 };
 

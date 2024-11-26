@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert, RefreshControl } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -62,6 +62,17 @@ export default function Pantry () {
 
     } catch (error) {
       console.error("Error fetching items:", error);
+    }
+  };
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchItems();
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -213,7 +224,7 @@ export default function Pantry () {
 
   {/* Functions - delete item */}
   const deleteItem = async (id: string, user_id: string) => { // argument is pantry_id
-    alert("pantry id is " + id);
+    // alert("pantry id is " + id);
     try {
       const response = await fetch(`${API_URL}/remove_pantry_item/`, {
         method: 'POST',
@@ -263,16 +274,22 @@ export default function Pantry () {
       <View style={styles.header}>
         <Text style={styles.title}>Pantry</Text>
 
-        <TouchableOpacity style={styles.addButton} onPress={fetchItems}>
+        {/* <TouchableOpacity style={styles.addButton} onPress={fetchItems}>
           <Ionicons name="refresh" size={24} color="white" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
           <Ionicons name="add-outline" size={40} color="white"/>
         </TouchableOpacity>
       </View>
       
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
       
         {/* Add item window */}
         <Modal
