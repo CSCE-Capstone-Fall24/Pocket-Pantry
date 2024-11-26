@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Modal, 
-  TextInput, 
-  Button, 
-  Alert 
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Button, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserContext } from '@/components/contexts/UserContext';
 import Roommates from '@/components/Roommates';
@@ -21,7 +11,10 @@ const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 export default function Profile() {
   const { userData, setUserData } = useUserContext();
 
-  const [isPasswordModalVisible, setPasswordModalVisible] = useState(false);
+  const [isWindowVisible, setWindowVisible] = useState(false);
+  const openWindow = () => setWindowVisible(true);
+  const closeWindow = () => setWindowVisible(false);
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [dropdownState, setDropdownState] = useState({
@@ -57,7 +50,7 @@ export default function Profile() {
   
       const result = await response.json();
       alert('Success, ' + result.message);
-      setPasswordModalVisible(false);
+      closeWindow();
       setCurrentPassword('');
       setNewPassword('');
     } catch (error: any) {
@@ -66,206 +59,167 @@ export default function Profile() {
     }
   };
   
-
-
   return (
-    <ScrollView>
-      <SafeAreaView>
-        {/* Header */}
-        <View style={styles.header}>
-          <Ionicons style={styles.title} name="person" color="#ff8667" />
-          <Text style={styles.title}>Your Profile</Text>
+    <View style={styles.container}> 
+      <Text style={styles.title}>Profile</Text>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
+        {/* Username/ID */}
+        <View style={styles.userContainer}>
+          <Text style={styles.userText}>Username: {userData?.username || 'N/A'}   </Text>
+          <Text style={styles.userText}>User ID: {userData?.user_id || 'N/A'}</Text>
         </View>
 
-        {/* Username */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Username <Text style={styles.value}>{userData?.username || 'N/A'}</Text></Text>
-          <Text style={styles.label}>User ID <Text style={styles.value}>{userData?.user_id || 'N/A'}</Text></Text>
-
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => setPasswordModalVisible(true)}
-          >
-            <Text style={styles.buttonText}>Change Password</Text>
-          </TouchableOpacity>  
-        </View>
+        <TouchableOpacity style={styles.changePasswordButton} onPress={openWindow}>
+          <Text style={styles.changePasswordButtonText}>Change Password</Text>
+        </TouchableOpacity>  
 
         <Roommates/>
 
         <FavoritedRecipes/>
 
         <Modal
+          transparent={true}
           animationType="slide"
-          transparent
-          visible={isPasswordModalVisible}
-          onRequestClose={() => setPasswordModalVisible(false)}
+          visible={isWindowVisible}
+          onRequestClose={closeWindow}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Reset Password</Text>
-              
-              {/* Current Password Input */}
-              <TextInput
-                style={styles.input}
-                placeholder="Current Password"
-                secureTextEntry
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-              />
+          <View style={styles.windowContainer}>
+            <Text style={styles.windowTitle}>RESET PASSWORD</Text>
+            
+            {/* Current password input */}
+            <TextInput
+              style={styles.inputContainer}
+              placeholder="Current Password"
+              secureTextEntry
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+            />
 
-              {/* New Password Input */}
-              <TextInput
-                style={styles.input}
-                placeholder="New Password"
-                secureTextEntry
-                value={newPassword}
-                onChangeText={setNewPassword}
-              />
+            {/* New password input */}
+            <TextInput
+              style={styles.inputContainer}
+              placeholder="New Password"
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
 
-              {/* Modal Buttons */}
-              <View style={styles.modalButtons}>
-                <Button title="Cancel" onPress={() => setPasswordModalVisible(false)} />
-                <Button title="Submit" onPress={handlePasswordChange} />
-              </View>
+            {/* Cancel/save new password */}
+            <View style={styles.buttonAlignment}>
+              <TouchableOpacity style={styles.cancelButton} onPress={closeWindow}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handlePasswordChange}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
-
-
-
-      </SafeAreaView>
-    </ScrollView>
+      </ScrollView>
+   </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
-    padding: 15,
-    marginHorizontal: 25,
-    marginVertical: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    // borderWidth: 1,
-    // borderColor: '#e0e0e0',
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 4,
-    // elevation: 2, // For Android shadow
-  },
-  label: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  value: {
-    fontSize: 24,
-    color: '#555',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+  container: {
+    flex: 1,
   },
   title: {
-    marginTop: 25,
+    marginTop: 80,
     marginLeft: 25,
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: 700,
   },
-  dropdownContainer: {
-    marginBottom: 10,
+  userContainer: {
+    marginTop: 25,
     marginHorizontal: 25,
-  },
-  dropdownHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderColor: 'lightgray',
-  },
-  dropdownTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  dropdownActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  refreshText: {
-    marginRight: 15,
-    fontSize: 16,
-    color: '#ff8667',
-  },
-  dropdownToggle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  dropdownContent: {
-    paddingVertical: 10,
-  },
-  dropdownItem: {
-    fontSize: 16,
-    paddingVertical: 5,
-  },
-  addButton: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: '#ff8667',
-    borderRadius: 5,
-    alignItems: 'center',
-  },  
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '85%',
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#ccc',
+    height: 52,
     borderRadius: 8,
-    padding: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    shadowColor: "black",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white", 
+  },
+  userText: {
+    fontSize: 24,
+  },
+  changePasswordButton: {
+    marginTop: 15,
+    marginHorizontal: 25,
+    height: 50,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ff8667",
+  },
+  changePasswordButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
+  },
+  windowContainer: {
+    flex: 1,
+    padding: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  windowTitle: {
+    marginBottom: 20,
+    fontSize: 24,
+    fontWeight: 600,
+  },
+  inputContainer: {
     marginBottom: 15,
+    height: 50,
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: "lightgray",
+    paddingHorizontal: 15,
+    fontSize: 16,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  resetButton: {
+  buttonAlignment: {
     marginTop: 10,
-    padding: 10,
-    backgroundColor: '#ff8667',
-    borderRadius: 5,
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
-  addButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+  cancelButton: {
+    marginRight: 35,
+    height: 50,
+    width: 100,
+    borderWidth: 2,
+    borderRadius: 8,
+    borderColor: "#ff8667",
+    paddingVertical: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
   },
-  buttonText: {
-    color: 'white',
+  cancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-  }
+    fontWeight: "bold",
+    color: "#ff8667",
+  },
+  saveButton: {
+    height: 50,
+    width: 100,
+    borderRadius: 8,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ff8667",
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
 });

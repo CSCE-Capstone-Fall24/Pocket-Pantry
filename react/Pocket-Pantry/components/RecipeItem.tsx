@@ -271,16 +271,16 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   recipeHeader: {
-    marginTop: 70,
+    marginTop: 75,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   backButton: {
-    marginLeft: 18,
+    marginLeft: 20,
   },
   bookmark: {
-    marginHorizontal: 22,
+    marginHorizontal: 25,
   },
   recipeTitle: {
     marginTop: 28,

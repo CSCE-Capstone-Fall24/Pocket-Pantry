@@ -1,6 +1,5 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 export default function LoginScreen({ setIsAuthenticated, setUserData }) {
@@ -208,9 +207,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#ff8667",
   },
   buttonText: {
-    color: "white",
     fontSize: 18,
     fontWeight: "bold",
+    color: "white",
   },
   textContainer: {
     flexDirection: "row",
