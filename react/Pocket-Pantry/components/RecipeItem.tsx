@@ -198,9 +198,9 @@ const RecipeItem = (props: RecipeProps) => {
             <Text style={styles.recipeTextHeader}>NUTRITION</Text>
             {props.nutrition.map((item, index) => (
               index === 0 ? (
-                  <Text style={styles.recipeText} key={index}>{nutrition[index]}: {item} Calories</Text>
+                  <Text style={styles.recipeText} key={index}>{nutrition[index]}: {Math.round(Number(servings) / props.servings * item)} Calories</Text>
                 ) : (
-                  <Text style={styles.recipeText} key={index}>{nutrition[index]}: {item}% Daily Value</Text>
+                  <Text style={styles.recipeText} key={index}>{nutrition[index]}: {Math.round(Number(servings) / props.servings * item)}% Daily Value</Text>
                 )
             ))}
 
