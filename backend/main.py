@@ -1119,7 +1119,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         all_combinations.extend(combinations(unique_users, r))
 
     # Convert tuples to lists
-    all_combinations = [list(comb) for comb in all_combinations]
+    all_combinations = [list(combo) for combo in all_combinations]
 
     for i in range(len(all_combinations) -1, -1, -1):
         if len(all_combinations[i]) == 1:
@@ -1261,12 +1261,12 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
 
                     # If a match is found, print or store the result
                     if best_match_index is not None:
-                        if meal[3][idx_meal] <= pantry[1][best_match_index]:
-                            pantry[1][best_match_index] -= meal[3][idx_meal]
+                        if meal[3][idx_meal] <= pantry[2][best_match_index]:
+                            pantry[2][best_match_index] -= meal[3][idx_meal]
                             meal[3][idx_meal] = 0
                         else:
-                            meal[3][idx_meal] -= pantry[1][best_match_index]
-                            pantry[1][best_match_index] = 0
+                            meal[3][idx_meal] -= pantry[2][best_match_index]
+                            pantry[2][best_match_index] = 0
 #convert units back
     for meal in meal_info:
         meal[3] = convert_list_from_grams(meal[3], meal[4])
