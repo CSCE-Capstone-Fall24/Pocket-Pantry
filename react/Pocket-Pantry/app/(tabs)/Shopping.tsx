@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ShoppingList from '@/components/ShoppingList';
 
@@ -9,6 +9,7 @@ export default function Shopping() {
     name: string;
     unit: string;
     quantity: number;
+    checked: boolean; // New property to track if the item is checked
   }
 
   interface List {
@@ -22,32 +23,63 @@ export default function Shopping() {
       listId: "1",
       userIds: ["You"],
       shoppingItems: [
-        { id: "1", name: "Apple", unit: "count", quantity: 3 },
-        { id: "2", name: "Bananas", unit: "count", quantity: 5 },
+        { id: "1", name: "Apple", unit: "count", quantity: 3, checked: false },
+        { id: "2", name: "Bananas", unit: "count", quantity: 5, checked: false },
       ],
     },
     {
       listId: "2",
       userIds: ["You", "Roommate 1"],
       shoppingItems: [
-        { id: "3", name: "Milk", unit: "gal", quantity: 0.5 },
-        { id: "4", name: "Bread", unit: "loaf", quantity: 1 },
+        { id: "3", name: "Milk", unit: "gal", quantity: 0.5, checked: false },
+        { id: "4", name: "Bread", unit: "loaf", quantity: 1, checked: false },
       ],
     },
     {
       listId: "3",
       userIds: ["You", "Roommate 2"],
       shoppingItems: [
-        { id: "5", name: "Orange", unit: "count", quantity: 69 },
-        { id: "6", name: "Juice", unit: "bottle", quantity: 2 },
+        { id: "5", name: "Orange", unit: "count", quantity: 69, checked: false },
+        { id: "6", name: "Juice", unit: "bottle", quantity: 2, checked: false },
       ],
     },
   ]);
 
+  // Function to handle checkbox toggling for an item
+  const toggleCheckbox = (listId: string, itemId: string) => {
+    setTestLists((prevLists) =>
+      prevLists.map((list) =>
+        list.listId === listId
+          ? {
+              ...list,
+              shoppingItems: list.shoppingItems.map((item) =>
+                item.id === itemId ? { ...item, checked: !item.checked } : item
+              ),
+            }
+          : list
+      )
+    );
+  };
+
+  // Function to handle submit action
+  const handleSubmit = () => {
+    setTestLists((prevLists) =>
+      prevLists.map((list) => ({
+        ...list,
+        shoppingItems: list.shoppingItems.filter((item) => !item.checked),
+      }))
+    );
+
+    Alert.alert('Submitted', 'Checked items have been removed from your shopping list.');
+  };
+
   return (
     <ScrollView>
       <SafeAreaView>
-        <Text style={styles.title}>Shopping Lists</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Shopping Lists</Text>
+          <Button title="Submit" onPress={handleSubmit} />
+        </View>
       </SafeAreaView>
 
       {/* Render each shopping list */}
@@ -60,6 +92,7 @@ export default function Shopping() {
             listId={list.listId}
             userIds={list.userIds}
             shoppingItems={list.shoppingItems}
+            toggleCheckbox={toggleCheckbox} // Pass down the toggle function
           />
         </View>
       ))}
@@ -68,9 +101,14 @@ export default function Shopping() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingTop: 25,
+  },
   title: {
-    marginLeft: 25,
-    marginTop: 25,
     fontSize: 32,
     fontWeight: "700",
   },
