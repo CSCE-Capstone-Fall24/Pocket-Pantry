@@ -34,7 +34,7 @@ const PantryItem = (props: PantryProps) => {
   const { userData, setUserData } = useUserContext();
 
   const units = [
-    "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "c", "pt",
+    "pieces", "oz", "lbs", "tbsp", "tsp", "fl oz", "cups", "pt",
     "qt", "gal", "mg", "g", "kg", "ml", "l", "drops", "dashes",
     "pinches", "handfuls", "cloves", "slices", "sticks", "cans",
     "bottles", "packets", "bunches", "leaves", "stones", "sprigs",
