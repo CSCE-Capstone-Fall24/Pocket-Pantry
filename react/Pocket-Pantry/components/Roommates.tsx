@@ -182,7 +182,7 @@ export default function Roommates() {
           {/* New roommate input */}
           <TextInput
             style={styles.inputContainer}
-            placeholder="Enter roommate username or ID"
+            placeholder="Enter roommate ID"
             value={newRoommate}
             onChangeText={setNewRoommate}
           />
