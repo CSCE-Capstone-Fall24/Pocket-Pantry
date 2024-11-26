@@ -190,8 +190,8 @@ export default function Pantry () {
 
   {/* Functions - add item */}
   const addItem = async () => {
-    if (isNaN(Number(newQuantity))) {
-      Alert.alert('Quantity must be a number.');
+    if (isNaN(Number(newQuantity)) || Number(newQuantity) <= 0) {
+      Alert.alert('Please enter a valid quantity.');
     } else if (newName && newQuantity && newUnit && newExpiration && newShared) {
       // Prepare the item object to send to the backend
       const newItem = {
@@ -262,7 +262,6 @@ export default function Pantry () {
       }
   
       setItems((prevItems) => prevItems.filter((item) => item.id !== id));
-      alert('Item successfully removed!');
     } catch (error) {
       console.error('Error removing item:', error);
       alert('Error: Failed to remove item.');
@@ -469,7 +468,6 @@ export default function Pantry () {
                 </ScrollView>
               )}
 
-
               {/* Cancel/save new item */}
               <View style={styles.buttonAlignment}>
                 <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); }}>
@@ -486,36 +484,33 @@ export default function Pantry () {
 
         {/* Display items */}
         {items.length ? (
-            categorizedItems.map((categoryGroup, index) => (
-              categoryGroup.items.length > 0 && (
-                <View key={`${categoryGroup.category}-${index}`}>
-                  <Text style={styles.categoryHeader}>
-                    {categoryGroup.category.toUpperCase()}
-                  </Text>
-                  {categoryGroup.items.map((item) => (
-                    <View 
+          categorizedItems.map((categoryGroup, index) => (
+            categoryGroup.items.length > 0 && (
+              <View key={`${categoryGroup.category}-${index}`}>
+                <Text style={styles.categoryHeader}>
+                  {categoryGroup.category.toUpperCase()}
+                </Text>
+                {categoryGroup.items.map((item) => (
+                  <View key={item.id}>
+                    <PantryItem
                       key={item.id}
-                    >
-                      <PantryItem
-                        key={item.id}
-                        id={item.id}
-                        user_id={item.user_id}
-                        name={item.name}
-                        category={item.category}
-                        quantity={item.quantity}
-                        unit={item.unit}
-                        expiration={item.expiration}
-                        shared={item.shared}
-                        shared_with={item.shared_with}
-                        deleteItem={deleteItem}
-                        recipRoommates={recipRoommates}
-                        refetch={fetchItems}
-                      />
-                    </View>
-                  ))}
-                </View>
-              )
-            ))
+                      id={item.id}
+                      user_id={item.user_id}
+                      name={item.name}
+                      category={item.category}
+                      quantity={item.quantity}
+                      unit={item.unit}
+                      expiration={item.expiration}
+                      shared={item.shared}
+                      shared_with={item.shared_with}
+                      deleteItem={deleteItem}
+                      recipRoommates={recipRoommates}
+                      refetch={fetchItems}
+                    />
+                  </View>
+                ))}
+              </View>
+            )))
           ) : (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>Pantry is empty :(</Text>
