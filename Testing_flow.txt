@@ -55,48 +55,27 @@ Testing Recipes With Info:
         serving_size: 15
         n_steps: 8
         n_ingredients: 10
-        ingredients_scraped: []
 
     Recipe 3:
         recipe_id:
         name: 'Slow Cooker Stuffing'
-        description: 'This crockpot stuffing is an easy way to make extra stuffing for a large crowd — and it frees up stove space because it cooks in a slow cooker. This recipe is designed for use in a standard 4-quart slow cooker and is very tasty and moist!'
-        food_com_id: 55053
-        contributor_id: 451
-        Submitted_date: '2006-04-28'
-        tags: ['Group', 'Dinner', 'Slow Cook']
-        nutrition: [9, 20, 0, 24, 3, 15, 6]
-        cook_time_minutes: 315
-        cook_steps: ['Melt butter in a skillet over medium heat. Cook and stir onion, celery, mushroom, and parsley in butter until slightly softened, 5 to 8 minutes.', 'Place bread cubes in a very large mixing bowl. Spoon cooked vegetables over bread cubes.', 'Season with salt, sage, poultry seasoning, thyme, marjoram, and pepper.', 'Pour in enough broth to moisten, then mix in eggs.', 'Transfer mixture to a slow cooker.', 'Cover and cook on High for 45 minutes, then reduce heat to Low and cook for 4 to 8 hours.']
         ingredients: ['Butter', 'Chopped onion', 'Chopped celery', 'Sliced Mushrooms', 'Chopped Fresh Parsley', 'Bread Cubes', 'Salt', 'Dried Sage', 'Poultry Seasoning', 'Dried Thyme', 'Dried Marjoram', 'Ground Black Pepper', 'Chicken Broth', 'Large Eggs']
         ingredient_quantities: [1, 2, 2, 12, 0.25, 12, 1.5, 1.5, 1, 1, 0.5, 0.5, 4.5, 2]
         ingredient_units: ['cup', 'cups', 'cups', 'oz', 'cup', 'cups', 'tsp', 'tsp', 'tsp', 'tsp', 'tsp', 'tsp', 'cups', 'pieces']
         serving_size: 16
         n_steps: 6
         n_ingredients: 14
-        ingredients_scraped: []
 
     Recipe 4:
-        recipe_id:
         name: 'Simple Lemon Herb Chicken'
-        description: 'This lemon-herb chicken is a simple, quick, and delicious dish. All you need are a few herbs, a lemon, and of course, the chicken! The amount of spices is completely up to you. You can add more or less according to your taste.'
-        food_com_id: 14132
-        contributor_id: 206
-        Submitted_date: '2015-03-27'
-        tags: ['Chicken', 'Quick and Easy', 'Lemon', 'Herb', 'Healthy']
-        nutrition: [12, 17, 0, 8, 31, 13, 1]
-        cook_time_minutes: 15
-        cook_steps: ['Place chicken in a bowl; pour 1/2 of the lemon juice over chicken and season with salt.', 'Heat olive oil in a medium skillet on medium-low heat. Place chicken into hot oil. Add remaining lemon juice and oregano; season with black pepper.”, “Cook chicken until golden brown and the juices run clear, 5 to 10 minutes per side. Internal temperature should read at least 165 degrees F (74 degrees C).', 'Garnish chicken with parsley to serve.']
         ingredients: ['Skinless Boneless Chicken Breast Halves', 'Medium Lemon', 'Salt', 'Freshly Ground Black Pepper', 'Olive Oil', 'Dried Oregano', 'Fresh Parsley Chopped']
         ingredient_quantities: [10, 1, 1, 1, 1, 1, 2]
         ingredient_units: ['oz', 'piece', 'pinches', 'pinches', 'tbsp', 'pinch', 'sprigs']
         serving_size: 2
         n_steps: 4
         n_ingredients: 7
-        ingredients_scraped: []
 
     Recipe 5:
-        recipe_id:
         name: 'Easy Weeknight Spaghetti'
         description: 'My family’s favorite weeknight friendly spaghetti recipe is quick and simple. The super flavorful spaghetti sauce is ready in 45 minutes and you can use your favorite ground meat to make it (beef, turkey, and chicken are all excellent).'
         food_com_id: 17867
