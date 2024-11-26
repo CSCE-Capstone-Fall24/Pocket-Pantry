@@ -288,7 +288,7 @@ async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Dep
     pantry_item.is_shared = bool(request.shared_with)
 
     db.commit()
-    db.refresh()
+    db.refresh(pantry_item)
 
     return {
         "message": "Pantry item updated successfully",
