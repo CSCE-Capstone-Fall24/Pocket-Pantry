@@ -24,7 +24,6 @@ function RootLayout() {
 
   console.log("thing is " + API_URL);
 
-
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
@@ -38,7 +37,7 @@ function RootLayout() {
   if (isAuthenticated) {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Text style={{ backgroundColor: 'yellow' }}>user_id {userData.user_id}</Text>
+        {/* <Text style={{ backgroundColor: 'yellow' }}>user_id {userData.user_id}</Text> */}
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
