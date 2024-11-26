@@ -22,6 +22,12 @@ export default function MealPlan () {
     ingredient_units: string[];
   }
 
+  type Roommate = {
+    id: string; 
+    name: string; 
+    isReciprocal: boolean;
+  };
+
   type PlannedMeal = {
     meal_id: string; 
     user_id: string; 
@@ -34,6 +40,55 @@ export default function MealPlan () {
   }
 
   const { userData, setUserData } = useUserContext(); // pull once integrated
+  const [recipRoommates, setRecipRoommates] = useState<Roommate[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchPlannedMeals();
+      await refreshRoommates();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const refreshRoommates = async () => {
+    try {
+      const response = await fetch(`${API_URL}/get_roommates/?user_id=${userData?.user_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch roommates');
+
+      const data = await response.json();
+      setUserData((prevData: any) => ({
+        ...prevData,
+        roommates: data.roommates,
+      }));
+
+      // Alert.alert('Success', 'Roommates updated!');
+    } catch (error) {
+      // console.error(error);
+      // Alert.alert('Error', 'Could not refresh roommates. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    const rms: Roommate[] = userData.roommates
+      .filter((item: any) => item.is_reciprocated)
+      .map((item: any) => ({
+        id: item.roommate_id,
+        name: item.username,
+        isReciprocal: item.is_reciprocated,
+      })).sort((a: Roommate, b: Roommate) => Number(a.id) - Number(b.id));
+
+    setRecipRoommates(rms);
+    fetchPlannedMeals();
+  }, [userData.reciprocatedRoommates, userData.roommates]);
 
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -140,6 +195,15 @@ export default function MealPlan () {
       ingredient_quantities={item.ingredient_quantities}
       ingredient_units={item.ingredient_units}
       closeSearchWindow={closeWindow}
+
+      // editing: Boolean; // IF EDITING POST TO EDIT ON SAVE, ELSE POST TO ADD
+      // recip_roommates: Roommate[]; // need for share
+      // shared_with: Number[];
+      // user_id: Number;
+      editing={false}
+      recip_roommates={recipRoommates}
+      shared_with={[]}
+      user_id={-1}
     />
   );
 
@@ -160,7 +224,7 @@ export default function MealPlan () {
           <View key={date}>
             <Text style={styles.dateHeader}>{new Date(date).toLocaleDateString()}</Text>
             {meals.map((meal) => (
-                <MealItem
+              <MealItem
                 key={meal.meal_id}
                 meal_id={meal.meal_id}
                 user_id={meal.user_id}
@@ -170,6 +234,7 @@ export default function MealPlan () {
                 shared_with={meal.shared_with}
                 expiration={meal.expiration_date}
                 recipe={meal.recipe_obj}
+                recip_rms={recipRoommates}
               />
             ))}
           </View>

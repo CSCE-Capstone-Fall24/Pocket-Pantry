@@ -2,22 +2,29 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
+type Roommate = {
+  id: string; 
+  name: string; 
+  isReciprocal: boolean;
+};
+
 type MealProps = {
   meal_id: string;
-  user_id: string;
+  user_id: string; // PLANNER, not necessarily 
   recipe_id: string;
   n_servings: number;
   is_shared: boolean;
   shared_with: Number[];
   expiration: Date;
   recipe: any; // lol
+  recip_rms: Roommate[]
 };
 
 const MealItem = (props: MealProps) => {
   const { recipe_id, n_servings, is_shared, shared_with, expiration } = props;
 
   return (
-    <TouchableOpacity style={styles.container} onPress={() => console.log("Meal pressed:", recipe_id)}>
+    <TouchableOpacity style={styles.container} onPress={() => console.log("Meal pressed:", recipe_id)}> {/* ON PRESS OPEN MODAL OF RECIPE ITEM WITH EDIT=TRUE */}
       <View style={styles.textContainer}>
         {/* Meal Info */}
         <Text style={styles.recipeName}>{props.recipe.name}</Text>

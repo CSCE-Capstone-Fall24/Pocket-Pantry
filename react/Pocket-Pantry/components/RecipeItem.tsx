@@ -1,8 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Pressable, Alert } from "react-native";
 import Modal from "react-native-modal"
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useUserContext } from "./contexts/UserContext";
+
+type Roommate = {
+  id: string; 
+  name: string; 
+  isReciprocal: boolean;
+};
 
 type RecipeProps = {
   id: number;
@@ -16,10 +23,17 @@ type RecipeProps = {
   ingredient_quantities: number[];
   ingredient_units: string[];
   closeSearchWindow: () => void;
+
+  editing: Boolean; // IF EDITING POST TO EDIT ON SAVE, ELSE POST TO ADD
+  recip_roommates: Roommate[]; // need for share
+  shared_with: Number[];
+  user_id: Number;
 };
 
 const RecipeItem = (props: RecipeProps) => {
+  
   const nutrition = ["Calories", "Fat", "Sugar", "Sodium", "Protein", "Saturated Fat", "Carbohydrates"];
+  const { userData, setUserData } = useUserContext(); // pull once integrated
 
   {/* Functions - view recipe window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -78,6 +92,44 @@ const RecipeItem = (props: RecipeProps) => {
       closeWindow();
     }
   };
+
+
+  const [shared, setShared] = useState<boolean[]>([]);
+  const [tempShared, setTempShared] = useState<boolean[]>([]);
+  useEffect(() => {
+    const initialShared = props.recip_roommates.map((roommate: Roommate) => {
+      return props.shared_with.includes(Number(roommate.id)); // ignore rn, data is fetched as string but it should be a number according to type script
+    });
+    
+    // console.log(props.shared_with.includes(props.recipRoommates[0].id.toString()));
+    // console.log(props.recipRoommates);
+    // console.log(props.shared_with);
+
+    setShared(initialShared);
+    setTempShared(initialShared);
+
+    // setQuantity(props.quantity.toString()); MAYBE NEED FOR EDIT? IDK
+    // setTempQuantity(quantity);
+    // setUnit(props.unit);
+    // setTempUnit(unit);
+    // setExpiration(props.expiration);
+    // setTempExpiration(expiration);
+    // console.log(initialShared);
+  }, [props.recip_roommates, props ]);
+
+  const sharedToggle = (index: number) => {
+    setTempShared((prevState) => {
+      const updatedState = [...prevState];
+      updatedState[index] = !updatedState[index];
+      return updatedState;
+    });
+  };
+
+  const sharedColors = [
+    "#e167a4", "#f4737e", "#ff8667", "#ffb778",
+    "#fde289", "#ade693", "#89e0b3", "#78dbde",
+    "#6eabd7", "#7a6ed7","#ae5da2",
+  ];
 
   return (
     <TouchableOpacity onPress={openWindow}>
@@ -219,6 +271,63 @@ const RecipeItem = (props: RecipeProps) => {
                 </View>
               </View>
             </Modal>
+
+            
+                          {/* Set item as shared */}
+              {
+                userData.user_id == props.user_id ? (
+                  // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
+                  // props.shared_with.length > 0 && (
+                    <ScrollView horizontal={false} style={styles.sharedScroll}>
+                        {props.recip_roommates.map((roommate: Roommate, index: number) => {
+                          return (
+                            <View key={roommate.id} style={styles.sharedContainer}>
+                              <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
+                              <Pressable onPress={() => sharedToggle(index)}>
+                                  <Ionicons 
+                                    name={tempShared[index] ? "checkmark-circle" : "ellipse-outline"}
+                                    size={32} 
+                                    color={sharedColors[index]}/>
+                              </Pressable>
+                            </View>
+                          );
+                        })}
+                    </ScrollView>
+                  // )
+                ) : (
+                  // USER VIEWING IS NOT OWNER
+                  // SHOW OWNER
+                  <ScrollView horizontal={false} style={styles.sharedScroll}>
+                    <View key={999} style={styles.sharedContainer}>
+                      <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                        Item Owner: {props.recip_roommates.find((rm: Roommate) => rm.id.toString() == props.user_id.toString())?.name || 'Unknown'}
+                      </Text>
+                      {/* <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {((props.recipRoommates: Roommate).find((rm: Roommate) => rm.id === props.user_id)).name}</Text> */}
+                    </View>
+                    {/* // SHOW SHARED WITH
+                    // MARK YOU IN SHARED WITH */}
+                    {props.shared_with.map((roommate: Number, index: number) => {
+                      const found = props.recip_roommates.find((rm: Roommate) => Number(rm.id) == roommate);
+                      const roommateName = found ? found.name : `Unknown (${roommate})`;
+                      
+                      return (
+                        <View key={Number(roommate)} style={styles.sharedContainer}>
+                          <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                            {/* Shared with {userData.user_id != roommate ? roommateName : roommate} */}
+                            fix this line 317 recipeitem.tsx
+                            </Text>
+                          <Pressable>
+                              <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                          </Pressable>
+                          {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                )
+              }
+
+
 
             {/* Cancel/add recipe to meal plan */}
             <View style={styles.recipeInputContainer}>
