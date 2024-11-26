@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert, RefreshControl } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -65,6 +65,42 @@ export default function Pantry () {
     }
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchItems();
+      await refreshRoommates();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const refreshRoommates = async () => {
+    try {
+      const response = await fetch(`${API_URL}/get_roommates/?user_id=${userData?.user_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch roommates');
+
+      const data = await response.json();
+      setUserData((prevData: any) => ({
+        ...prevData,
+        roommates: data.roommates,
+      }));
+
+      // Alert.alert('Success', 'Roommates updated!');
+    } catch (error) {
+      // console.error(error);
+      // Alert.alert('Error', 'Could not refresh roommates. Please try again.');
+    }
+  };
+
   useEffect(() => {
     const rms: Roommate[] = userData.roommates
       .filter((item: any) => item.is_reciprocated)
@@ -74,12 +110,10 @@ export default function Pantry () {
         isReciprocal: item.is_reciprocated,
       })).sort((a: Roommate, b: Roommate) => Number(a.id) - Number(b.id));
 
-    console.log('got recip rms');
-    console.log(rms);
     setRecipRoommates(rms);
 
     fetchItems();
-  }, [userData.reciprocatedRoommates]);
+  }, [userData.reciprocatedRoommates, userData.roommates]);
 
   const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
@@ -213,7 +247,7 @@ export default function Pantry () {
 
   {/* Functions - delete item */}
   const deleteItem = async (id: string, user_id: string) => { // argument is pantry_id
-    alert("pantry id is " + id);
+    // alert("pantry id is " + id);
     try {
       const response = await fetch(`${API_URL}/remove_pantry_item/`, {
         method: 'POST',
@@ -263,16 +297,22 @@ export default function Pantry () {
       <View style={styles.header}>
         <Text style={styles.title}>Pantry</Text>
 
-        <TouchableOpacity style={styles.addButton} onPress={fetchItems}>
+        {/* <TouchableOpacity style={styles.addButton} onPress={fetchItems}>
           <Ionicons name="refresh" size={24} color="white" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
           <Ionicons name="add-outline" size={40} color="white"/>
         </TouchableOpacity>
       </View>
       
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
       
         {/* Add item window */}
         <Modal
@@ -293,6 +333,7 @@ export default function Pantry () {
                 <Text style={styles.fieldText}>Name:  </Text>
                 <TextInput
                   style={styles.nameInput}
+                  maxLength={20}
                   value={newName}
                   onChangeText={(value) => setNewName(value)}
                 />
@@ -445,15 +486,15 @@ export default function Pantry () {
 
         {/* Display items */}
         {items.length ? (
-            categorizedItems.map((categoryGroup) => (
+            categorizedItems.map((categoryGroup, index) => (
               categoryGroup.items.length > 0 && (
-                <View key={categoryGroup.category}>
+                <View key={`${categoryGroup.category}-${index}`}>
                   <Text style={styles.categoryHeader}>
                     {categoryGroup.category.toUpperCase()}
                   </Text>
                   {categoryGroup.items.map((item) => (
                     <View 
-                      // key={item.id}
+                      key={item.id}
                     >
                       <PantryItem
                         key={item.id}
