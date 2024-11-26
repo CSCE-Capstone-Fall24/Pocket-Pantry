@@ -5,7 +5,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 type MealProps = {
-  
+  meal_id: string,
+  user_id: string,
+  recipe_id: string,
+  n_servings: number,
+  is_shared: boolean,
+  shared_with: Number[],
+  expiration: Date
 };
 
 const MealItem = (props: MealProps) => {

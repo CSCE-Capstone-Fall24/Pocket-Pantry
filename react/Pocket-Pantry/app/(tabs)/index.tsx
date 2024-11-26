@@ -4,6 +4,7 @@ import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MealItem from "@/components/MealItem";
 import RecipeItem from "@/components/RecipeItem";
+import { useUserContext } from '@/components/contexts/UserContext';
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
@@ -20,6 +21,18 @@ export default function MealPlan () {
     ingredient_quantities: number[];
     ingredient_units: string[];
   }
+
+  type PlannedMeal = {
+    meal_id: string; 
+    user_id: string; 
+    recipe_id: string;
+    n_servings: number;
+    is_shared: boolean;
+    shared_with: Number[];
+    expiration_date: Date;
+  }
+
+  const { userData, setUserData } = useUserContext(); // pull once integrated
 
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -60,8 +73,58 @@ export default function MealPlan () {
         console.error('Error fetching recipes:', error);
       }
     };
+
     fetchRecipes();
+    fetchPlannedMeals();
   }, []);
+
+
+  const [mealData, setMealData] = useState<PlannedMeal[]>();
+  const [groupedMeals, setGroupedMeals] = useState<{ [key: string]: PlannedMeal[] }>({});
+  const fetchPlannedMeals = async () => {
+    try {
+      // const response = await fetch(`${API_URL}/planned_meals/?user_id=${userData.user_id}`);
+      const response = await fetch(`${API_URL}/planned_meals/?user_id=4`);
+      const data = await response.json();
+      // setMealData(data);
+
+      const transformedMeals: PlannedMeal[] = data.map((meal: any) => ({
+        meal_id: meal.meal_id,
+        user_id: meal.user_id,
+        recipe_id: meal.recipe_id,
+        n_servings: meal.n_servings,
+        is_shared: Boolean(meal.is_shared),
+        shared_with: meal.shared_with.sort(),
+        expiration: new Date(meal.expiration_date),
+      }));
+      setMealData([...transformedMeals]); 
+
+      console.log("got meals as");
+      console.log(transformedMeals);
+
+      // grp by date
+      const grouped = transformedMeals.reduce((acc: { [key: string]: PlannedMeal[] }, meal) => {
+        const day = meal.expiration_date.toISOString().split("T")[0];
+        if (!acc[day]) acc[day] = [];
+        acc[day].push(meal);
+        return acc;
+      }, {});
+
+      // Sort dates
+      const sortedGrouped = Object.keys(grouped)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+        .reduce((acc: { [key: string]: PlannedMeal[] }, key) => {
+          acc[key] = grouped[key];
+          return acc;
+        }, {});
+
+      setGroupedMeals(sortedGrouped);
+      
+    } catch (error) {
+      console.error('Error fetching recipes:', error);
+    }
+  };
+
   const renderRecipes = ({item}:{item:any}) => (
     <RecipeItem
       id={item.recipe_id}
@@ -90,6 +153,15 @@ export default function MealPlan () {
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
+        {Object.entries(groupedMeals).map(([date, meals]) => (
+          <View key={date}>
+            <Text style={styles.dateHeader}>{new Date(date).toLocaleDateString()}</Text>
+            {meals.map((meal) => (
+              <MealItem key={meal.meal_id} {...meal} />
+            ))}
+          </View>
+        ))}
 
         {/* Recipe search window */}
         <Modal
@@ -181,21 +253,6 @@ export default function MealPlan () {
             />
           </View>
         </Modal>
-
-        {/* Display planned meals */}
-        <Text style={styles.dateHeader}>WEDNESDAY 11/27/2024</Text>
-        <MealItem/>
-        <MealItem/>
-        <MealItem/>
-        <MealItem/>
-        <MealItem/>
-
-        <Text style={styles.dateHeader}>SATURDAY 11/30/2024</Text>
-        <MealItem/>
-        <MealItem/>
-        <MealItem/>
-        <MealItem/>
-        <MealItem/>
 
         <View style={styles.itemBuffer}></View>
       </ScrollView>
