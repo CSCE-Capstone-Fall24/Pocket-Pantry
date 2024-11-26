@@ -1132,7 +1132,9 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         meal_id = meal.meal_id
         users = []
         users.append(meal.user_id)
-        users.append(meal.shared_with)
+
+        for user in meal.shared_with: 
+            users.append(user)
         users = sorted(users)
         #query recipe table (recipes_good for meal info)
         recipe_details = db.query(Recipes).filter(Recipes.recipe_id == meal.recipe_id).first()
