@@ -344,7 +344,7 @@ async def set_item_shared_with(request: Share, db: Session = Depends(get_db)):
     
 # MEAL QUERIES --------------------------------------------------------------------------------------------------------------
 
-@app.get("/indv_planned_meals")
+@app.get("/indv_planned_meals/")
 def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
     user_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(PlannedMeals.user_id == user_id).all()
 
@@ -353,7 +353,7 @@ def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
 
     return user_meals
 
-@app.get("/planned_meals")
+@app.get("/planned_meals/")
 def planned_meals(user_id: int, db: Session = Depends(get_db)):
     all_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
         or_(
@@ -367,7 +367,7 @@ def planned_meals(user_id: int, db: Session = Depends(get_db)):
 
     return all_meals
 
-@app.get("/meals_shared_with")
+@app.get("/meals_shared_with/")
 def meals_shared_with(user_id: int, db: Session = Depends(get_db)):
     shared_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(
         and_(
@@ -446,6 +446,54 @@ def mark_pantry_item_unshared(data: ShareMealRequest, db: Session = Depends(get_
     except ValueError:
         return {"message": "roommate not shared with"}
     
+class ServingsChangeRequest(BaseModel):
+    meal_id: int
+    planned_servings: int
+
+@app.post("/edit_shared_meal_servings/")
+async def edit_shared_meal_servings(Request: ServingsChangeRequest, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == Request.meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
+    
+    meal.n_servings = Request.planned_servings
+
+    db.commit()
+    db.refresh(meal)
+
+    return {
+        "message": "Servings for your planned meal have been adjusted", 
+        "meal_name": db.query(Recipes).filter(Recipes.recipe_id == meal.recipe_id).first().name
+    }
+
+class MealShareListRequest(BaseModel):
+    meal_id: int
+    share_with: List[int]
+
+@app.post("/update_meal_roommates/")
+async def update_meal_roommates(Request: MealShareListRequest, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == Request.meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="meal not found")
+    
+    if len(Request.share_with) == 0:
+        meal.is_shared == False
+    else:
+        meal.is_shared == True
+
+    meal.shared_with = Request.share_with
+
+    db.commit()
+    db.refresh(meal)
+
+    return {
+        "message": "Shared roommates on meal has been updated"
+    }
+
 @app.post("/delete_planned_meal/")
 async def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)):
 
