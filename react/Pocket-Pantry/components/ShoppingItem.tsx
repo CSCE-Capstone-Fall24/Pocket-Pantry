@@ -5,12 +5,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 // One "Shopping Item" will be a list. "ShoppingListProps" would probably be a more discriptive name, but that's the idea
 type ShoppingProps = {
-  listId: string;
-  userIds: string[];
-  ingredients: string[];
-  ingredientQuantities: Number[];
-  ingredientUnits: string[];
-}
+  id: string;
+  name: string;
+  unit: string;
+  quantity: number;
+};
 
 // Or, ShoppingProps could be just a Shopping Item, like how PantryProps is just a Pantry Item,
 // and then create a List item that takes in an array of Shopping Items
@@ -23,11 +22,10 @@ const ShoppingItem = (props: ShoppingProps) => {
   return (
     <View style={styles.container}>
 
-      {/* Item information */}
+      {/* Shopping item line */}
       <View style={styles.itemContainer}>
-        <Text style={styles.itemName}>{props.name}</Text>
-        <View style={styles.itemDetailsContainer}>
-          <Text style={styles.itemDetailsText}>{props.quantity} lbs   Exp. 11/30/24</Text>
+          <View style={styles.rowAlignment}>
+            <Text style={styles.itemName}>Ground Beef 2 lbs </Text>
         </View>
       </View>
 
@@ -68,6 +66,10 @@ const styles = StyleSheet.create({
   itemContainer: {
     marginVertical: 10,
     marginLeft: 25,
+  },
+  rowAlignment: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   itemName: {
     marginBottom: 5,
