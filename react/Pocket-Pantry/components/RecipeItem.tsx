@@ -15,7 +15,7 @@ type RecipeProps = {
   ingredients: string[];
   ingredient_quantities: number[];
   ingredient_units: string[];
-  closeSearchModal: () => void;
+  closeSearchWindow: () => void;
 };
 
 const RecipeItem = (props: RecipeProps) => {
@@ -77,7 +77,7 @@ const RecipeItem = (props: RecipeProps) => {
     } else {
       closeWindow();
       setTimeout(() => {
-        props.closeSearchModal();
+        props.closeSearchWindow();
       }, 350);
     }
   };

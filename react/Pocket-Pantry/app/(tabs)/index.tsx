@@ -74,7 +74,7 @@ export default function MealPlan () {
       ingredients={item.ingredients}
       ingredient_quantities={item.ingredient_quantities}
       ingredient_units={item.ingredient_units}
-      closeSearchModal={closeWindow}
+      closeSearchWindow={closeWindow}
     />
   );
 
