@@ -288,6 +288,7 @@ async def update_pantry_item(request: UpdatePantryItemRequest, db: Session = Dep
     pantry_item.is_shared = bool(request.shared_with)
 
     db.commit()
+    db.refresh()
 
     return {
         "message": "Pantry item updated successfully",
@@ -344,6 +345,8 @@ async def set_item_shared_with(request: Share, db: Session = Depends(get_db)):
     
 # MEAL QUERIES --------------------------------------------------------------------------------------------------------------
 
+
+#fix meal queries to check confirm user_id of user making request is the owner of the meal before edits are pushed through
 @app.get("/indv_planned_meals/")
 def indv_planned_meals(user_id: int, db: Session = Depends(get_db)):
     user_meals = db.query(PlannedMeals).options(joinedload(PlannedMeals.recipe)).filter(PlannedMeals.user_id == user_id).all()
@@ -400,7 +403,42 @@ def add_planned_meal(data: PlannedMealRequest, db: Session = Depends(get_db)):
     db.refresh(new_meal)
     return {"message": "Meal added successfully", "meal": new_meal}
 
+class UpdateMealRequest(BaseModel):
+    user_id: int
+    meal_id: int
+    planned_servings: int
+    shared_with: List[int]
 
+@app.post("/update_meal/")
+def update_meal(request: UpdateMealRequest, db: Session = Depends(get_db)):
+
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == request.meal_id).first()
+
+    if not meal:
+        raise HTTPException(status_code=404, detail="Pantry item not found")
+
+    if meal.user_id != request.user_id:
+        return {
+            "message": "This meal is shared with you. You do not have edit permissions."
+        }
+    else:
+        meal.n_servings = request.planned_servings if request.planned_servings is not None else meal.n_servings
+        meal.is_shared = True if request.shared_with is not None else False
+        meal.shared_with = request.shared_with if request.shared_with is not None else []
+
+        db.commit()
+        db.refresh(meal)
+
+        return{
+            "message": "Planned meal updated successfully.",
+            "user_id": meal.user_id,
+            "meal_id": meal.meal_id,
+            "n_servings": meal.n_servings,
+            "is_shared": meal.is_shared,
+            "shared_with": meal.shared_with
+        }
+     
+"""
 class ShareMealRequest(BaseModel):
     meal_id: int
     roommate_id: int
@@ -493,19 +531,37 @@ async def update_meal_roommates(Request: MealShareListRequest, db: Session = Dep
     return {
         "message": "Shared roommates on meal has been updated"
     }
+"""
 
+class DeleteMealRequest(BaseModel):
+    user_id: int
+    meal_id: int
+    
 @app.post("/delete_planned_meal/")
-async def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)):
+async def delete_planned_meal(request: DeleteMealRequest, db: Session = Depends(get_db)):
 
-    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == meal_id).first()
+    meal = db.query(PlannedMeals).filter(PlannedMeals.meal_id == request.meal_id).first()
 
     if not meal:
         raise HTTPException(status_code=404, detail="Planned Meal not found")
     
-    db.delete(meal)
-    db.commit()
+    if meal.user_id == request.user_id:
+        db.delete(meal)
+        db.commit()
 
-    return {"message": "Your meal has been removed and meal plan has been updated."}
+        return {"message": "Your meal has been removed. Meal plan has been updated."}
+    else:
+        for idx, id in enumerate(meal.shared_with):
+            if id == request.user_id:
+                del meal.shared_with[idx]
+
+        if len(meal.shared_with) == 0:
+            meal.is_shared = False
+
+        db.commit()
+        db.refresh(meal)
+
+        return {"meassage": "You have been successfully removed from the meal. Meal plan has been updated."}
 
 #adjust item quantities after cooking meals
 @app.post("/mark_meal_cooked/")
