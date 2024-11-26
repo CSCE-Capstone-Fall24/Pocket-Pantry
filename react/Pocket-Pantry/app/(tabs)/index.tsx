@@ -30,6 +30,7 @@ export default function MealPlan () {
     is_shared: boolean;
     shared_with: Number[];
     expiration_date: Date;
+    recipe_obj: any; // lets go
   }
 
   const { userData, setUserData } = useUserContext(); // pull once integrated
@@ -95,7 +96,8 @@ export default function MealPlan () {
         n_servings: meal.n_servings,
         is_shared: Boolean(meal.is_shared),
         shared_with: meal.shared_with.sort(),
-        expiration: new Date(meal.expiration_date),
+        expiration_date: new Date(meal.expiration_date),
+        recipe_obj: meal.recipe,
       }));
       setMealData([...transformedMeals]); 
 
@@ -158,7 +160,17 @@ export default function MealPlan () {
           <View key={date}>
             <Text style={styles.dateHeader}>{new Date(date).toLocaleDateString()}</Text>
             {meals.map((meal) => (
-              <MealItem key={meal.meal_id} {...meal} />
+                <MealItem
+                key={meal.meal_id}
+                meal_id={meal.meal_id}
+                user_id={meal.user_id}
+                recipe_id={meal.recipe_id}
+                n_servings={meal.n_servings}
+                is_shared={meal.is_shared}
+                shared_with={meal.shared_with}
+                expiration={meal.expiration_date}
+                recipe={meal.recipe_obj}
+              />
             ))}
           </View>
         ))}
