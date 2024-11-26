@@ -387,6 +387,7 @@ class PlannedMealRequest(BaseModel):
     n_servings: float
     is_shared: bool
     shared_with: List[int]
+    expiration_date: datetime
 
 @app.post("/add_planned_meal/")
 def add_planned_meal(data: PlannedMealRequest, db: Session = Depends(get_db)):
@@ -396,6 +397,7 @@ def add_planned_meal(data: PlannedMealRequest, db: Session = Depends(get_db)):
         n_servings=data.n_servings,
         is_shared=data.is_shared,
         shared_with=data.shared_with
+        expiration_date=data.expiration_date
     )
 
     db.add(new_meal)
