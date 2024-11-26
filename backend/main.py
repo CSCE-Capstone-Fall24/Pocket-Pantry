@@ -325,13 +325,13 @@ async def remove_pantry_item(request: RemovePantryItemRequest, db: Session = Dep
 
     return {"message": "Pantry item removed successfully", "item_id": request.id}
 
-class share:
+class Share(BaseModel):
     item_id: int
     share_list: List[int]
 
 @app.post("/set_item_shared_with/")
-async def set_item_shared_with(request: share, db: Session = Depends(get_db)):
-    item = db.query(Pantry).filter(Pantry.pantry_id == share.item_id).first()
+async def set_item_shared_with(request: Share, db: Session = Depends(get_db)):
+    item = db.query(Pantry).filter(Pantry.pantry_id == request.item_id).first()
 
     item.is_shared = bool(request.share_list)
     item.shared_with = request.share_list

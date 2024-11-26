@@ -90,7 +90,7 @@ export default function Pantry () {
     setRecipRoommates(rms);
 
     fetchItems();
-  }, [userData.reciprocatedRoommates]);
+  }, [userData.reciprocatedRoommates, userData.roommates]);
 
   const categories = [
     "Proteins", "Fresh Produce", "Dairy & Alternatives",
@@ -464,7 +464,7 @@ export default function Pantry () {
         {items.length ? (
             categorizedItems.map((categoryGroup, index) => (
               categoryGroup.items.length > 0 && (
-                <View key={categoryGroup.category + index}>
+                <View key={`${categoryGroup.category}-${index}`}>
                   <Text style={styles.categoryHeader}>
                     {categoryGroup.category.toUpperCase()}
                   </Text>

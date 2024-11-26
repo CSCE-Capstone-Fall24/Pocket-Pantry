@@ -1,5 +1,6 @@
 from database import Base
-from sqlalchemy import ForeignKey, Column, Integer, String, TIMESTAMP, Boolean, Text, Float, Date, ARRAY, Numeric
+from sqlalchemy import ForeignKey, Column, Integer, String, TIMESTAMP, Boolean, Text, Float, Date, Numeric
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 
 class Recipes(Base):

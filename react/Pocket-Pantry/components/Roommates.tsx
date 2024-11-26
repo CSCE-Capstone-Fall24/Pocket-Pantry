@@ -67,6 +67,7 @@ export default function Roommates() {
         }),
       });
 
+      // console.log(response);
       if (!response.ok) throw new Error('Failed to remove roommate');
 
       const updatedRoommates = await response.json();
