@@ -439,7 +439,8 @@ def update_meal(request: UpdateMealRequest, db: Session = Depends(get_db)):
             "meal_id": meal.meal_id,
             "n_servings": meal.n_servings,
             "is_shared": meal.is_shared,
-            "shared_with": meal.shared_with
+            "shared_with": meal.shared_with,
+            "expiration_date": meal.expiration_date
         }
 
 class DeleteMealRequest(BaseModel):
