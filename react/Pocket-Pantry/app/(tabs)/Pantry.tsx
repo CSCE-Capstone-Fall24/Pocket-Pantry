@@ -494,7 +494,7 @@ export default function Pantry () {
                   </Text>
                   {categoryGroup.items.map((item) => (
                     <View 
-                      // key={item.id}
+                      key={item.id}
                     >
                       <PantryItem
                         key={item.id}
