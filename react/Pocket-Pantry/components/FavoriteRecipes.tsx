@@ -77,24 +77,23 @@ export default function FavoritedRecipes() {
 
 const styles = StyleSheet.create({
   dropdownContainer: {
-    marginBottom: 10,
     marginHorizontal: 25,
   },
   dropdownHeader: {
+    marginTop: 25,
+    borderBottomWidth: 1,
+    borderColor: 'lightgray',
+    paddingBottom: 13,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderColor: 'lightgray',
   },
   dropdownTitle: {
     fontSize: 18,
     fontWeight: '600',
   },
   dropdownToggle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 25,
   },
   dropdownContent: {
     paddingVertical: 10,

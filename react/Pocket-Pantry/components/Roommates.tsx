@@ -10,14 +10,18 @@ import {
   Alert,
 } from 'react-native';
 import { useUserContext } from '@/components/contexts/UserContext';
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 export default function Roommates() {
   const { userData, setUserData } = useUserContext();
   const [dropdownState, setDropdownState] = useState(true);
-  const [isAddRoommateModalVisible, setAddRoommateModalVisible] = useState(false);
   const [newRoommate, setNewRoommate] = useState('');
+
+  const [isWindowVisible, setWindowVisible] = useState(false);
+  const openWindow = () => setWindowVisible(true);
+  const closeWindow = () => setWindowVisible(false);
 
   const toggleDropdown = () => {
     setDropdownState(!dropdownState);
@@ -46,7 +50,7 @@ export default function Roommates() {
 
       alert('Success, Roommate added successfully!');
       setNewRoommate('');
-      setAddRoommateModalVisible(false);
+      closeWindow();
     } catch (error) {
       console.error(error);
       alert('Error, Could not add roommate. Please check their ID and try again.');
@@ -113,9 +117,7 @@ export default function Roommates() {
       <TouchableOpacity style={styles.dropdownHeader} onPress={toggleDropdown}>
         <Text style={styles.dropdownTitle}>Roommates</Text>
         <View style={styles.dropdownActions}>
-          <TouchableOpacity onPress={refreshRoommates}>
-            <Text style={styles.refreshText}>Refresh</Text>
-          </TouchableOpacity>
+          
           <Text style={styles.dropdownToggle}>{dropdownState ? '-' : '+'}</Text>
         </View>
       </TouchableOpacity>
@@ -126,15 +128,29 @@ export default function Roommates() {
           {userData?.roommates && userData.roommates.length > 0 ? (
             userData.roommates.map((roommate: any, index: number) => (
               <View key={index} style={styles.roommateItem}>
-                <Text style={styles.roommateName}>ID: {roommate.roommate_id}, User: {roommate.username}</Text>
-                <Text style={styles.status}>
-                  {roommate.is_reciprocated ? '✅ Added Back' : '❌ Not Added Back'}
-                </Text>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => handleRemoveRoommate(roommate.roommate_id)}
-                >
-                  <Text style={styles.removeButtonText}>Remove</Text>
+
+                <View>
+                  <Text style={styles.text}>Username: {roommate.username}</Text>
+                  <Text style={styles.text}>User ID: {roommate.roommate_id}</Text>
+                
+                  {roommate.is_reciprocated 
+                    ? (
+                      <View style={styles.rowAlignment}>
+                        <Text style={styles.text}>Added back </Text>
+                        <Ionicons name="ellipse" size={25} color="#55ff55"/>
+                      </View>           
+                    ) 
+                    : (
+                      <View style={styles.rowAlignment}>
+                        <Text style={styles.text}>Not added back </Text>
+                        <Ionicons name="ellipse" size={25} color="#ff5555"/>
+                      </View>           
+                    )
+                  }
+                </View>
+
+                <TouchableOpacity onPress={() => handleRemoveRoommate(roommate.roommate_id)}>
+                  <Ionicons name="trash" size={32} color="#ff5555"/>
                 </TouchableOpacity>
               </View>
             ))
@@ -142,36 +158,43 @@ export default function Roommates() {
             <Text style={styles.dropdownItem}>No roommates found</Text>
           )}
 
-          {/* Add Roommate Button */}
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setAddRoommateModalVisible(true)}
-          >
-            <Text style={styles.addButtonText}>+ Add Roommate</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.addRoommateButton} onPress={openWindow}>
+              <Text style={styles.addRoommateButtonText}>+ Add Roommate</Text>
+            </TouchableOpacity>  
+            <TouchableOpacity onPress={refreshRoommates}>
+              <Ionicons name="refresh" size={40} color="gray"/>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
-      {/* Add Roommate Modal */}
+      {/* Add roommate window */}
       <Modal
+        transparent={true}
         animationType="slide"
-        transparent
-        visible={isAddRoommateModalVisible}
-        onRequestClose={() => setAddRoommateModalVisible(false)}
+        visible={isWindowVisible}
+        onRequestClose={closeWindow}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Roommate</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter roommate username or ID"
-              value={newRoommate}
-              onChangeText={setNewRoommate}
-            />
-            <View style={styles.modalButtons}>
-              <Button title="Cancel" onPress={() => setAddRoommateModalVisible(false)} />
-              <Button title="Add" onPress={handleAddRoommate} />
-            </View>
+        <View style={styles.windowContainer}>
+          <Text style={styles.windowTitle}>ADD ROOMMATE</Text>
+          
+          {/* New roommate input */}
+          <TextInput
+            style={styles.inputContainer}
+            placeholder="Enter roommate username or ID"
+            value={newRoommate}
+            onChangeText={setNewRoommate}
+          />
+
+          {/* Cancel/save new password */}
+          <View style={styles.buttonAlignment}>
+            <TouchableOpacity style={styles.cancelButton} onPress={closeWindow}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddRoommate}>
+              <Text style={styles.addButtonText}>Add</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -179,125 +202,150 @@ export default function Roommates() {
   );
 }
 
-
 const styles = StyleSheet.create({
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    title: {
-      marginTop: 25,
-      marginLeft: 25,
-      fontSize: 32,
-      fontWeight: '700',
-    },
-    dropdownContainer: {
-      marginBottom: 10,
-      marginHorizontal: 25,
-    },
-    dropdownHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 15,
-      borderBottomWidth: 1,
-      borderColor: 'lightgray',
-    },
-    dropdownTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-    },
-    dropdownActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    refreshText: {
-      marginRight: 15,
-      fontSize: 16,
-      color: '#ff8667',
-    },
-    dropdownToggle: {
-      fontSize: 18,
-      fontWeight: '600',
-    },
-    dropdownContent: {
-      paddingVertical: 10,
-    },
-    dropdownItem: {
-      fontSize: 16,
-      paddingVertical: 5,
-    },
-    addButton: {
-      marginTop: 10,
-      padding: 10,
-      backgroundColor: '#ff8667',
-      borderRadius: 5,
-      alignItems: 'center',
-    },
-    addButtonText: {
-      color: 'white',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContent: {
-      width: '80%',
-      backgroundColor: 'white',
-      borderRadius: 10,
-      padding: 20,
-      alignItems: 'center',
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      marginBottom: 15,
-    },
-    input: {
-      width: '100%',
-      borderWidth: 1,
-      borderColor: 'lightgray',
-      borderRadius: 5,
-      padding: 10,
-      marginBottom: 15,
-    },
-    modalButtons: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      width: '100%',
-    },
-    roommateItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 10,
-        marginBottom: 5,
-        backgroundColor: '#f8f9fa',
-        borderRadius: 8,
-      },
-      roommateName: {
-        fontSize: 16,
-        fontWeight: '600',
-      },
-      status: {
-        fontSize: 14,
-        color: '#6c757d',
-        textAlign: 'right',
-        flex: 1,
-        marginRight: 20
-      },
-      removeButton: {
-        backgroundColor: '#dc3545',
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 5,
-      },
-      removeButtonText: {
-        color: '#fff',
-        fontWeight: '600',
-      },
-  });
+  rowAlignment: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  text: {
+    fontSize: 16,
+  },
+  dropdownContainer: {
+    marginHorizontal: 25,
+  },
+  dropdownHeader: {
+    marginTop: 25,
+    borderBottomWidth: 1,
+    borderColor: 'lightgray',
+    paddingBottom: 13,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  dropdownActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dropdownToggle: {
+    fontSize: 25,
+  },
+  dropdownContent: {
+    paddingVertical: 10,
+  },
+  dropdownItem: {
+    fontSize: 16,
+    paddingVertical: 5,
+  },
+  roommateItem: {
+    marginTop: 15,
+    borderRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "black",
+    backgroundColor: "white", 
+  },
+  status: {
+    fontSize: 14,
+    color: '#6c757d',
+  },
+  removeButton: {
+    backgroundColor: '#dc3545',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  removeButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  addRoommateButton: {
+    marginRight: 15,
+    height: 50,
+    flex: 1,
+    flexShrink: 1,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ff8667",
+  },
+  addRoommateButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
+  },
+  buttonContainer: {
+    marginTop: 15,
+    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  windowContainer: {
+    flex: 1,
+    padding: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  windowTitle: {
+    marginBottom: 20,
+    fontSize: 24,
+    fontWeight: 600,
+  },
+  inputContainer: {
+    marginBottom: 15,
+    height: 50,
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: "lightgray",
+    paddingHorizontal: 15,
+    fontSize: 16,
+  },
+  buttonAlignment: {
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    marginRight: 35,
+    height: 50,
+    width: 100,
+    borderWidth: 2,
+    borderRadius: 8,
+    borderColor: "#ff8667",
+    paddingVertical: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ff8667",
+  },
+  addButton: {
+    height: 50,
+    width: 100,
+    borderRadius: 8,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ff8667",
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
+});

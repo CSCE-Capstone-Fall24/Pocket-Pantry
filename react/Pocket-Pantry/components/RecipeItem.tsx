@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Pressable, Alert } from "react-native";
 import Modal from "react-native-modal"
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -22,7 +22,7 @@ const RecipeItem = (props: RecipeProps) => {
   const nutrition = ["Calories", "Fat", "Sugar", "Sodium", "Protein", "Saturated Fat", "Carbohydrates"];
 
   {/* Functions - view recipe window */}
-  const [isWindowVisible, setWindowVisible] = useState(false);
+  const [isZeWindowVisible, setWindowVisible] = useState(false);
   const openWindow = () => setWindowVisible(true);
   const closeWindow = () => {
     setWindowVisible(false);
@@ -76,6 +76,9 @@ const RecipeItem = (props: RecipeProps) => {
       Alert.alert('Please enter a valid quantity.');
     } else {
       closeWindow();
+      setTimeout(() => {
+        props.closeSearchWindow();
+      }, 350);
     }
   };
 
@@ -88,7 +91,7 @@ const RecipeItem = (props: RecipeProps) => {
 
         {/* View recipe window */}
         <Modal
-          isVisible={isWindowVisible}
+          isVisible={isZeWindowVisible}
           onBackdropPress={closeWindow}
           animationIn="slideInRight"
           animationOut="slideOutRight"
@@ -96,18 +99,19 @@ const RecipeItem = (props: RecipeProps) => {
           backdropOpacity={0.0}
         >
           <ScrollView style={styles.recipeContainer}>
-
-            {/* Recipe title/bookmark */}
+          
+            {/* Back button/bookmark */}
             <View style={styles.recipeHeader}>
-              <Text style={styles.recipeTitle}>{props.name.toUpperCase()}</Text>
+              <TouchableOpacity style={styles.backButton} onPress={closeWindow}>
+                <Ionicons name={"chevron-back"} size={40} color="gray"/>
+              </TouchableOpacity>
               <Pressable style={styles.bookmark} onPress={() => setFavorited(!favorited)}>
-                <Ionicons name={favorited ? "bookmark" : "bookmark-outline"}
-                  size={40}
-                  color="#ff8667"/>
+                <Ionicons name={favorited ? "bookmark" : "bookmark-outline"} size={40} color="#ff8667"/>
               </Pressable>
             </View>
 
-            {/* Recipe description */}
+            {/* Recipe title/description */}
+            <Text style={styles.recipeTitle}>{props.name.toUpperCase()}</Text>
             {props.description
               ? <Text style={styles.recipeDescription}>"{props.description}"</Text>
               : null
@@ -267,23 +271,25 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   recipeHeader: {
-    marginTop: 80,
+    marginTop: 75,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  recipeTitle: {
-    marginHorizontal: 25,
-    flex: 1,
-    flexShrink: 1,
-    fontSize: 28,
-    fontWeight: 600,
+  backButton: {
+    marginLeft: 20,
   },
   bookmark: {
     marginHorizontal: 25,
   },
+  recipeTitle: {
+    marginTop: 28,
+    marginHorizontal: 25,
+    fontSize: 28,
+    fontWeight: 600,
+  },
   recipeDescription: {
-    marginTop: 35,
+    marginTop: 30,
     marginHorizontal: 25,
     fontSize: 16,
     fontStyle: "italic",

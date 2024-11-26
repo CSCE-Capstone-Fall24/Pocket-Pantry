@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal } from 'react-native';
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 export default function LoginScreen({ setIsAuthenticated, setUserData }) {
@@ -39,7 +38,6 @@ export default function LoginScreen({ setIsAuthenticated, setUserData }) {
       if (response.ok) {
         setIsAuthenticated(true);
         setUserData(data.user_data);
-        Alert.alert('Success', 'Logged in successfully!');
         console.log(data);
       } else {
         Alert.alert('Error', data.detail || 'Something went wrong. Please try again.');
@@ -95,10 +93,15 @@ export default function LoginScreen({ setIsAuthenticated, setUserData }) {
     }
   };
 
+  const [isWindowVisible, setWindowVisible] = useState(false);
+  const openWindow = () => setWindowVisible(true);
+  const closeWindow = () => setWindowVisible(false);
+
   return (
     <View style={styles.container}>
-      {/* login */}
-      <Text style={styles.title}>Login</Text>
+      
+      {/* Login */}
+      <Text style={styles.title}>LOGIN</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -115,43 +118,58 @@ export default function LoginScreen({ setIsAuthenticated, setUserData }) {
         value={password}
         onChangeText={setPassword}
       />
+
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loadingLogin}>
         <Text style={styles.buttonText}>{loadingLogin ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
 
-      <View style={styles.divider}>
-        <Text style={styles.dividerText}>OR</Text>
-      </View>
-
-      {/* signup */}
-      <Text style={styles.title}>Sign Up</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={signupEmail}
-        onChangeText={setSignupEmail}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        autoCapitalize="none"
-        value={signupUsername}
-        onChangeText={setSignupUsername}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        autoCapitalize="none"
-        value={signupPassword}
-        onChangeText={setSignupPassword}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loadingSignup}>
-        <Text style={styles.buttonText}>{loadingSignup ? 'Signing up...' : 'Sign Up'}</Text>
+      <TouchableOpacity style={styles.textContainer} onPress={openWindow}>
+        <Text style={styles.textA}>Don't have an account?  </Text>
+        <Text style={styles.textB}>Sign Up</Text>
       </TouchableOpacity>
+
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={isWindowVisible}
+        onRequestClose={closeWindow}
+      >
+        <View style={styles.container}>
+          {/* Sign-up */}
+          <Text style={styles.title}>SIGN UP</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={signupEmail}
+            onChangeText={setSignupEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            autoCapitalize="none"
+            value={signupUsername}
+            onChangeText={setSignupUsername}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            secureTextEntry
+            autoCapitalize="none"
+            value={signupPassword}
+            onChangeText={setSignupPassword}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loadingSignup}>
+            <Text style={styles.buttonText}>{loadingSignup ? 'Signing up...' : 'Sign Up'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.textContainer} onPress={closeWindow}>
+            <Text style={styles.textA}>Already have an account?  </Text>
+            <Text style={styles.textB}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -159,48 +177,52 @@ export default function LoginScreen({ setIsAuthenticated, setUserData }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
   },
   title: {
+    marginBottom: 20,
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: 600,
   },
   input: {
-    width: '100%',
+    marginBottom: 15,
     height: 50,
-    borderColor: '#ccc',
+    width: "100%",
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    borderColor: "lightgray",
+    paddingHorizontal: 15,
+    fontSize: 16,
   },
   button: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#007bff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
     marginTop: 10,
+    height: 50,
+    width: "100%",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ff8667",
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
+  textContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
   },
-  dividerText: {
+  textA: {
+    marginTop: 20,
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#555',
+  },
+  textB: {
+    marginTop: 20,
+    fontSize: 16,
+    fontWeight: 700,
+    color: "#ff8667",
   },
 });
