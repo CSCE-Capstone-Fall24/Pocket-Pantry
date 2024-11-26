@@ -172,195 +172,188 @@ const PantryItem = (props: PantryProps) => {
 
   return (
     <TouchableOpacity onPress={openWindow}>
-    <View style={styles.container}>
+      <View style={styles.container}>
 
-      {/* Displayed item information */}
-      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+        {/* Displayed item information */}
         <View style={styles.itemContainer}>
+          <Text style={styles.itemName}>{props.name} </Text>
           <View style={styles.rowAlignment}>
-            <Text style={styles.itemName}>{props.name} </Text>
+            <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()} </Text>
             {
               userData.user_id == props.user_id ? (
                 props.recipRoommates.map((roommate: Roommate, index: number) => {
-                  return (shared[index] && <Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
+                  return (shared[index] && <Text style={styles.iconAlignment} key={index}><Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
                 })
               ) : (
                 props.shared_with.map((roommate: string, index: number) => {
-                  return (<Text key={index}> <Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
+                  return (<Text style={styles.iconAlignment} key={index}><Ionicons name="ellipse" size={13} color={sharedColors[index%11]}/></Text>);
                 })
               )
             }
           </View>
-          <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()}</Text>
         </View>
-      </ScrollView>
-
-      <TouchableOpacity style={styles.editButton} onPress={openWindow}>
-      {/* <TouchableOpacity style={styles.editButton}> */}
-        <Ionicons name="pencil" size={26} color="gray"/>
-      </TouchableOpacity>
-
-      {/* Edit window */}
-      <Modal
-        transparent={true}
-        animationType="fade"
-        visible={isWindowVisible}
-        onRequestClose={closeWindow}
-      >
-        <View style={[StyleSheet.absoluteFill, styles.blurOverlay]}>
-          <BlurView style={StyleSheet.absoluteFill} intensity={30}/>
-        </View>
-        <View style={styles.windowAlignment}>
-          <View style={styles.windowContainer}>
-            <Text style={styles.windowTitle} numberOfLines={1} ellipsizeMode="tail">{props.name}</Text>
-            <Text style={styles.windowSubtitle}>{props.category}</Text>
-            
-            {/* Edit quantity */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldText}>Edit quantity:  </Text>
-              <TextInput
-                style={styles.quantityInput}
-                value={tempQuantity}
-                onChangeText={(value) => setTempQuantity(value)}
-              />
-              
-              {/* Edit unit */}
-              <TouchableOpacity style={styles.pickerInput} onPress={openUnitPicker}>
-                  <Text style={styles.fieldText}>{tempUnit}</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Unit picker */}
-            <Modal
-              transparent={true}
-              animationType="slide"
-              visible={isUnitPickerVisible}
-              onRequestClose={closeUnitPicker}
-            >
-              <Pressable style={styles.pickerSpacer} onPress={closeUnitPicker}></Pressable>
-              <View>
-                <View style={styles.doneButtonContainer}>
-                  <TouchableOpacity onPress={closeUnitPicker}>
-                    <Text style={styles.doneButtonText}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.pickerA}>
-                  {isUnitPickerVisible && (
-                    <Picker selectedValue={tempUnit} onValueChange={(value) => setTempUnit(value)}>
-                      {units.map((unit, index) => (<Picker.Item key={index} label={unit} value={unit}/>))}
-                    </Picker>
-                  )}
-                </View>
-              </View>
-            </Modal>
-
-            {/* Edit expiration date */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldText}>Edit expiration date:  </Text>
-              <TouchableOpacity style={styles.pickerInput} onPress={openExpirationPicker}>
-                <Text style={styles.fieldText}>{tempExpiration.toLocaleDateString()}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Expiration date picker */}
-            <Modal
-              transparent={true}
-              animationType="slide"
-              visible={isExpirationPickerVisible}
-              onRequestClose={closeExpirationPicker}
-            >
-              <Pressable style={styles.pickerSpacer} onPress={closeExpirationPicker}></Pressable>
-              <View>
-                <View style={styles.doneButtonContainer}>
-                  <TouchableOpacity onPress={closeExpirationPicker}>
-                    <Text style={styles.doneButtonText}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.pickerB}>
-                  {isExpirationPickerVisible && (
-                    <DateTimePicker
-                      value={tempExpiration}
-                      mode="date"
-                      display="spinner"
-                      onChange={(event, date) => {if (date) setTempExpiration(date);}}
-                    />
-                  )}
-                </View>
-              </View>
-            </Modal>
-
-            {/* Set item as shared */}
-            {
-              userData.user_id == props.user_id ? (
-                // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
-                // props.shared_with.length > 0 && (
-                  <ScrollView horizontal={false} style={styles.sharedScroll}>
-                      {props.recipRoommates.map((roommate: Roommate, index: number) => {
-                        return (
-                          <View key={roommate.id} style={styles.sharedContainer}>
-                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
-                            <Pressable onPress={() => sharedToggle(index)}>
-                                <Ionicons 
-                                  name={tempShared[index] ? "checkmark-circle" : "ellipse-outline"}
-                                  size={32} 
-                                  color={sharedColors[index]}/>
-                            </Pressable>
-                          </View>
-                        );
-                      })}
-                  </ScrollView>
-                // )
-              ) : (
-                // USER VIEWING IS NOT OWNER
-                // SHOW OWNER
-                <ScrollView horizontal={false} style={styles.sharedScroll}>
-                  <View key={999} style={styles.sharedContainer}>
-                    <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
-                      Item Owner: {props.recipRoommates.find((rm: Roommate) => rm.id.toString() == props.user_id)?.name || 'Unknown'}
-                    </Text>
-                    {/* <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {((props.recipRoommates: Roommate).find((rm: Roommate) => rm.id === props.user_id)).name}</Text> */}
-                  </View>
-                  {/* // SHOW SHARED WITH
-                  // MARK YOU IN SHARED WITH */}
-                  {props.shared_with.map((roommate: string, index: number) => {
-                    const found = props.recipRoommates.find((rm: Roommate) => rm.id == roommate);
-                    const roommateName = found ? found.name : `Unknown (${roommate})`;
-                    
-                    return (
-                      <View key={roommate} style={styles.sharedContainer}>
-                        <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
-                          Shared with {userData.user_id != roommate ? roommateName : roommate}
-                          </Text>
-                        <Pressable>
-                            <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
-                        </Pressable>
-                        {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
-                      </View>
-                    );
-                  })}
-                </ScrollView>
-              )
-            }
-
-            {/* Cancel/save user changes */}
-            <View style={styles.buttonAlignment}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); handleCancel(); }}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.saveButton} onPress={() => { handleSave(); }}>
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Delete item */}
-            <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
-              <Ionicons name="trash" size={32} color="#ff5555" />
-            </TouchableOpacity>
+        
+        {/* Edit window */}
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isWindowVisible}
+          onRequestClose={closeWindow}
+        >
+          <View style={[StyleSheet.absoluteFill, styles.blurOverlay]}>
+            <BlurView style={StyleSheet.absoluteFill} intensity={30}/>
           </View>
-        </View>
-      </Modal>
-    </View>
+          <View style={styles.windowAlignment}>
+            <View style={styles.windowContainer}>
+              <Text style={styles.windowTitle} numberOfLines={1} ellipsizeMode="tail">{props.name}</Text>
+              <Text style={styles.windowSubtitle}>{props.category}</Text>
+              
+              {/* Edit quantity */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldText}>Edit quantity:  </Text>
+                <TextInput
+                  style={styles.quantityInput}
+                  value={tempQuantity}
+                  onChangeText={(value) => setTempQuantity(value)}
+                />
+                
+                {/* Edit unit */}
+                <TouchableOpacity style={styles.pickerInput} onPress={openUnitPicker}>
+                    <Text style={styles.fieldText}>{tempUnit}</Text>
+                  </TouchableOpacity>
+              </View>
+
+              {/* Unit picker */}
+              <Modal
+                transparent={true}
+                animationType="slide"
+                visible={isUnitPickerVisible}
+                onRequestClose={closeUnitPicker}
+              >
+                <Pressable style={styles.pickerSpacer} onPress={closeUnitPicker}></Pressable>
+                <View>
+                  <View style={styles.doneButtonContainer}>
+                    <TouchableOpacity onPress={closeUnitPicker}>
+                      <Text style={styles.doneButtonText}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.pickerA}>
+                    {isUnitPickerVisible && (
+                      <Picker selectedValue={tempUnit} onValueChange={(value) => setTempUnit(value)}>
+                        {units.map((unit, index) => (<Picker.Item key={index} label={unit} value={unit}/>))}
+                      </Picker>
+                    )}
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Edit expiration date */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldText}>Edit expiration date:  </Text>
+                <TouchableOpacity style={styles.pickerInput} onPress={openExpirationPicker}>
+                  <Text style={styles.fieldText}>{tempExpiration.toLocaleDateString()}</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Expiration date picker */}
+              <Modal
+                transparent={true}
+                animationType="slide"
+                visible={isExpirationPickerVisible}
+                onRequestClose={closeExpirationPicker}
+              >
+                <Pressable style={styles.pickerSpacer} onPress={closeExpirationPicker}></Pressable>
+                <View>
+                  <View style={styles.doneButtonContainer}>
+                    <TouchableOpacity onPress={closeExpirationPicker}>
+                      <Text style={styles.doneButtonText}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.pickerB}>
+                    {isExpirationPickerVisible && (
+                      <DateTimePicker
+                        value={tempExpiration}
+                        mode="date"
+                        display="spinner"
+                        onChange={(event, date) => {if (date) setTempExpiration(date);}}
+                      />
+                    )}
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Set item as shared */}
+              {
+                userData.user_id == props.user_id ? (
+                  // IF USER VIEWING IS OWNER, GIVE THEM FULL SHARE PERMISSIONS
+                  // props.shared_with.length > 0 && (
+                    <ScrollView horizontal={false} style={styles.sharedScroll}>
+                        {props.recipRoommates.map((roommate: Roommate, index: number) => {
+                          return (
+                            <View key={roommate.id} style={styles.sharedContainer}>
+                              <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
+                              <Pressable onPress={() => sharedToggle(index)}>
+                                  <Ionicons 
+                                    name={tempShared[index] ? "checkmark-circle" : "ellipse-outline"}
+                                    size={32} 
+                                    color={sharedColors[index]}/>
+                              </Pressable>
+                            </View>
+                          );
+                        })}
+                    </ScrollView>
+                  // )
+                ) : (
+                  // USER VIEWING IS NOT OWNER
+                  // SHOW OWNER
+                  <ScrollView horizontal={false} style={styles.sharedScroll}>
+                    <View key={999} style={styles.sharedContainer}>
+                      <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                        Item Owner: {props.recipRoommates.find((rm: Roommate) => rm.id.toString() == props.user_id)?.name || 'Unknown'}
+                      </Text>
+                      {/* <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {((props.recipRoommates: Roommate).find((rm: Roommate) => rm.id === props.user_id)).name}</Text> */}
+                    </View>
+                    {/* // SHOW SHARED WITH
+                    // MARK YOU IN SHARED WITH */}
+                    {props.shared_with.map((roommate: string, index: number) => {
+                      const found = props.recipRoommates.find((rm: Roommate) => rm.id == roommate);
+                      const roommateName = found ? found.name : `Unknown (${roommate})`;
+                      
+                      return (
+                        <View key={roommate} style={styles.sharedContainer}>
+                          <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                            Shared with {userData.user_id != roommate ? roommateName : roommate}
+                            </Text>
+                          <Pressable>
+                              <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                          </Pressable>
+                          {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                )
+              }
+
+              {/* Cancel/save user changes */}
+              <View style={styles.buttonAlignment}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); handleCancel(); }}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.saveButton} onPress={() => { handleSave(); }}>
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Delete item */}
+              <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
+                <Ionicons name="trash" size={32} color="#ff5555" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
     </TouchableOpacity>
   )
 };
@@ -385,19 +378,18 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   rowAlignment: {
+    marginTop: 5,
     flexDirection: "row",
     alignItems: "center",
   },
+  iconAlignment: {
+    marginLeft: 4,
+  },
   itemName: {
-    marginBottom: 5,
     fontSize: 20,
   },
   itemDetails: {
     color: "gray",
-  },
-  editButton: {
-    marginHorizontal: 2,
-    padding: 20,
   },
   blurOverlay: {
     backgroundColor: `rgba(0, 0, 0, ${.15})`

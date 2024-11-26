@@ -333,6 +333,7 @@ export default function Pantry () {
                 <Text style={styles.fieldText}>Name:  </Text>
                 <TextInput
                   style={styles.nameInput}
+                  maxLength={20}
                   value={newName}
                   onChangeText={(value) => setNewName(value)}
                 />
