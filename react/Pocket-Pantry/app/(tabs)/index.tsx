@@ -1,56 +1,25 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, FlatList } from "react-native";
 import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MealItem from "@/components/MealItem";
 import RecipeItem from "@/components/RecipeItem";
 
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
+
 export default function MealPlan () {
   interface Recipe {
-    recipeId: string;
+    id: number;
     name: string;
-    recipeServings: number;
+    description: string;
+    servings: number;
+    nutrition: number[];
+    cook_time: number;
+    cook_steps: string[];
     ingredients: string[];
-    ingredientUnits: string[];
-    ingredientQuantities: number[];
-    cookTime: number;
-    recipeSteps: string;
+    ingredient_quantities: number[];
+    ingredient_units: string[];
   }
-
-  const [recipes, setRecipes] = useState<Recipe[]>([
-    { recipeId: "1", name: "Recipe1", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 15, recipeSteps: "Don't burn the kitchen down"
-    },
-    { recipeId: "2", name: "Recipe2", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 30, recipeSteps: "Don't burn the kitchen down"
-    },
-    { recipeId: "3", name: "Recipe3", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 45, recipeSteps: "Don't burn the kitchen down"
-    },
-    { recipeId: "4", name: "Recipe4", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 60, recipeSteps: "Don't burn the kitchen down"
-    },
-    { recipeId: "5", name: "Recipe1", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 15, recipeSteps: "Don't burn the kitchen down"
-    },
-    { recipeId: "6", name: "Recipe2", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 30, recipeSteps: "Don't burn the kitchen down"
-    },
-    { recipeId: "7", name: "Recipe3", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 45, recipeSteps: "Don't burn the kitchen down"
-    },
-    { recipeId: "8", name: "Recipe4", recipeServings: 1, 
-      ingredients: ["apple", "orange", "tomato"], ingredientUnits: ["lbs", "oz", "purple"], ingredientQuantities: [1, 2, 3], 
-      cookTime: 60, recipeSteps: "Don't burn the kitchen down"
-    }
-  ]);
 
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -75,6 +44,39 @@ export default function MealPlan () {
   };
   const filterCancel = () => { setTempFilter(filter); closeFilter(); };
   const filterApply = () => { setFilter(tempFilter); closeFilter(); };
+
+  {/* Functions - search results */}
+  const [searchData, setSearchData] = useState<any>('');
+  const [searchResult, setSearchResult] = useState('');
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await fetch(`${API_URL}/all_recipes`);
+        const data = await response.json();
+        setSearchData(data);
+        console.log("FETCHING");
+        console.log(data);
+      } catch (error) {
+        console.error('Error fetching recipes:', error);
+      }
+    };
+    fetchRecipes();
+  }, []);
+  const renderRecipes = ({item}:{item:any}) => (
+    <RecipeItem
+      id={item.recipe_id}
+      name={item.name}
+      description={item.description}
+      servings={item.serving_size}
+      nutrition={item.nutrition}
+      cook_time={item.cook_time_minutes}
+      cook_steps={item.cook_steps}
+      ingredients={item.ingredients}
+      ingredient_quantities={item.ingredient_quantities}
+      ingredient_units={item.ingredient_units}
+      closeSearchWindow={closeWindow}
+    />
+  );
 
   return (
     <View style={styles.container}> 
@@ -103,6 +105,7 @@ export default function MealPlan () {
                   style={styles.searchBar}
                   placeholder="Search for recipes"
                   placeholderTextColor="gray"
+                  onChangeText={(value) => setSearchResult(value)}
                 />
                 <TouchableOpacity style={styles.filterButton} onPress={openFilter}>
                   <Ionicons name="options" size={27} color="gray"/>
@@ -161,24 +164,19 @@ export default function MealPlan () {
             <View style={styles.line}></View>
 
             {/* Recipe results */}
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.resultsContainer}>
-              {recipes.map((recipe) => (
-                <View key={recipe.recipeId}>
-                  <RecipeItem
-                    key={recipe.recipeId}
-                    recipeId={recipe.recipeId}
-                    name={recipe.name}
-                    recipeServings={recipe.recipeServings}
-                    ingredients={recipe.ingredients}
-                    ingredientUnits={recipe.ingredientUnits}
-                    ingredientQuantities={recipe.ingredientQuantities}
-                    cookTime={recipe.cookTime}
-                    recipeSteps={recipe.recipeSteps}
-                  />
-                </View>
-              ))}
-              <View style={styles.resultsBuffer}></View>
-            </ScrollView>
+            <FlatList
+              data={
+                searchResult 
+                ? searchData.filter((item: any) =>
+                    item.name.toLowerCase().includes(searchResult.toLowerCase())
+                  )
+                : []
+              }
+              keyExtractor={(item) => item.recipe_id.toString()}
+              renderItem={renderRecipes}
+              style={styles.resultsContainer}
+              contentContainerStyle={styles.resultsBuffer}
+            />
           </View>
         </Modal>
 
@@ -332,7 +330,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
   },
   resultsBuffer: {
-    height: 140,
+    paddingBottom: 50,
   },
   dateHeader: {
     marginTop: 40,

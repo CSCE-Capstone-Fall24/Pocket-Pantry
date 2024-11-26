@@ -11,9 +11,11 @@ type MealProps = {
 const MealItem = (props: MealProps) => {
 
   return (
-    <View style={styles.container}>
-      
-    </View>
+    <TouchableOpacity>
+      <View style={styles.container}>
+        
+      </View>
+    </TouchableOpacity>
   )
 };
 

@@ -67,6 +67,13 @@ const PantryItem = (props: PantryProps) => {
   const closeExpirationPicker = () => setExpirationPickerVisible(false);
   const [expiration, setExpiration] = useState(props.expiration);
   const [tempExpiration, setTempExpiration] = useState(expiration);
+  const isWithinThreeDays = (date: Date) => {
+    const today = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(today.getDate() + 3);
+  
+    return date >= today && date < threeDaysFromNow;
+  };
 
   {/* Functions - set item as shared */}
   const [shared, setShared] = useState<boolean[]>([]);
@@ -108,6 +115,7 @@ const PantryItem = (props: PantryProps) => {
     setTempUnit(unit);
     setTempExpiration(expiration);
     setTempShared(shared);
+    closeWindow(); 
   }
 
   const handleSave = async () => {
@@ -178,7 +186,19 @@ const PantryItem = (props: PantryProps) => {
         <View style={styles.itemContainer}>
           <Text style={styles.itemName}>{props.name} </Text>
           <View style={styles.rowAlignment}>
-            <Text style={styles.itemDetails}>{quantity} {unit}   Exp. {expiration.toLocaleDateString()} </Text>
+            <Text style={styles.itemDetails}>
+              {quantity} {unit}{"   "}
+              <Text
+                style={[
+                  styles.itemDetails,
+                  expiration < new Date() && { color: "red" },
+                  isWithinThreeDays(expiration) && { color: "orange" },
+                ]}
+              >
+                Exp. {expiration.toLocaleDateString()}
+              </Text>
+            </Text>
+            
             {
               userData.user_id == props.user_id ? (
                 props.recipRoommates.map((roommate: Roommate, index: number) => {
@@ -337,11 +357,11 @@ const PantryItem = (props: PantryProps) => {
 
               {/* Cancel/save user changes */}
               <View style={styles.buttonAlignment}>
-                <TouchableOpacity style={styles.cancelButton} onPress={() => { closeWindow(); handleCancel(); }}>
+                <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.saveButton} onPress={() => { handleSave(); }}>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                   <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
               </View>
