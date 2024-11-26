@@ -149,8 +149,8 @@ export default function MealPlan () {
   const [groupedMeals, setGroupedMeals] = useState<{ [key: string]: PlannedMeal[] }>({});
   const fetchPlannedMeals = async () => {
     try {
-      // const response = await fetch(`${API_URL}/planned_meals/?user_id=${userData.user_id}`);
-      const response = await fetch(`${API_URL}/planned_meals/?user_id=4`);
+      const response = await fetch(`${API_URL}/planned_meals/?user_id=${userData.user_id}`);
+      // const response = await fetch(`${API_URL}/planned_meals/?user_id=4`);
       const data = await response.json();
       // setMealData(data);
 
