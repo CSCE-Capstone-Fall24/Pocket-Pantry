@@ -154,7 +154,6 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         meal_info.append(indv_meal_info)
 
 
-    """
     #fetch all the pantry items the users are associated with
     pantry_items = db.query(Pantry).filter(
         or_(
@@ -165,8 +164,12 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         )
     ).all()
-    """
+    
 
     return
 
+
 shopping_list(4)
+
+
+#print(fuzz.WRatio("Easy Weeknight Spaghetti".lower(), "Spaghetti".lower()))

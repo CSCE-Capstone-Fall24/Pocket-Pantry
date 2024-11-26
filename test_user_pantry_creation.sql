@@ -130,44 +130,6 @@ INSERT INTO recipes_good (
     n_ingredients, 
     ingredients_scraped
 ) 
-VALUES ( 
-    '<name>', 
-    '<description>', 
-    <food_com_id>, 
-    <contributer_id>, 
-    '<submitted_date>',
-    ARRAY['<tag1>', '<tag2>'], 
-    ARRAY[<nutrition1>, <nutrition2>], 
-    <cook_time_minutes>, 
-    ARRAY['<step1>', '<step2>'], 
-    ARRAY['<ingredient1>', '<ingredient2>'], 
-    ARRAY[<quantity1>, <quantity2>], 
-    ARRAY['<unit1>', '<unit2>'], 
-    <serving_size>, 
-    <n_steps>, 
-    <n_ingredients>, 
-    ARRAY['<scraped_ingredient1>', '<scraped_ingredient2>']
-);
-
-
-INSERT INTO recipes_good ( 
-    name, 
-    description, 
-    food_com_id, 
-    contributer_id, 
-    submitted_date, 
-    tags, 
-    nutrition, 
-    cook_time_minutes, 
-    cook_steps, 
-    ingredients, 
-    ingredient_quantities, 
-    ingredient_units, 
-    serving_size, 
-    n_steps, 
-    n_ingredients, 
-    ingredients_scraped
-) 
 VALUES (
     'Simple Lemon Herb Chicken', 
     'This lemon-herb chicken is a simple, quick, and delicious dish. All you need are a few herbs, a lemon, and of course, the chicken! The amount of spices is completely up to you. You can add more or less according to your taste.', 
