@@ -71,8 +71,33 @@ export default function Pantry () {
     setRefreshing(true);
     try {
       await fetchItems();
+      await refreshRoommates();
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const refreshRoommates = async () => {
+    try {
+      const response = await fetch(`${API_URL}/get_roommates/?user_id=${userData?.user_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch roommates');
+
+      const data = await response.json();
+      setUserData((prevData: any) => ({
+        ...prevData,
+        roommates: data.roommates,
+      }));
+
+      // Alert.alert('Success', 'Roommates updated!');
+    } catch (error) {
+      // console.error(error);
+      // Alert.alert('Error', 'Could not refresh roommates. Please try again.');
     }
   };
 
@@ -85,8 +110,6 @@ export default function Pantry () {
         isReciprocal: item.is_reciprocated,
       })).sort((a: Roommate, b: Roommate) => Number(a.id) - Number(b.id));
 
-    console.log('got recip rms');
-    console.log(rms);
     setRecipRoommates(rms);
 
     fetchItems();

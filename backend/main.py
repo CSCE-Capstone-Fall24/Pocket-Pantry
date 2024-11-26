@@ -678,42 +678,27 @@ def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
             db.commit()
             db.refresh(roommate)
 
+        # Helper function to remove a user from shared lists (Pantry, PlannedMeals)
+        def remove_from_shared_list(db, model, user_id, roommate_id):
+            # Get all shared items for the user
+            shared_items = db.query(model).filter(model.user_id == user_id).all()
+
+            for item in shared_items:
+                # Check if the roommate is in the shared list for this item
+                if roommate_id in item.shared_with:
+                    # Create a new shared list by removing the roommate_id
+                    new_shared = item.shared_with.copy()
+                    new_shared.remove(roommate_id)
+                    item.shared_with = new_shared  # Update shared_with with the new list
+                    db.add(item)  # Mark the item for update
+            
+            db.commit()  # Commit all changes after modification
+
         # Remove shared items for pantry and planned meals
-        # Remove user_id from anything roommate_id shared with them
-        db.query(Pantry).filter(
-            Pantry.shared_with.contains([data.user_id]),
-            Pantry.user_id == data.roommate_id
-        ).update(
-            {"shared_with": Pantry.shared_with.op("||")([data.user_id])},
-            synchronize_session=False
-        )
-
-        db.query(PlannedMeals).filter(
-            PlannedMeals.shared_with.contains([data.user_id]),
-            PlannedMeals.user_id == data.roommate_id
-        ).update(
-            {"shared_with": PlannedMeals.shared_with.op("||")([data.user_id])},
-            synchronize_session=False
-        )
-
-        # Remove roommate_id from anything user_id shared with them
-        db.query(Pantry).filter(
-            Pantry.shared_with.contains([data.roommate_id]),
-            Pantry.user_id == data.user_id
-        ).update(
-            {"shared_with": Pantry.shared_with.op("||")([data.roommate_id])},
-            synchronize_session=False
-        )
-
-        db.query(PlannedMeals).filter(
-            PlannedMeals.shared_with.contains([data.roommate_id]),
-            PlannedMeals.user_id == data.user_id
-        ).update(
-            {"shared_with": PlannedMeals.shared_with.op("||")([data.roommate_id])},
-            synchronize_session=False
-        )
-
-        db.commit()
+        remove_from_shared_list(db, Pantry, data.roommate_id, data.user_id)
+        remove_from_shared_list(db, Pantry, data.user_id, data.roommate_id)
+        remove_from_shared_list(db, PlannedMeals, data.roommate_id, data.user_id)
+        remove_from_shared_list(db, PlannedMeals, data.user_id, data.roommate_id)
 
         # Prepare updated roommates list for response
         roommate_data = []
@@ -738,7 +723,7 @@ def remove_roommate(data: RoommateRequest, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
+  
 class UserLogin(BaseModel):
     username: str = None
     email: str = None
