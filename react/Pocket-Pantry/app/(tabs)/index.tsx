@@ -79,7 +79,9 @@ export default function MealPlan () {
   return (
     <View style={styles.container}> 
       <View style={styles.header}>
-        <Text style={styles.title}>Meal Plan</Text>
+        <Text style={styles.title}>
+          Meal Plan
+          </Text>
         <TouchableOpacity style={styles.addButton} onPress={openWindow}>
           <Ionicons name="add-outline" size={40} color="white"/>
         </TouchableOpacity>
@@ -218,6 +220,13 @@ const styles = StyleSheet.create({
     marginLeft: 25,
     fontSize: 32,
     fontWeight: 700,
+  },
+  tempSubtitle: { // This will need to be removed
+    marginTop: 30,
+    marginBottom: 10,
+    marginLeft: 25,
+    color: 'gray',
+    fontWeight: 600,
   },
   addButton: {
     marginTop: 25,

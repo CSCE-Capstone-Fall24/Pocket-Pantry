@@ -3,10 +3,17 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
+// One "Shopping Item" will be a list. "ShoppingListProps" would probably be a more discriptive name, but that's the idea
 type ShoppingProps = {
-  name: string
-  quantity: number
+  listId: string;
+  userIds: string[];
+  ingredients: string[];
+  ingredientQuantities: Number[];
+  ingredientUnits: string[];
 }
+
+// Or, ShoppingProps could be just a Shopping Item, like how PantryProps is just a Pantry Item,
+// and then create a List item that takes in an array of Shopping Items
 
 const ShoppingItem = (props: ShoppingProps) => {
   const [isModalVisible, setModalVisible] = useState(false);
