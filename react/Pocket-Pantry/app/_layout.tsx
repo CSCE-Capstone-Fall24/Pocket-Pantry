@@ -9,6 +9,7 @@ import Login from './login';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { UserProvider, useUserContext } from '@/components/contexts/UserContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 SplashScreen.preventAutoHideAsync();
@@ -36,13 +37,15 @@ function RootLayout() {
 
   if (isAuthenticated) {
     return (
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        {/* <Text style={{ backgroundColor: 'yellow' }}>user_id {userData.user_id}</Text> */}
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </ThemeProvider>
+      <GestureHandlerRootView>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          {/* <Text style={{ backgroundColor: 'yellow' }}>user_id {userData.user_id}</Text> */}
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </ThemeProvider>
+      </GestureHandlerRootView>
     );
   }
 

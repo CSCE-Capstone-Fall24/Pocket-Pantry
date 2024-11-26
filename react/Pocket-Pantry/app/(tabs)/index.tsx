@@ -5,6 +5,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MealItem from "@/components/MealItem";
 import RecipeItem from "@/components/RecipeItem";
 import { useUserContext } from '@/components/contexts/UserContext';
+import { RefreshControl } from 'react-native-gesture-handler';
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
@@ -228,7 +229,17 @@ export default function MealPlan () {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#ff8667']}
+          />
+        }
+      >
 
         {/* Recipe search window */}
         <Modal
