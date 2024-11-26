@@ -127,3 +127,15 @@ Testing Recipes With Info:
         n_steps: 8
         n_ingredients: 10
         ingredients_scraped: []
+
+Queries to update pantry:
+    UPDATE pantry
+    SET shared_with = ARRAY[1]  -- Sharing with Brian (user_id 1)
+    WHERE pantry_id = 1 AND user_id = 2;
+    SELECT * FROM pantry WHERE user_id = 1;
+    INSERT INTO pantry (user_id, food_name, quantity, unit, added_date) 
+    VALUES (1, 'Vegetable Oil', 3, 'tbsp', NOW());
+    SELECT * FROM pantry WHERE user_id = 1 AND food_name = 'Vegetable Oil';
+    UPDATE pantry
+    SET quantity = quantity + 3  -- Increase the quantity by 3 tbsp
+    WHERE user_id = 1 AND food_name = 'Vegetable Oil';
