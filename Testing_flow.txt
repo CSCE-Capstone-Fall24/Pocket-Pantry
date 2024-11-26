@@ -61,10 +61,10 @@ Testing Recipes With Info:
         tags: ['Dessert']
         nutrition: [14, 22, 65, 7, 5, 23, 15]
         cook_time_minutes: 85
-        cook_steps: ['In a large bowl, cream the butter, granulated sugar, and brown sugar until creamy, then beat in the egg and vanilla.', “In a separate bowl, whisk together the flour, cornstarch, baking soda, and salt.”, “Add the dry ingredients into the wet ingredients and mix until combined.”, “Cover the dough tightly with aluminum foil or plastic and chill in the refrigerator for at least 1 hour or up to 2 days. (Chilling is mandatory!)”. “Preheat the oven to 350F. Take the cookie dough from the refrigerator and allow to sit at room temperature for about 10 minutes.”, “Line 2 baking sheets with parchment paper and set aside. With a spoon or ice cream scoop, roll your cookie dough balls, about 1.5 tablespoons of cookie dough each.”, “Bake for 10-12 minutes until the cookies are barely golden brown around the edges. If you like your chocolate chip cookies extra gooey, bake for 8-10 minutes. Allow to cool before serving.”]
-        ingredients: ['Unsalted Butter”, “Granulated Sugar”, “Brown Sugar”, “Large Egg”, “Vanilla Extract”, “All Purpose Flour”, “Cornstarch”, “Baking Soda”, “Salt”, “Semi-Sweet Chocolate Chips”]
+        cook_steps: ['In a large bowl, cream the butter, granulated sugar, and brown sugar until creamy, then beat in the egg and vanilla.', 'In a separate bowl, whisk together the flour, cornstarch, baking soda, and salt.', 'Add the dry ingredients into the wet ingredients and mix until combined.', 'Cover the dough tightly with aluminum foil or plastic and chill in the refrigerator for at least 1 hour or up to 2 days.', 'Preheat the oven to 350F. Take the cookie dough from the refrigerator and allow to sit at room temperature for about 10 minutes.', 'Line 2 baking sheets with parchment paper and set aside. With a spoon or ice cream scoop, roll your cookie dough balls, about 1.5 tablespoons of cookie dough each.', 'Bake for 10-12 minutes until the cookies are barely golden brown around the edges. If you like your chocolate chip cookies extra gooey, bake for 8-10 minutes. Allow to cool before serving.']
+        ingredients: ['Unsalted Butter', 'Granulated Sugar', 'Brown Sugar', 'Large Egg', 'Vanilla Extract', 'All Purpose Flour', 'Cornstarch', 'Baking Soda', 'Salt', 'Semi-Sweet Chocolate Chips']
         ingredient_quantities: [0.75, 0.75, .25, 1, 2.5, 2, 2, 1, 0.5, 1.5]
-        ingredient_units: ['cups', “cups”, “cups”, “pieces”, “tsp”, “cups”, “tsp”, “tsp”, “tsp”, “cups”]
+        ingredient_units: ['cups', 'cups', 'cups', 'pieces', 'tsp', 'cups', 'tsp', 'tsp', 'tsp', 'cups']
         serving_size: 15
         n_steps: 8
         n_ingredients: 10
