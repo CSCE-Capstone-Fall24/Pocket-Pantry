@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Pressa
 import Modal from "react-native-modal"
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useUserContext } from "./contexts/UserContext";
 
 const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
@@ -38,6 +39,7 @@ type RecipeProps = {
 
 const RecipeItem = (props: RecipeProps) => {
   const nutrition = ["Calories", "Fat", "Sugar", "Sodium", "Protein", "Saturated Fat", "Carbohydrates"];
+  const {userData, setUserData} = useUserContext();
 
   {/* Functions - view recipe window */}
   const [isZeWindowVisible, setWindowVisible] = useState(false);
@@ -143,6 +145,36 @@ const RecipeItem = (props: RecipeProps) => {
     }
   };
 
+  const deleteMeal = async () => {
+    const requestData = {
+      meal_id: props.meal_id, 
+      user_id: userData.user_id,
+    };
+  
+    try {
+      const response = await fetch(`${API_URL}/delete_planned_meal/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete the meal.');
+      }
+  
+      const data = await response.json();
+      alert('Meal deleted successfully!');
+  
+      props.refreshMeals();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Something went wrong.');
+    }
+  };
+  
+
   useEffect(() => {
     if (props.editing) {
       setWindowVisible(true);
@@ -174,7 +206,8 @@ const RecipeItem = (props: RecipeProps) => {
               </TouchableOpacity>
 
               {props.editing ? (
-              <Pressable style={styles.bookmark} onPress={() => props.deleteMeal(props.meal_id.toString(), props.user_id.toString())}>
+              // <Pressable style={styles.bookmark} onPress={() => props.deleteMeal(props.meal_id.toString(), props.user_id.toString())}>
+              <Pressable style={styles.bookmark} onPress={() => deleteMeal()}>  
                 <Ionicons name="trash" size={40} color="#ff8667"/>
               </Pressable>
               ) : null}
