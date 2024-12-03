@@ -4,6 +4,8 @@ import Modal from "react-native-modal"
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
+
 type Roommate = {
   id: string; 
   name: string; 
@@ -30,6 +32,7 @@ type RecipeProps = {
   close_guy: () => void;
   deleteMeal: (arg1: string, arg2: string) => void;
   meal_id: string;
+  refreshMeals: () => void;
 };
 
 const RecipeItem = (props: RecipeProps) => {
@@ -91,14 +94,47 @@ const RecipeItem = (props: RecipeProps) => {
   const [date, setDate] = useState(new Date());
 
   {/* Functions - add recipe to meal plan */}
-  const addRecipe = () => {
+  const addRecipe = async () => {
     if (!servings || isNaN(Number(servings)) || Number(servings) <= 0) {
       Alert.alert('Please enter a valid quantity.');
     } else {
-      closeWindow();
-      setTimeout(() => {
-        props.closeSearchWindow();
-      }, 350);
+      
+      const requestData = {
+        user_id: props.user_id,
+        recipe_id: props.id,
+        n_servings: servings,
+        is_shared: false, // shared_with.length > 0, // FIX
+        shared_with: [],    // FIX
+        expiration_date: date, // Expiration date
+      };
+    
+      try {
+        const response = await fetch(`${API_URL}/add_planned_meal/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to add the meal.');
+        }
+    
+        const data = await response.json();
+        alert('Meal added successfully!');
+        
+        props.refreshMeals();
+
+        closeWindow();
+        setTimeout(() => {
+          props.closeSearchWindow();
+        }, 350);
+
+      } catch (error: any) {
+        Alert.alert('Error', error.message || 'Something went wrong.');
+      }
     }
   };
 

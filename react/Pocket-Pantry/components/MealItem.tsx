@@ -20,6 +20,7 @@ type MealProps = {
   recipe: any; // lol
   recip_rms: Roommate[];
   deleteMeal: (arg1: string, arg2: string) => void;
+  refreshMeals: () => void;
 };
 
 const MealItem = (props: MealProps) => {
@@ -68,6 +69,7 @@ const MealItem = (props: MealProps) => {
             close_guy={closeModal}
             deleteMeal={props.deleteMeal}
             meal_id={props.meal_id}
+            refreshMeals={props.refreshMeals}
           />
         </View>
       </View>

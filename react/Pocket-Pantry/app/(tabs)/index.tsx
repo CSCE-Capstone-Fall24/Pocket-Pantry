@@ -239,9 +239,10 @@ export default function MealPlan () {
       editing={false}
       recip_roommates={recipRoommates}
       shared_with={[]}
-      user_id={-1}
+      user_id={userData.user_id}
       deleteMeal={deleteMeal}
       meal_id={"-1"} // string uh idk
+      refreshMeals={onRefresh}
     />
   );
 
@@ -375,6 +376,7 @@ export default function MealPlan () {
                 recipe={meal.recipe_obj}
                 recip_rms={recipRoommates}
                 deleteMeal={deleteMeal}
+                refreshMeals={onRefresh}
               />
             ))}
           </View>
