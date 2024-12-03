@@ -28,6 +28,8 @@ type RecipeProps = {
   shared_with: Number[];
   user_id: Number;
   close_guy: () => void;
+  deleteMeal: (arg1: string, arg2: string) => void;
+  meal_id: string;
 };
 
 const RecipeItem = (props: RecipeProps) => {
@@ -129,6 +131,13 @@ const RecipeItem = (props: RecipeProps) => {
               <TouchableOpacity style={styles.backButton} onPress={closeWindow}>
                 <Ionicons name={"chevron-back"} size={40} color="gray"/>
               </TouchableOpacity>
+
+              {props.editing ? (
+              <Pressable style={styles.bookmark} onPress={() => props.deleteMeal(props.meal_id.toString(), props.user_id.toString())}>
+                <Ionicons name="trash" size={40} color="#ff8667"/>
+              </Pressable>
+              ) : null}
+
               <Pressable style={styles.bookmark} onPress={() => setFavorited(!favorited)}>
                 <Ionicons name={favorited ? "bookmark" : "bookmark-outline"} size={40} color="#ff8667"/>
               </Pressable>

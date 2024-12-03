@@ -18,7 +18,8 @@ type MealProps = {
   shared_with: Number[];
   expiration: Date;
   recipe: any; // lol
-  recip_rms: Roommate[]
+  recip_rms: Roommate[];
+  deleteMeal: (arg1: string, arg2: string) => void;
 };
 
 const MealItem = (props: MealProps) => {
@@ -65,6 +66,8 @@ const MealItem = (props: MealProps) => {
             user_id={Number(props.user_id)}
             shared_with={props.shared_with}
             close_guy={closeModal}
+            deleteMeal={props.deleteMeal}
+            meal_id={props.meal_id}
           />
         </View>
       </View>

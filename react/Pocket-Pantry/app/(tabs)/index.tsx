@@ -102,7 +102,7 @@ export default function MealPlan () {
 
     setRecipRoommates(rms);
     fetchPlannedMeals();
-  }, [userData.reciprocatedRoommates, userData.roommates]);
+  }, [userData.reciprocatedRoommates, userData.roommates]); // TODO, make run when item is deleted?
 
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -193,6 +193,31 @@ export default function MealPlan () {
     }
   };
 
+  const deleteMeal = async (id: string, user_id: string) => { // argument is pantry_id
+    alert("DELETING PLANNED MEAL " + id + " from " + user_id);
+    console.log(mealData?.filter((item) => item.meal_id == id))
+    // try {
+    //   const response = await fetch(`${API_URL}/remove_pantry_item/`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({ id: id, user_id: user_id }),
+    //   });
+  
+    //   if (!response.ok) {
+    //     throw new Error('Failed to remove item from pantry');
+    //   }
+  
+    //   setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    // } catch (error) {
+    //   console.error('Error removing item:', error);
+    //   alert('Error: Failed to remove item.');
+    // }    
+  };
+
+
+
   const renderRecipes = ({item}:{item:any}) => (
     <RecipeItem
       id={item.recipe_id}
@@ -215,6 +240,8 @@ export default function MealPlan () {
       recip_roommates={recipRoommates}
       shared_with={[]}
       user_id={-1}
+      deleteMeal={deleteMeal}
+      meal_id={"-1"} // string uh idk
     />
   );
 
@@ -347,6 +374,7 @@ export default function MealPlan () {
                 expiration={meal.expiration_date}
                 recipe={meal.recipe_obj}
                 recip_rms={recipRoommates}
+                deleteMeal={deleteMeal}
               />
             ))}
           </View>
