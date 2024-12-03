@@ -17,6 +17,7 @@ type RecipeProps = {
   name: string;
   description: string;
   servings: number;
+  planned_servings: number;
   nutrition: number[];
   cook_time: number;
   cook_steps: string[];
@@ -70,7 +71,7 @@ const RecipeItem = (props: RecipeProps) => {
   const { hours, minutes } = separateHoursMinutes(props.cook_time);
 
   {/* Functions - set recipe servings */}
-  const [servings, setServings] = useState(props.servings.toString());
+  const [servings, setServings] = useState(props.editing ? props.planned_servings.toString() : props.servings.toString());
   
   {/* Functions - adjust ingredient quantities based on recipe servings */}
   const [quantities, setQuantities] = useState(props.ingredient_quantities);
@@ -86,6 +87,10 @@ const RecipeItem = (props: RecipeProps) => {
       );
     }
   };
+
+  useEffect(() => {
+    adjustQuantities(servings);
+  }, []);
 
   {/* Functions - set recipe date */}
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);

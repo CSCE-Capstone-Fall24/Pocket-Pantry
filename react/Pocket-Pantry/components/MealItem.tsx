@@ -54,7 +54,8 @@ const MealItem = (props: MealProps) => {
             id={recipe.id}
             name={recipe.name}
             description={recipe.description}
-            servings={n_servings}
+            servings={recipe.serving_size}
+            planned_servings={n_servings}
             nutrition={recipe.nutrition}
             cook_time={recipe.cook_time}
             cook_steps={recipe.cook_steps}
