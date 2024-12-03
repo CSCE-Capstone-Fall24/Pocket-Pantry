@@ -1148,7 +1148,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         recipe_details = db.query(Recipes).filter(Recipes.recipe_id == meal.recipe_id).first()
         ingredient_names = recipe_details.ingredients
         quantities = recipe_details.ingredient_quantities
-        quantities = [num * (meal.n_servings/recipe_details.serving_size) for num in quantities]
+        quantities = [float(num * (meal.n_servings/recipe_details.serving_size)) for num in quantities]
         units = recipe_details.ingredient_units
         quantities = convert_list_to_grams(quantities, units)
         indv_meal_info = [meal_id, users, ingredient_names, quantities, units]
