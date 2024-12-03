@@ -38,7 +38,7 @@ const MealItem = (props: MealProps) => {
           {/* Meal Info */}
           <Text style={styles.recipeName}>{props.recipe.name}</Text>
           <Text style={styles.details}>Servings: {n_servings}</Text>
-          <Text style={styles.details}>Expiration: {expiration.toLocaleDateString()}</Text>
+          {/* <Text style={styles.details}>Expiration: {expiration.toLocaleDateString()}</Text> */}
 
           {/* Sharing Info */}
           {is_shared && (
@@ -81,7 +81,7 @@ const MealItem = (props: MealProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    height: 100,
+    height: 70,
     marginVertical: 8,
     marginHorizontal: 16,
     borderRadius: 8,
