@@ -1125,7 +1125,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         if len(all_combinations[i]) == 1:
             del all_combinations[i]
 
-    #fetches the planned meal info (meal_id, users oon meal, ingredient names, quantities, units) and scales/converts info
+    #fetches the planned meal info (meal_id, users on meal, ingredient names, quantities, units) and scales/converts info
     meal_info = []
 
     for meal in planned_meals:
@@ -1198,7 +1198,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         inventory_info.append(pantry_info)
 
     #pantries info gathering of combinations of associated users in meal where they are in the shared_with
-    #and the user_id of the item is not aninvolved user in the meal planning(part 3)
+    #and the user_id of the item is not an involved user in the meal planning(part 3)
     for combo in all_combinations:
         inv = db.query(Pantry).filter(
             and_(
@@ -1245,28 +1245,31 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
     #math calculation of needed ingredients and amounts
     for meal in meal_info:
         for pantry in inventory_info:
-            if all(user in meal[2] for user in pantry[0]):
-                for idx_meal, ingredient in enumerate(meal[2]):
-                    highest_score = 0
-                    best_match_index = None  # To store the index of the best matching item
 
-                    for idx_inv, item in enumerate(pantry[1]):
-                        # Calculate the similarity ratio
-                        ratio = fuzz.WRatio(ingredient.lower(), item.lower())
+            if not all(user in meal[1] for user in pantry[0]):
+                continue
 
-                        # Update the highest score and best match index if ratio > 88
-                        if ratio > 88 and ratio > highest_score and meal[3][idx_inv] > 0 and pantry[1][idx_inv] > 0:
-                            highest_score = ratio
-                            best_match_index = idx_inv
+            for idx_meal, ingredient in enumerate(meal[2]):
+                highest_score = 0
+                best_match_index = None  # To store the index of the best matching item
 
-                    # If a match is found, print or store the result
-                    if best_match_index is not None:
-                        if meal[3][idx_meal] <= pantry[2][best_match_index]:
-                            pantry[2][best_match_index] -= meal[3][idx_meal]
-                            meal[3][idx_meal] = 0
-                        else:
-                            meal[3][idx_meal] -= pantry[2][best_match_index]
-                            pantry[2][best_match_index] = 0
+                for idx_inv, item in enumerate(pantry[1]):
+                    # Calculate the similarity ratio
+                    ratio = fuzz.WRatio(ingredient.lower(), item.lower())
+
+                    # Update the highest score and best match index if ratio > 88
+                    if ratio > 88 and ratio > highest_score and meal[3][idx_meal] > 0 and pantry[2][idx_inv] > 0:
+                        highest_score = ratio
+                        best_match_index = idx_inv
+
+                # If a match is found, print or store the result
+                if best_match_index is not None:
+                    if meal[3][idx_meal] <= pantry[2][best_match_index]:
+                        pantry[2][best_match_index] -= meal[3][idx_meal]
+                        meal[3][idx_meal] = 0
+                    else:
+                        meal[3][idx_meal] -= pantry[2][best_match_index]
+                        pantry[2][best_match_index] = 0
 #convert units back
     for meal in meal_info:
         meal[3] = convert_list_from_grams(meal[3], meal[4])
