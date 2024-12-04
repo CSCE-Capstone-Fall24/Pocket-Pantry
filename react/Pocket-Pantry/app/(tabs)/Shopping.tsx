@@ -122,19 +122,6 @@ const Shopping = () => {
     );
   };
 
-  // Function to handle submit action
-  const handleSubmit = () => {
-    setItems((prevLists) =>
-      prevLists
-        .map((list) => ({
-          ...list,
-          shoppingItems: list.shoppingItems.filter((item) => !item.checked), // Remove checked items
-        }))
-        .filter((list) => list.shoppingItems.length > 0) // Remove empty lists
-    );
-
-    Alert.alert('Submitted', 'Checked items have been removed from your shopping lists.');
-  };
 
   const formatListTitle = (userIds: string[]): string => {
     const roommateNames = userIds
@@ -166,7 +153,6 @@ const Shopping = () => {
       <SafeAreaView>
         <View style={styles.header}>
           <Text style={styles.title}>Shopping Lists</Text>
-          <Button title="Submit" onPress={handleSubmit} />
         </View>
       </SafeAreaView>
 

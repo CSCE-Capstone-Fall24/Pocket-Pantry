@@ -9,6 +9,7 @@ from sqlalchemy.exc import NoResultFound
 from itertools import combinations
 from datetime import datetime
 import copy
+from collections import defaultdict
 
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
@@ -57,7 +58,8 @@ GRAMS_CONVERSION = {
     "bunch": 150, "bunches": 150,  
     "piece": 100, "pieces": 100, "pc": 100, "count": 100,  
     "leaf": 1, "leaves": 1,  
-    "sprig": 1, "sprigs": 1  
+    "sprig": 1, "sprigs": 1,
+    "unknown unit": 1  
 }
 
 def convert_to_grams(quantity, unit_name):
@@ -876,14 +878,12 @@ def reset_pass(data: Reset, db: Session = Depends(get_db)):
 
 # RECIPE QUERIES ----------------------------------------------------------------------------------------------------------------------------
 @app.get("/recipes_made_from_inventory/")
-async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
+async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_db)):
     pantry_items = db.query(Pantry).filter(
         or_(
-            Pantry.user_id.in_(data.user_list),
-            and_(
-                #Pantry.is_shared == True,
-                Pantry.shared_with.op('&&')(data.user_list)
-            )
+            Pantry.user_id == user_id,
+
+            Pantry.shared_with.contains([user_id])
         )
     ).all()
     
@@ -897,25 +897,36 @@ async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get
     for recipe in all_r:
         has_ingredients = []
 
-        for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
+        if len(recipe.ingredients)==0 or len(recipe.ingredient_quantities)==0 or len(recipe.ingredient_units)==0:
+            continue
+
+        for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):   
             possessed = False
             for item in pantry_items:
                 if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 88:
-                    if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
+                    if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(float(recipe.ingredient_quantities[idx_ingredient]), recipe.ingredient_units[idx_ingredient]):
                         possessed = True
                         has_ingredients.append(True)
                         break
             if possessed == False:
                 has_ingredients.append(False)
         ingredients_owned_all_r.append(has_ingredients)
+        recipe.possessed_list = has_ingredients
 
 
-    for i, recp in enumerate(all_r):
-        recp.possessed_list = ingredients_owned_all_r[i]
+    #for i, recp in enumerate(all_r):
+    #    recp.possessed_list = ingredients_owned_all_r[i]
 
-    all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+    return_recipes = []
 
-    return all_r
+    for recipe in all_r:
+        if len(recipe.ingredients)!=0 and len(recipe.ingredient_quantities)!=0 and len(recipe.ingredient_units)!=0:
+            return_recipes.append(recipe)
+            
+
+    return_recipes.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+
+    return return_recipes
 
     """
     all_r = db.query(Recipes).all()         #fetches all recipes from database
@@ -1208,7 +1219,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
                     Pantry.shared_with.contains([user for user in combo if user != Pantry.user_id])
                 )
             ).all()
-            
+
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
         quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
@@ -1305,19 +1316,49 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
 
     shopping_list = []
 
+    shopping_dict = defaultdict(lambda: [[], [], []])  # Key: Group; Value: [items, quantities, units]
+
+    for meal in meal_info:
+        # Remove zero quantities
+        for zero_idx in range(len(meal[3]) - 1, -1, -1):  # Iterate backward
+            if meal[3][zero_idx] <= 0:
+                del meal[2][zero_idx]
+                del meal[3][zero_idx]
+                del meal[4][zero_idx]
+
+        # Normalize the group key (sorted and unique)
+        group_key = tuple(sorted(set(meal[1])))
+
+        # Update the group in the shopping dictionary
+        for ingredient_idx, ingredient_name in enumerate(meal[2]):
+            if ingredient_name in shopping_dict[group_key][0]:  # Ingredient already exists
+                item_idx = shopping_dict[group_key][0].index(ingredient_name)
+                shopping_dict[group_key][1][item_idx] += meal[3][ingredient_idx]  # Add quantity
+            else:  # New ingredient for the group
+                shopping_dict[group_key][0].append(ingredient_name)
+                shopping_dict[group_key][1].append(meal[3][ingredient_idx])
+                shopping_dict[group_key][2].append(meal[4][ingredient_idx])  # Add unit
+
+    # Convert shopping dictionary back to list format
+    shopping_list = [
+        [list(key), items, quantities, units]
+        for key, (items, quantities, units) in shopping_dict.items()
+    ]
+
+    """
     for meal in meal_info:
         #remove 0 quantities here
         for zero_idx in range(len(meal[3]) - 1, -1, -1):  # Iterate backward
-            if meal[3][zero_idx] == 0:
+            if meal[3][zero_idx] <= 0:
                 del meal[2][zero_idx]
                 del meal[3][zero_idx]
                 del meal[4][zero_idx]
         if len(shopping_list) != 0: #if shoppinglist doesn't have any shopping info yet then add first group
             for idx_match, group in enumerate(shopping_list):
                 group_match_index = None
-                if sorted(meal[1]) == sorted(group[0]):
+                if set(meal[1]) == set(group[0]):
                     group_match_index = idx_match
-            if group_match_index != None:
+            if group_match_index is not None:
                 for ingredient_idx, ingredient_name in enumerate(meal[2]):
                     match_found = False
                     for shop_idx, item_name in enumerate(shopping_list[group_match_index][1]):
@@ -1342,7 +1383,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             new_group.append(meal[3])
             new_group.append(meal[4])
             shopping_list.append(new_group) #add new group line
-
+    """
     #fix shopping_list format
     for idx in range(len(shopping_list)):
         shopping_list[idx].append(shopping_list[idx][0])
