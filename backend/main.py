@@ -911,10 +911,11 @@ async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_d
             if possessed == False:
                 has_ingredients.append(False)
         ingredients_owned_all_r.append(has_ingredients)
+        recipe.possessed_list = has_ingredients
 
 
-    for i, recp in enumerate(all_r):
-        recp.possessed_list = ingredients_owned_all_r[i]
+    #for i, recp in enumerate(all_r):
+    #    recp.possessed_list = ingredients_owned_all_r[i]
 
     all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
 
