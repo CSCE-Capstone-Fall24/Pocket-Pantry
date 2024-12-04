@@ -329,6 +329,7 @@ const RecipeItem = (props: RecipeProps) => {
                 style={!props.editing ? styles.recipeServingsInput : styles.recipeServingsInputGray}
                 value={servings}
                 onChangeText={(value) => adjustQuantities(value)}
+                editable={!props.editing}
               />
               <Text style={styles.recipeInputText}>Date:  </Text>
               <TouchableOpacity style={!props.editing ? styles.recipeDateInput : styles.recipeDateInputGray} onPress={() => (!props.editing ? openDatePicker : null)}>
