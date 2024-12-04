@@ -896,7 +896,10 @@ async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_d
     for recipe in all_r:
         has_ingredients = []
 
-        for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):
+        if len(recipe.ingredients)==0 or len(recipe.ingredient_quantities)==0 or len(recipe.ingredient_units)==0:
+            continue
+
+        for idx_ingredient, ingredient_name in enumerate(recipe.ingredients):   
             possessed = False
             for item in pantry_items:
                 if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 88:
