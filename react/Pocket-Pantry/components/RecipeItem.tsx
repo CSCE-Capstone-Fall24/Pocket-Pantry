@@ -44,7 +44,7 @@ const RecipeItem = (props: RecipeProps) => {
     "#fde289", "#ade693", "#89e0b3", "#78dbde",
     "#6eabd7", "#7a6ed7","#ae5da2",
   ];
-  const {userData, setUserData} = useUserContext();
+  const {userData} = useUserContext();
 
   {/* Functions - view recipe window */}
   const [isZeWindowVisible, setWindowVisible] = useState(false);
@@ -399,14 +399,14 @@ const RecipeItem = (props: RecipeProps) => {
                     </View>
                     {/* // SHOW SHARED WITH
                     // MARK YOU IN SHARED WITH */}
-                    {props.shared_with.map((roommate: string, index: number) => {
-                      const found = props.recip_roommates.find((rm: Roommate) => rm.id == roommate);
+                    {props.shared_with.map((roommate: Number, index: number) => {
+                      const found = props.recip_roommates.find((rm: Roommate) => rm.id == roommate.toString());
                       const roommateName = found ? found.name : `Unknown (${roommate})`;
                       
                       return (
-                        <View key={roommate} style={styles.sharedContainer}>
+                        <View key={roommate.toString()} style={styles.sharedContainer}>
                           <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
-                            Shared with {userData.user_id != roommate ? roommateName : roommate}
+                            Shared with {userData.user_id != roommate.toString() ? roommateName : roommate.toString()}
                             </Text>
                           <Pressable>
                               <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
