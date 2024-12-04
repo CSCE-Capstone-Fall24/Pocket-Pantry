@@ -1200,12 +1200,21 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
                     )
                 )
             ).all()
-            ingredient_names = [pantry_item.food_name for pantry_item in inv]
-            quantities = [float(pantry_item.quantity) for pantry_item in inv]
-            units = [pantry_item.unit for pantry_item in inv]
-            quantities = convert_list_to_grams(quantities, units)
-            pantry_info = [combo, ingredient_names, quantities, units]
-            inventory_info.append(pantry_info)
+        else:
+            inv = db.query(Pantry).filter(
+                and_(
+                    Pantry.user_id.in_(combo),
+
+                    Pantry.shared_with.contains([user for user in combo if user != Pantry.user_id])
+                )
+            ).all()
+            
+        ingredient_names = [pantry_item.food_name for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
+        units = [pantry_item.unit for pantry_item in inv]
+        quantities = convert_list_to_grams(quantities, units)
+        pantry_info = [combo, ingredient_names, quantities, units]
+        inventory_info.append(pantry_info)
 
     
     #pantries info gathering of combinations of associated users in meal where they are in the shared_with
@@ -1228,12 +1237,22 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
                     )
                 )
             ).all()
-            ingredient_names = [pantry_item.food_name for pantry_item in inv]
-            quantities = [float(pantry_item.quantity) for pantry_item in inv]
-            units = [pantry_item.unit for pantry_item in inv]
-            quantities = convert_list_to_grams(quantities, units)
-            pantry_info = [combo, ingredient_names, quantities, units]
-            inventory_info.append(pantry_info)
+
+        else:
+            inv = db.query(Pantry).filter(
+                and_(
+                    not_(Pantry.user_id.in_(unique_users)),
+
+                    Pantry.shared_with.contains(combo)
+                )
+            ).all()
+
+        ingredient_names = [pantry_item.food_name for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
+        units = [pantry_item.unit for pantry_item in inv]
+        quantities = convert_list_to_grams(quantities, units)
+        pantry_info = [combo, ingredient_names, quantities, units]
+        inventory_info.append(pantry_info)
     
     #pantry info gathering where the item is shared with just one unique user from unique_users
     #  and the user_id is not in unique_users
