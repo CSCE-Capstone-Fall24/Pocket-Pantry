@@ -3,6 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Pressa
 import Modal from "react-native-modal"
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useUserContext } from "./contexts/UserContext";
+import { handleAddFavorite, handleRemoveFavorite } from './FavoriteRecipes';
+
+const API_URL = process.env["EXPO_PUBLIC_API_URL"];
 
 type Roommate = {
   id: string; 
@@ -11,7 +15,7 @@ type Roommate = {
 };
 
 type RecipeProps = {
-  id: number;
+  id: string;
   name: string;
   description: string;
   servings: number;
@@ -31,6 +35,8 @@ type RecipeProps = {
 };
 
 const RecipeItem = (props: RecipeProps) => {
+  const { userData, setUserData } = useUserContext();
+
   const nutrition = ["Calories", "Fat", "Sugar", "Sodium", "Protein", "Saturated Fat", "Carbohydrates"];
 
   {/* Functions - view recipe window */}
@@ -49,8 +55,23 @@ const RecipeItem = (props: RecipeProps) => {
     }
   };
 
-  {/* Functions - add recipe to favorites */}
-  const [favorited, setFavorited] = useState(false);
+  {/* Functions - bookmark recipe to favorites */}
+  const [favorited, setFavorited] = useState(() =>
+    !!userData?.favorite_recipes?.find((recipe: RecipeProps) => recipe.id === props.id)
+  );
+  const toggleFavorite = async (isFavorited: boolean) => {
+    if (isFavorited) {
+      const result = await handleRemoveFavorite(userData?.user_id, props.id, setUserData);
+      if (result.success) {
+        setFavorited(false);
+      }
+    } else {
+      const result = await handleAddFavorite(userData?.user_id, props.id, setUserData);
+      if (result.success) {
+        setFavorited(true);
+      }
+    }
+  };  
 
   {/* Functions - recipe text formatting */}
   const capitalizeFirstLetter = (value: string) => {
@@ -91,7 +112,7 @@ const RecipeItem = (props: RecipeProps) => {
   {/* Functions - add recipe to meal plan */}
   const addRecipe = () => {
     if (!servings || isNaN(Number(servings)) || Number(servings) <= 0) {
-      Alert.alert('Please enter a valid quantity.');
+      Alert.alert('Please enter a valid number of servings.');
     } else {
       closeWindow();
       setTimeout(() => {
@@ -129,8 +150,17 @@ const RecipeItem = (props: RecipeProps) => {
               <TouchableOpacity style={styles.backButton} onPress={closeWindow}>
                 <Ionicons name={"chevron-back"} size={40} color="gray"/>
               </TouchableOpacity>
-              <Pressable style={styles.bookmark} onPress={() => setFavorited(!favorited)}>
-                <Ionicons name={favorited ? "bookmark" : "bookmark-outline"} size={40} color="#ff8667"/>
+              <Pressable
+                style={styles.bookmark}
+                onPress={() => {
+                  toggleFavorite(favorited);
+                }}
+              >
+                <Ionicons
+                  name={favorited ? "bookmark" : "bookmark-outline"}
+                  size={40}
+                  color="#ff8667"
+                />
               </Pressable>
             </View>
 
