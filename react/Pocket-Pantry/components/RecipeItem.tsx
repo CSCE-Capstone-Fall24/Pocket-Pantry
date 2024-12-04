@@ -68,6 +68,7 @@ const RecipeItem = (props: RecipeProps) => {
   const [favorited, setFavorited] = useState(() =>
     !!userData?.favorite_recipes?.find((recipe: RecipeProps) => recipe.id === props.id)
   );
+
   const toggleFavorite = async (isFavorited: boolean) => {
     if (isFavorited) {
       const result = await handleRemoveFavorite(userData?.user_id, props.id, setUserData);

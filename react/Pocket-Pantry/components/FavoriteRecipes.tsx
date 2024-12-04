@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -72,12 +72,33 @@ export const handleRemoveFavorite = async (user_id: string, recipeId: string, se
 };
 
 export default function FavoritedRecipes() {
-  const { userData, setUserData } = useUserContext();
+  const { userData } = useUserContext();
   const [dropdownState, setDropdownState] = useState(false);
+  const [favoriteRecipes, setFavoriteRecipes] = useState<any[]>([]); // Array to store recipes
 
   const toggleDropdown = () => {
     setDropdownState(!dropdownState);
   };
+
+  // Fetch favorite recipes from backend
+  const fetchFavoriteRecipes = async () => {
+    try {
+      const response = await fetch(`${API_URL}/fetch_favorite_recipes/?user_id=${userData?.user_id}`);
+      const data = await response.json();
+      console.log("Fetched favorites:", data); // Debug: Log the response data
+      setFavoriteRecipes(data || []); // Update state with the fetched recipes
+    } catch (error) {
+      console.error("Error fetching favorite recipes:", error);
+      Alert.alert("Error", "Could not fetch favorite recipes. Please try again.");
+    }
+  };
+
+  // Fetch recipes on mount or when `userData.user_id` changes
+  useEffect(() => {
+    if (userData?.user_id) {
+      fetchFavoriteRecipes();
+    }
+  }, [userData?.user_id]);
 
   return (
     <View style={styles.dropdownContainer}>
@@ -88,14 +109,10 @@ export default function FavoritedRecipes() {
 
       {dropdownState && (
         <View style={styles.dropdownContent}>
-          {userData?.favorite_recipes && userData.favorite_recipes.length > 0 ? (
-            userData.favorite_recipes.map((recipe: any, index: number) => (
+          {favoriteRecipes.length > 0 ? (
+            favoriteRecipes.map((recipe, index) => (
               <View key={index} style={styles.recipeItem}>
                 <Text style={styles.recipeName}>{recipe.name}</Text>
-                <Button
-                  title="Remove"
-                  onPress={() => handleRemoveFavorite(userData.user_id, recipe.id, setUserData)}
-                />
               </View>
             ))
           ) : (
