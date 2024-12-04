@@ -1254,30 +1254,28 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
     for meal in meal_info:
         for pantry in inventory_info:
 
-            if not all(user in meal[1] for user in pantry[0]):
-                continue
+            if all(user in meal[1] for user in pantry[0]):
+                for idx_meal, ingredient in enumerate(meal[2]):
+                    highest_score = 0
+                    best_match_index = None  # To store the index of the best matching item
 
-            for idx_meal, ingredient in enumerate(meal[2]):
-                highest_score = 0
-                best_match_index = None  # To store the index of the best matching item
+                    for idx_inv, item in enumerate(pantry[1]):
+                        # Calculate the similarity ratio
+                        ratio = fuzz.WRatio(ingredient.lower(), item.lower())
 
-                for idx_inv, item in enumerate(pantry[1]):
-                    # Calculate the similarity ratio
-                    ratio = fuzz.WRatio(ingredient.lower(), item.lower())
+                        # Update the highest score and best match index if ratio > 88
+                        if ratio > 88 and ratio > highest_score and meal[3][idx_meal] > 0 and pantry[2][idx_inv] > 0:
+                            highest_score = ratio
+                            best_match_index = idx_inv
 
-                    # Update the highest score and best match index if ratio > 88
-                    if ratio > 88 and ratio > highest_score and meal[3][idx_meal] > 0 and pantry[2][idx_inv] > 0:
-                        highest_score = ratio
-                        best_match_index = idx_inv
-
-                # If a match is found, print or store the result
-                if best_match_index is not None:
-                    if meal[3][idx_meal] <= pantry[2][best_match_index]:
-                        pantry[2][best_match_index] -= meal[3][idx_meal]
-                        meal[3][idx_meal] = 0
-                    else:
-                        meal[3][idx_meal] -= pantry[2][best_match_index]
-                        pantry[2][best_match_index] = 0
+                    # If a match is found, print or store the result
+                    if best_match_index is not None:
+                        if meal[3][idx_meal] <= pantry[2][best_match_index]:
+                            pantry[2][best_match_index] -= meal[3][idx_meal]
+                            meal[3][idx_meal] = 0
+                        else:
+                            meal[3][idx_meal] -= pantry[2][best_match_index]
+                            pantry[2][best_match_index] = 0
 #convert units back
     for meal in meal_info:
         meal[3] = convert_list_from_grams(meal[3], meal[4])
