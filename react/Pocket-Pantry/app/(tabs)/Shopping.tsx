@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Button, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ShoppingList from '@/components/ShoppingList';
 import { useUserContext } from "@/components/contexts/UserContext";
@@ -29,6 +29,7 @@ interface List {
 
 const Shopping = () => {
   const [items, setItems] = useState<List[]>([]); // Store fetched shopping lists
+  const [refreshing, setRefreshing] = useState(false);
   const { userData } = useUserContext(); // User context to get `user_id`
 
   // Function to fetch and transform items
@@ -74,6 +75,12 @@ const Shopping = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true); // Start refreshing
+    await fetchItems();  // Fetch the latest data
+    setRefreshing(false); // End refreshing
+  };
+
   // Fetch items on component mount
   useEffect(() => {
     fetchItems();
@@ -111,7 +118,14 @@ const Shopping = () => {
 
   // Render the component
   return (
-    <ScrollView>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh} // Handle pull-to-refresh
+        />
+    }
+    >
       <SafeAreaView>
         <View style={styles.header}>
           <Text style={styles.title}>Shopping Lists</Text>

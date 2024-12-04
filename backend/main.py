@@ -1052,7 +1052,7 @@ async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depe
 
     return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
 
-@app.post("/fetch_favorite_recipes/")
+@app.get("/fetch_favorite_recipes/")
 async def fetch_favorite_recipes(user_id: int, db: Session = Depends(get_db)):
     fav_recipes_ids = db.query(Users).filter(Users.user_id == user_id).first().favorite_recipes
     fav_recipes = db.query(Recipes).filter(Recipes.recipe_id.in_(fav_recipes_ids)).all()
