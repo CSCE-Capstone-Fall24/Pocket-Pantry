@@ -461,12 +461,14 @@ async def delete_planned_meal(request: DeleteMealRequest, db: Session = Depends(
 
         return {"message": "Your meal has been removed. Meal plan has been updated."}
     else:
+        copy = meal.shared_with[::]
         for idx, id in enumerate(meal.shared_with):
             if id == request.user_id:
-                del meal.shared_with[idx]
+                del copy[idx]
 
-        if len(meal.shared_with) == 0:
+        if len(copy) == 0:
             meal.is_shared = False
+        meal.shared_with = copy
 
         db.commit()
         db.refresh(meal)
@@ -1063,7 +1065,6 @@ async def fetch_favorite_recipes(user_id: int, db: Session = Depends(get_db)):
 @app.post("/fetch_recipe_by_id/")
 async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
     recipe_details = db.query(Recipes).filter(Recipes.recipe_id == recipe_id).first()
-
 
     if not recipe_details:
         raise HTTPException(status_code=404, detail="Recipe not in Recipes")
