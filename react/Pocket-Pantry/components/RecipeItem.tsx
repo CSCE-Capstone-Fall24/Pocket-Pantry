@@ -326,12 +326,12 @@ const RecipeItem = (props: RecipeProps) => {
             <View style={styles.recipeInputContainer}>
               <Text style={styles.recipeInputText}>Servings:  </Text>
               <TextInput
-                style={styles.recipeServingsInput}
+                style={!props.editing ? styles.recipeServingsInput : styles.recipeServingsInputGray}
                 value={servings}
                 onChangeText={(value) => adjustQuantities(value)}
               />
               <Text style={styles.recipeInputText}>Date:  </Text>
-              <TouchableOpacity style={styles.recipeDateInput} onPress={openDatePicker}>
+              <TouchableOpacity style={!props.editing ? styles.recipeDateInput : styles.recipeDateInputGray} onPress={() => (!props.editing ? openDatePicker : null)}>
                 <Text style={styles.recipeInputText}>{date.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
@@ -372,7 +372,7 @@ const RecipeItem = (props: RecipeProps) => {
                 props.editing ? (
                 userData.user_id == props.user_id ? (
                   // IF USER VIEWING IS OWNER
-                  // props.shared_with.length > 0 && (
+                  props.shared_with.length > 0 && (
                     <ScrollView horizontal={false} style={styles.sharedScroll}>
                         {props.recip_roommates.map((roommate: Roommate, index: number) => {
                           return (
@@ -392,6 +392,7 @@ const RecipeItem = (props: RecipeProps) => {
                           );
                         })}
                     </ScrollView>
+                  )
                 ) : (
                   // USER VIEWING IS NOT OWNER
                   // SHOW OWNER
@@ -451,11 +452,11 @@ const RecipeItem = (props: RecipeProps) => {
               <TouchableOpacity style={styles.cancelButton} onPress={closeWindow}>
                 <Text style={styles.cancelButtonText}>{props.editing ? "Close" : "Cancel"}</Text>
               </TouchableOpacity>
-              {!props.editing ? 
+              {!props.editing && 
               <TouchableOpacity style={styles.addButton} onPress={addRecipe}>
                 <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
-              : null}
+              }
             </View>
 
             <View style={styles.scrollerSpacer}></View>
@@ -548,10 +549,25 @@ const styles = StyleSheet.create({
     padding: 11,
     fontSize: 16,
   },
+  recipeServingsInputGray: {
+    marginRight: 20,
+    width: 70,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: "#aaaaaa",
+    backgroundColor: "#aaaaaa",
+    padding: 11,
+    fontSize: 16,
+  },
   recipeDateInput: {
     borderRadius: 8,
     padding: 12,
     backgroundColor: "#f0f0f0",
+  },
+  recipeDateInputGray: {
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#aaaaaa",
   },
   datePickerSpacer: {
     flex: 1,
@@ -612,6 +628,7 @@ const styles = StyleSheet.create({
     borderColor: "lightgray",
     paddingTop: 12,
     paddingHorizontal: 12,
+    alignSelf: 'center'
   },
   sharedContainer: {
     marginBottom: 8,
