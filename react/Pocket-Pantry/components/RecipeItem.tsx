@@ -166,7 +166,7 @@ const RecipeItem = (props: RecipeProps) => {
         closeWindow();
         setTimeout(() => {
           props.closeSearchWindow();
-        }, 350);
+        }, 1000);
 
       } catch (error: any) {
         Alert.alert('Error', error.message || 'Something went wrong.');
