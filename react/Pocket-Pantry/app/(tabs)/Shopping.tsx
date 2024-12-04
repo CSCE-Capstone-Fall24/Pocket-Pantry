@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Button, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ShoppingList from '@/components/ShoppingList';
 import { useUserContext } from "@/components/contexts/UserContext";
@@ -29,6 +29,7 @@ interface List {
 
 const Shopping = () => {
   const [items, setItems] = useState<List[]>([]); // Store fetched shopping lists
+  const [refreshing, setRefreshing] = useState(false);
   const { userData } = useUserContext(); // User context to get `user_id`
 
   // Function to fetch and transform items
@@ -48,18 +49,6 @@ const Shopping = () => {
 
       const data: RawList[] = await response.json(); // Fetch raw data
       console.log(data);
-      // Transform the raw data into the required structure
-      // const transformedItems: List[] = data.map((list, listIndex) => ({
-      //   listId: `list-${listIndex + 1}`, // Generate a unique listId
-      //   userIds: list.userIds, // Use user IDs directly from the API response
-      //   shoppingItems: list.map((item, itemIndex) => ({
-      //     id: `item-${listIndex}-${itemIndex}`, // Generate a unique item ID
-      //     name: item.name, // Use the item name
-      //     quantity: list.qnts[itemIndex], // Map the corresponding quantity
-      //     unit: list.units[itemIndex], // Map the corresponding unit
-      //     checked: false, // Default to unchecked
-      //   })),
-      // }));
 
       const transformedItems: List[] = data.map((listData, listIndex) => ({
         listId: `list-${listIndex + 1}`, // Generate a unique listId
@@ -72,12 +61,24 @@ const Shopping = () => {
           checked: false, // Default to unchecked
         })),
       }));
-  
+      
+      const singleUserLists = transformedItems.filter((list) => list.userIds.length === 1);
+      const multiUserLists = transformedItems.filter((list) => list.userIds.length > 1);
+
+      // Combine single-user lists first, followed by multi-user lists
+      const sortedItems = [...singleUserLists, ...multiUserLists];
+
       setItems(transformedItems); // Store the transformed data in state
       console.log("Transformed items:", transformedItems);
     } catch (error) {
       console.error("Error fetching items:", error);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true); // Start refreshing
+    await fetchItems();  // Fetch the latest data
+    setRefreshing(false); // End refreshing
   };
 
   // Fetch items on component mount
@@ -117,7 +118,14 @@ const Shopping = () => {
 
   // Render the component
   return (
-    <ScrollView>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh} // Handle pull-to-refresh
+        />
+    }
+    >
       <SafeAreaView>
         <View style={styles.header}>
           <Text style={styles.title}>Shopping Lists</Text>
@@ -129,7 +137,7 @@ const Shopping = () => {
       {items.map((list) => (
         <View key={list.listId} style={styles.listContainer}>
           <Text style={styles.listTitle}>
-            Shopping List ({list.userIds.join(", ")})
+            List: {list.userIds.join(", ")}
           </Text>
           <ShoppingList
             listId={list.listId}

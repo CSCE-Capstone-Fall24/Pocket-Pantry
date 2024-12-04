@@ -1052,6 +1052,14 @@ async def remove_favorite_recipe(data: removeFavoriteRequest, db: Session = Depe
 
     return {"message": "Recipe has been removed from favorites", "user_id": data.user_id, "favorite_recipes": user.favorite_recipes}
 
+@app.get("/fetch_favorite_recipes/")
+async def fetch_favorite_recipes(user_id: int, db: Session = Depends(get_db)):
+    fav_recipes_ids = db.query(Users).filter(Users.user_id == user_id).first().favorite_recipes
+    fav_recipes = db.query(Recipes).filter(Recipes.recipe_id.in_(fav_recipes_ids)).all()
+
+    return fav_recipes
+
+
 @app.post("/fetch_recipe_by_id/")
 async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
     recipe_details = db.query(Recipes).filter(Recipes.recipe_id == recipe_id).first()
@@ -1125,7 +1133,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         if len(all_combinations[i]) == 1:
             del all_combinations[i]
 
-    #fetches the planned meal info (meal_id, users oon meal, ingredient names, quantities, units) and scales/converts info
+    #fetches the planned meal info (meal_id, users on meal, ingredient names, quantities, units) and scales/converts info
     meal_info = []
 
     for meal in planned_meals:
@@ -1140,7 +1148,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         recipe_details = db.query(Recipes).filter(Recipes.recipe_id == meal.recipe_id).first()
         ingredient_names = recipe_details.ingredients
         quantities = recipe_details.ingredient_quantities
-        quantities = [num * (meal.n_servings/recipe_details.serving_size) for num in quantities]
+        quantities = [float(num * (meal.n_servings/recipe_details.serving_size)) for num in quantities]
         units = recipe_details.ingredient_units
         quantities = convert_list_to_grams(quantities, units)
         indv_meal_info = [meal_id, users, ingredient_names, quantities, units]
@@ -1165,7 +1173,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
         pantry_info = [users, ingredient_names, quantities, units]
@@ -1191,14 +1199,14 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
         pantry_info = [combo, ingredient_names, quantities, units]
         inventory_info.append(pantry_info)
 
     #pantries info gathering of combinations of associated users in meal where they are in the shared_with
-    #and the user_id of the item is not aninvolved user in the meal planning(part 3)
+    #and the user_id of the item is not an involved user in the meal planning(part 3)
     for combo in all_combinations:
         inv = db.query(Pantry).filter(
             and_(
@@ -1217,7 +1225,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
         pantry_info = [combo, ingredient_names, quantities, units]
@@ -1236,16 +1244,17 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
-        pantry_info = [user, ingredient_names, quantities, units]
+        pantry_info = [[user], ingredient_names, quantities, units]
         inventory_info.append(pantry_info)
 
     #math calculation of needed ingredients and amounts
     for meal in meal_info:
         for pantry in inventory_info:
-            if all(user in meal[2] for user in pantry[0]):
+
+            if all(user in meal[1] for user in pantry[0]):
                 for idx_meal, ingredient in enumerate(meal[2]):
                     highest_score = 0
                     best_match_index = None  # To store the index of the best matching item
@@ -1255,7 +1264,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
                         ratio = fuzz.WRatio(ingredient.lower(), item.lower())
 
                         # Update the highest score and best match index if ratio > 88
-                        if ratio > 88 and ratio > highest_score and meal[3][idx_inv] > 0 and pantry[1][idx_inv] > 0:
+                        if ratio > 88 and ratio > highest_score and meal[3][idx_meal] > 0 and pantry[2][idx_inv] > 0:
                             highest_score = ratio
                             best_match_index = idx_inv
 
