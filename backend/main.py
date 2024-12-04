@@ -1173,7 +1173,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
         pantry_info = [users, ingredient_names, quantities, units]
@@ -1199,7 +1199,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
         pantry_info = [combo, ingredient_names, quantities, units]
@@ -1225,7 +1225,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
         pantry_info = [combo, ingredient_names, quantities, units]
@@ -1244,10 +1244,10 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             )
         ).all()
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
-        quantities = [pantry_item.quantity for pantry_item in inv]
+        quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
         quantities = convert_list_to_grams(quantities, units)
-        pantry_info = [user, ingredient_names, quantities, units]
+        pantry_info = [[user], ingredient_names, quantities, units]
         inventory_info.append(pantry_info)
 
     #math calculation of needed ingredients and amounts
