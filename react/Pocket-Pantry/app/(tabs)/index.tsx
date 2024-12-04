@@ -102,7 +102,7 @@ export default function MealPlan () {
 
     setRecipRoommates(rms);
     fetchPlannedMeals();
-  }, [userData.reciprocatedRoommates, userData.roommates]);
+  }, [userData.reciprocatedRoommates, userData.roommates]); // TODO, make run when item is deleted?
 
   {/* Functions - recipe search window */}
   const [isWindowVisible, setWindowVisible] = useState(false);
@@ -214,7 +214,10 @@ export default function MealPlan () {
       editing={false}
       recip_roommates={recipRoommates}
       shared_with={[]}
-      user_id={-1}
+      user_id={userData.user_id}
+      // deleteMeal={deleteMeal}
+      meal_id={"-1"} // string uh idk
+      refreshMeals={onRefresh}
     />
   );
 
@@ -347,6 +350,8 @@ export default function MealPlan () {
                 expiration={meal.expiration_date}
                 recipe={meal.recipe_obj}
                 recip_rms={recipRoommates}
+                // deleteMeal={deleteMeal}
+                refreshMeals={onRefresh}
               />
             ))}
           </View>
