@@ -461,12 +461,14 @@ async def delete_planned_meal(request: DeleteMealRequest, db: Session = Depends(
 
         return {"message": "Your meal has been removed. Meal plan has been updated."}
     else:
+        copy = meal.shared_with[::]
         for idx, id in enumerate(meal.shared_with):
             if id == request.user_id:
-                del meal.shared_with[idx]
+                del copy[idx]
 
-        if len(meal.shared_with) == 0:
+        if len(copy) == 0:
             meal.is_shared = False
+        meal.shared_with = copy
 
         db.commit()
         db.refresh(meal)
@@ -1064,7 +1066,6 @@ async def fetch_favorite_recipes(user_id: int, db: Session = Depends(get_db)):
 async def fetch_recipe(recipe_id: int, db: Session = Depends(get_db)):
     recipe_details = db.query(Recipes).filter(Recipes.recipe_id == recipe_id).first()
 
-
     if not recipe_details:
         raise HTTPException(status_code=404, detail="Recipe not in Recipes")
     
@@ -1205,6 +1206,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         pantry_info = [combo, ingredient_names, quantities, units]
         inventory_info.append(pantry_info)
 
+    """
     #pantries info gathering of combinations of associated users in meal where they are in the shared_with
     #and the user_id of the item is not an involved user in the meal planning(part 3)
     for combo in all_combinations:
@@ -1230,7 +1232,41 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
         quantities = convert_list_to_grams(quantities, units)
         pantry_info = [combo, ingredient_names, quantities, units]
         inventory_info.append(pantry_info)
-    
+    """
+    for combo in all_combinations:
+        if not combo:  # Skip empty combinations
+            continue
+
+        # Filter excluded users from unique_users
+        excluded_users = [user for user in unique_users if user not in combo]
+
+        # Query pantry for items matching the combination
+        inv = db.query(Pantry).filter(
+            and_(
+                not_(Pantry.user_id.in_(unique_users)),  # Condition 1
+                Pantry.shared_with.contains(combo),     # Condition 2
+                not_(
+                    or_(
+                        *(Pantry.shared_with.contains([user]) for user in excluded_users)  # Condition 3
+                    )
+                ) if excluded_users else True  # Skip if no excluded users
+            )
+        ).all()
+
+        # Extract pantry information
+        ingredient_names = [item.food_name for item in inv]
+        quantities = [float(item.quantity) for item in inv if item.quantity is not None]
+        units = [item.unit for item in inv]
+
+        # Convert quantities to grams
+        if quantities and units:
+            quantities = convert_list_to_grams(quantities, units)
+
+        # Append information for this combination
+        pantry_info = [combo, ingredient_names, quantities, units]
+        inventory_info.append(pantry_info)
+
+
     #pantry info gathering where the item is shared with just one unique user from unique_users
     #  and the user_id is not in unique_users
     for user in unique_users:
