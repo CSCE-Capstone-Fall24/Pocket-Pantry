@@ -882,7 +882,7 @@ async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_d
         or_(
             Pantry.user_id == user_id,
 
-            Pantry.shared_with.contains(user_id)
+            Pantry.shared_with.contains([user_id])
         )
     ).all()
     
