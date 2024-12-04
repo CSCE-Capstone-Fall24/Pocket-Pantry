@@ -134,17 +134,25 @@ export default function MealPlan () {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await fetch(`${API_URL}/all_recipes`);
-        const data = await response.json();
-        setSearchData(data);
-        console.log("FETCHING");
-        console.log(data);
+        if (filter[0]) {
+          const response = await fetch(`${API_URL}/recipes_made_from_inventory/?user_id=${userData.user_id}`);
+          const data = await response.json();
+          setSearchData(data);
+          console.log("FETCHING from shit");
+          console.log(data);
+        } else {
+          const response = await fetch(`${API_URL}/all_recipes`);
+          const data = await response.json();
+          setSearchData(data);
+          console.log("FETCHING");
+          console.log(data);
+        }
       } catch (error) {
         console.error('Error fetching recipes:', error);
       }
     };
     fetchRecipes();
-  }, []);
+  }, [filter]);
 
   const [mealData, setMealData] = useState<PlannedMeal[]>();
   const [groupedMeals, setGroupedMeals] = useState<{ [key: string]: PlannedMeal[] }>({});
@@ -325,7 +333,7 @@ export default function MealPlan () {
                 ? searchData.filter((item: any) =>
                     item.name.toLowerCase().includes(searchResult.toLowerCase())
                   )
-                : []
+                : searchData
               }
               keyExtractor={(item) => item.recipe_id.toString()}
               renderItem={renderRecipes}
