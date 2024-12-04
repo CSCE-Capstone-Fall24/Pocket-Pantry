@@ -903,7 +903,7 @@ async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_d
             possessed = False
             for item in pantry_items:
                 if fuzz.WRatio(item.food_name.lower(), ingredient_name.lower()) > 88:
-                    if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(recipe.ingredient_quantities[idx_ingredient], recipe.ingredient_units[idx_ingredient]):
+                    if convert_to_grams(item.quantity, item.unit) >= convert_to_grams(float(recipe.ingredient_quantities[idx_ingredient]), recipe.ingredient_units[idx_ingredient]):
                         possessed = True
                         has_ingredients.append(True)
                         break
