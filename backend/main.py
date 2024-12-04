@@ -9,6 +9,7 @@ from sqlalchemy.exc import NoResultFound
 from itertools import combinations
 from datetime import datetime
 import copy
+from collections import defaultdict
 
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
@@ -1208,7 +1209,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
                     Pantry.shared_with.contains([user for user in combo if user != Pantry.user_id])
                 )
             ).all()
-            
+
         ingredient_names = [pantry_item.food_name for pantry_item in inv]
         quantities = [float(pantry_item.quantity) for pantry_item in inv]
         units = [pantry_item.unit for pantry_item in inv]
@@ -1305,19 +1306,49 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
 
     shopping_list = []
 
+    shopping_dict = defaultdict(lambda: [[], [], []])  # Key: Group; Value: [items, quantities, units]
+
+    for meal in meal_info:
+        # Remove zero quantities
+        for zero_idx in range(len(meal[3]) - 1, -1, -1):  # Iterate backward
+            if meal[3][zero_idx] <= 0:
+                del meal[2][zero_idx]
+                del meal[3][zero_idx]
+                del meal[4][zero_idx]
+
+        # Normalize the group key (sorted and unique)
+        group_key = tuple(sorted(set(meal[1])))
+
+        # Update the group in the shopping dictionary
+        for ingredient_idx, ingredient_name in enumerate(meal[2]):
+            if ingredient_name in shopping_dict[group_key][0]:  # Ingredient already exists
+                item_idx = shopping_dict[group_key][0].index(ingredient_name)
+                shopping_dict[group_key][1][item_idx] += meal[3][ingredient_idx]  # Add quantity
+            else:  # New ingredient for the group
+                shopping_dict[group_key][0].append(ingredient_name)
+                shopping_dict[group_key][1].append(meal[3][ingredient_idx])
+                shopping_dict[group_key][2].append(meal[4][ingredient_idx])  # Add unit
+
+    # Convert shopping dictionary back to list format
+    shopping_list = [
+        [list(key), items, quantities, units]
+        for key, (items, quantities, units) in shopping_dict.items()
+    ]
+
+    """
     for meal in meal_info:
         #remove 0 quantities here
         for zero_idx in range(len(meal[3]) - 1, -1, -1):  # Iterate backward
-            if meal[3][zero_idx] == 0:
+            if meal[3][zero_idx] <= 0:
                 del meal[2][zero_idx]
                 del meal[3][zero_idx]
                 del meal[4][zero_idx]
         if len(shopping_list) != 0: #if shoppinglist doesn't have any shopping info yet then add first group
             for idx_match, group in enumerate(shopping_list):
                 group_match_index = None
-                if sorted(meal[1]) == sorted(group[0]):
+                if set(meal[1]) == set(group[0]):
                     group_match_index = idx_match
-            if group_match_index != None:
+            if group_match_index is not None:
                 for ingredient_idx, ingredient_name in enumerate(meal[2]):
                     match_found = False
                     for shop_idx, item_name in enumerate(shopping_list[group_match_index][1]):
@@ -1342,7 +1373,7 @@ async def shopping_list(user_id: int, db: Session = Depends(get_db) ):
             new_group.append(meal[3])
             new_group.append(meal[4])
             shopping_list.append(new_group) #add new group line
-
+    """
     #fix shopping_list format
     for idx in range(len(shopping_list)):
         shopping_list[idx].append(shopping_list[idx][0])
