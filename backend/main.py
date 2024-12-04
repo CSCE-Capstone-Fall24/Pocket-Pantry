@@ -877,14 +877,12 @@ def reset_pass(data: Reset, db: Session = Depends(get_db)):
 
 # RECIPE QUERIES ----------------------------------------------------------------------------------------------------------------------------
 @app.get("/recipes_made_from_inventory/")
-async def recipes_from_users_inventory(data: UserList, db: Session = Depends(get_db)):
+async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_db)):
     pantry_items = db.query(Pantry).filter(
         or_(
-            Pantry.user_id.in_(data.user_list),
-            and_(
-                #Pantry.is_shared == True,
-                Pantry.shared_with.op('&&')(data.user_list)
-            )
+            Pantry.user_id == user_id,
+
+            Pantry.shared_with.contains(user_id)
         )
     ).all()
     
