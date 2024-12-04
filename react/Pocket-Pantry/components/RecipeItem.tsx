@@ -196,8 +196,13 @@ const RecipeItem = (props: RecipeProps) => {
   
       const data = await response.json();
       alert('Meal deleted successfully!');
-  
+
       props.refreshMeals();
+
+      closeWindow();
+      setTimeout(() => {
+        props.closeSearchWindow();
+      }, 350);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Something went wrong.');
     }
