@@ -917,9 +917,16 @@ async def recipes_from_users_inventory(user_id: int, db: Session = Depends(get_d
     #for i, recp in enumerate(all_r):
     #    recp.possessed_list = ingredients_owned_all_r[i]
 
-    all_r.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+    return_recipes = []
 
-    return all_r
+    for recipe in all_r:
+        if len(recipe.ingredients)!=0 and len(recipe.ingredient_quantities)!=0 and len(recipe.ingredient_units)!=0:
+            return_recipes.append(recipe)
+            
+
+    return_recipes.sort(key = lambda recipe: sum(1 for has in recipe.possessed_list if has == False))
+
+    return return_recipes
 
     """
     all_r = db.query(Recipes).all()         #fetches all recipes from database
