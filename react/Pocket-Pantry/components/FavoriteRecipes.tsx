@@ -43,7 +43,7 @@ export const handleAddFavorite = async (user_id: string, recipeId: string, setUs
 
 export const handleRemoveFavorite = async (user_id: string, recipeId: string, setUserData: any) => {
   try {
-    const response = await fetch(`${API_URL}/remove_favorite_recipe`, {
+    const response = await fetch(`${API_URL}/remove_favorite_recipe/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export const handleRemoveFavorite = async (user_id: string, recipeId: string, se
 };
 
 export default function FavoritedRecipes() {
-  const { userData } = useUserContext();
+  const { userData, setUserData } = useUserContext();
   const [dropdownState, setDropdownState] = useState(false);
   const [favoriteRecipes, setFavoriteRecipes] = useState<any[]>([]); // Array to store recipes
 
@@ -113,6 +113,10 @@ export default function FavoritedRecipes() {
             favoriteRecipes.map((recipe, index) => (
               <View key={index} style={styles.recipeItem}>
                 <Text style={styles.recipeName}>{recipe.name}</Text>
+                <Button
+                  title="Remove"
+                  onPress={() => handleRemoveFavorite(userData?.user_id, recipe.recipe_id, setUserData)}
+                />
               </View>
             ))
           ) : (
