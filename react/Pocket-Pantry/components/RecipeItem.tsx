@@ -39,6 +39,11 @@ type RecipeProps = {
 
 const RecipeItem = (props: RecipeProps) => {
   const nutrition = ["Calories", "Fat", "Sugar", "Sodium", "Protein", "Saturated Fat", "Carbohydrates"];
+  const sharedColors = [
+    "#e167a4", "#f4737e", "#ff8667", "#ffb778",
+    "#fde289", "#ade693", "#89e0b3", "#78dbde",
+    "#6eabd7", "#7a6ed7","#ae5da2",
+  ];
   const {userData, setUserData} = useUserContext();
 
   {/* Functions - view recipe window */}
@@ -94,6 +99,24 @@ const RecipeItem = (props: RecipeProps) => {
     adjustQuantities(servings);
   }, []);
 
+  const [shared, setShared] = useState<boolean[]>([]);
+  useEffect(() => {
+    const initialShared = props.recip_roommates.map((roommate: Roommate) => {
+      return props.shared_with.includes(Number(roommate.id)); // ignore rn, data is fetched as string but it should be a number according to type script
+    });
+
+    setShared(initialShared);
+  }, [props.recip_roommates, props.shared_with, props]);
+
+  const [newShared, setNewShared] = useState<boolean[]>(new Array(props.recip_roommates.length).fill(false));
+  const sharedToggle = (index: number) => {
+    setNewShared((prevState) => {
+      const updatedState = [...prevState];
+      updatedState[index] = !updatedState[index];
+      return updatedState;
+    });
+  };
+
   {/* Functions - set recipe date */}
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
   const openDatePicker = () => setDatePickerVisible(true);
@@ -110,8 +133,14 @@ const RecipeItem = (props: RecipeProps) => {
         user_id: props.user_id,
         recipe_id: props.id,
         n_servings: servings,
-        is_shared: false, // shared_with.length > 0, // FIX
-        shared_with: [],    // FIX
+        // is_shared: false, // shared_with.length > 0, // FIX
+        // shared_with: [],    // FIX
+
+        shared_with: props.recip_roommates
+        .filter((_, index) => newShared[index]) // if user is shared, add their id
+        .map((roommate: Roommate) => roommate.id),
+        is_shared: newShared.some((b: Boolean) => b), // if any shared item is shared
+
         expiration_date: date, // Expiration date
       };
     
@@ -331,14 +360,97 @@ const RecipeItem = (props: RecipeProps) => {
               </View>
             </Modal>
 
+
+            {/* HERE IS CIRCLES FOR SHARED, IF EDITING TRUE, JUST SHOW CIRCLES, ELSE NEED MODIFY LOGIC FOR ADDING ITEM */}
+            
+              {
+                props.editing ? (
+                userData.user_id == props.user_id ? (
+                  // IF USER VIEWING IS OWNER
+                  // props.shared_with.length > 0 && (
+                    <ScrollView horizontal={false} style={styles.sharedScroll}>
+                        {props.recip_roommates.map((roommate: Roommate, index: number) => {
+                          return (
+                            <View key={roommate.id} style={styles.sharedContainer}>
+                              {shared[index] ? (
+                                <>
+                                <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
+                                <Pressable>
+                                      <Ionicons 
+                                        name={"checkmark-circle"}
+                                        size={32} 
+                                        color={sharedColors[index]}/>
+                                </Pressable>
+                                </>
+                              ) : null}
+                            </View>
+                          );
+                        })}
+                    </ScrollView>
+                ) : (
+                  // USER VIEWING IS NOT OWNER
+                  // SHOW OWNER
+                  <ScrollView horizontal={false} style={styles.sharedScroll}>
+                    <View key={999} style={styles.sharedContainer}>
+                      <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                        Meal Owner: {props.recip_roommates.find((rm: Roommate) => rm.id.toString() == props.user_id.toString())?.name || 'Unknown'}
+                      </Text>
+                      {/* <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Item Owner: {((props.recipRoommates: Roommate).find((rm: Roommate) => rm.id === props.user_id)).name}</Text> */}
+                    </View>
+                    {/* // SHOW SHARED WITH
+                    // MARK YOU IN SHARED WITH */}
+                    {props.shared_with.map((roommate: string, index: number) => {
+                      const found = props.recip_roommates.find((rm: Roommate) => rm.id == roommate);
+                      const roommateName = found ? found.name : `Unknown (${roommate})`;
+                      
+                      return (
+                        <View key={roommate} style={styles.sharedContainer}>
+                          <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">
+                            Shared with {userData.user_id != roommate ? roommateName : roommate}
+                            </Text>
+                          <Pressable>
+                              <Ionicons name="checkmark-circle" size={32} color={sharedColors[index]}/>
+                          </Pressable>
+                          {roommate == userData.user_id && <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">(You)</Text>}
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                )) : (
+                  // WHEN ADDING NEW PLANNED MEAL
+
+                  props.recip_roommates.length > 0 && (
+                    <ScrollView horizontal={false} style={styles.sharedScroll}>
+                      {props.recip_roommates.map((roommate: Roommate, index: number) => {
+                        return (
+                          <View key={roommate.id} style={styles.sharedContainer}>
+                            <Text style={styles.sharedText} numberOfLines={1} ellipsizeMode="tail">Shared with {roommate.name}</Text>
+                            <Pressable onPress={() => sharedToggle(index)}>
+                              {newShared[index] ? (
+                                <Ionicons name="checkmark-circle" size={32} color={sharedColors[index%11]}/>
+                              ) : (
+                                <Ionicons name="ellipse-outline" size={32} color={sharedColors[index%11]}/>
+                              )}
+                            </Pressable>
+                          </View>  
+                        );
+                      })}
+                    </ScrollView>
+                  )
+                )
+              }
+
+
             {/* Cancel/add recipe to meal plan */}
             <View style={styles.recipeInputContainer}>
               <TouchableOpacity style={styles.cancelButton} onPress={closeWindow}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{props.editing ? "Close" : "Cancel"}</Text>
               </TouchableOpacity>
+              {!props.editing ? 
               <TouchableOpacity style={styles.addButton} onPress={addRecipe}>
                 <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
+              : null}
             </View>
 
             <View style={styles.scrollerSpacer}></View>
@@ -485,6 +597,27 @@ const styles = StyleSheet.create({
   },
   scrollerSpacer: {
     height: 250,
+  },
+  sharedScroll: {
+    marginTop: 20,
+    maxHeight: 190,
+    width: 270,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: "lightgray",
+    paddingTop: 12,
+    paddingHorizontal: 12,
+  },
+  sharedContainer: {
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sharedText: {
+    marginRight: 5,
+    flexShrink: 1,
+    fontSize: 16,
   },
 });
 
