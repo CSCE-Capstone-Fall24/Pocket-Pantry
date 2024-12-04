@@ -27,10 +27,30 @@ interface List {
   shoppingItems: Item[]; // Array of items with name, quantity, unit, and checked state
 }
 
+type Roommate = {
+  id: string; 
+  name: string; 
+  isReciprocal: boolean;
+};
+
 const Shopping = () => {
   const [items, setItems] = useState<List[]>([]); // Store fetched shopping lists
   const [refreshing, setRefreshing] = useState(false);
   const { userData } = useUserContext(); // User context to get `user_id`
+  const [recipRoommates, setRecipRoommates] = useState<Roommate[]>([]);
+
+  useEffect(() => {
+    const rms: Roommate[] = userData.roommates
+      .filter((item: any) => item.is_reciprocated)
+      .map((item: any) => ({
+        id: item.roommate_id,
+        name: item.username,
+        isReciprocal: item.is_reciprocated,
+      })).sort((a: Roommate, b: Roommate) => Number(a.id) - Number(b.id));
+
+    setRecipRoommates(rms);
+    fetchItems();
+  }, [userData.reciprocatedRoommates, userData.roommates]);
 
   // Function to fetch and transform items
   const fetchItems = async () => {
@@ -116,6 +136,23 @@ const Shopping = () => {
     Alert.alert('Submitted', 'Checked items have been removed from your shopping lists.');
   };
 
+  const formatListTitle = (userIds: string[]): string => {
+    const roommateNames = userIds
+      .filter((id) => id !== userData.user_id) // Exclude the current user
+      .map((id) => recipRoommates.find((roommate) => roommate.id === id)?.name || 'Unknown');
+
+    if (roommateNames.length === 0) {
+      return "Your list";
+    }
+
+    const formattedNames =
+      roommateNames.length === 1
+        ? `You & ${roommateNames[0]}'s list`
+        : `You & ${roommateNames.join(' & ')}'s list`;
+
+    return formattedNames;
+  };
+
   // Render the component
   return (
     <ScrollView
@@ -136,9 +173,7 @@ const Shopping = () => {
       {/* Render the fetched shopping lists */}
       {items.map((list) => (
         <View key={list.listId} style={styles.listContainer}>
-          <Text style={styles.listTitle}>
-            List: {list.userIds.join(", ")}
-          </Text>
+          <Text style={styles.listTitle}>{formatListTitle(list.userIds)}</Text>
           <ShoppingList
             listId={list.listId}
             userIds={list.userIds}
