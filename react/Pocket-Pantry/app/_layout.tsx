@@ -7,6 +7,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import Login from './login';
 
+import { LogBox } from 'react-native';
+LogBox.ignoreAllLogs();
+
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { UserProvider, useUserContext } from '@/components/contexts/UserContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
