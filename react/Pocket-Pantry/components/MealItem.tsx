@@ -18,7 +18,9 @@ type MealProps = {
   shared_with: Number[];
   expiration: Date;
   recipe: any; // lol
-  recip_rms: Roommate[]
+  recip_rms: Roommate[];
+  // deleteMeal: (arg1: string, arg2: string) => void;
+  refreshMeals: () => void;
 };
 
 const MealItem = (props: MealProps) => {
@@ -36,7 +38,7 @@ const MealItem = (props: MealProps) => {
           {/* Meal Info */}
           <Text style={styles.recipeName}>{props.recipe.name}</Text>
           <Text style={styles.details}>Servings: {n_servings}</Text>
-          <Text style={styles.details}>Expiration: {expiration.toLocaleDateString()}</Text>
+          {/* <Text style={styles.details}>Expiration: {expiration.toLocaleDateString()}</Text> */}
 
           {/* Sharing Info */}
           {is_shared && (
@@ -52,7 +54,8 @@ const MealItem = (props: MealProps) => {
             id={recipe.id}
             name={recipe.name}
             description={recipe.description}
-            servings={n_servings}
+            servings={recipe.serving_size}
+            planned_servings={n_servings}
             nutrition={recipe.nutrition}
             cook_time={recipe.cook_time}
             cook_steps={recipe.cook_steps}
@@ -65,6 +68,9 @@ const MealItem = (props: MealProps) => {
             user_id={Number(props.user_id)}
             shared_with={props.shared_with}
             close_guy={closeModal}
+            // deleteMeal={props.deleteMeal}
+            meal_id={props.meal_id}
+            refreshMeals={props.refreshMeals}
           />
         </View>
       </View>
@@ -75,7 +81,7 @@ const MealItem = (props: MealProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    height: 100,
+    height: 70,
     marginVertical: 8,
     marginHorizontal: 16,
     borderRadius: 8,
