@@ -58,7 +58,8 @@ GRAMS_CONVERSION = {
     "bunch": 150, "bunches": 150,  
     "piece": 100, "pieces": 100, "pc": 100, "count": 100,  
     "leaf": 1, "leaves": 1,  
-    "sprig": 1, "sprigs": 1  
+    "sprig": 1, "sprigs": 1,
+    "unknown unit": 1  
 }
 
 def convert_to_grams(quantity, unit_name):
